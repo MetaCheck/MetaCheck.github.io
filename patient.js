@@ -33,12 +33,12 @@ function renderScoreGrid(scores, patientId) {
     return;
   }
 
-  const maxWavg = Math.max(...scores.map(s => s.wavg || 0), 1);
+  const maxWavg = Math.max(...scores.map(s => s.wavg_absfc || 0), 1);
 
   grid.innerHTML = scores.map(s => {
     const rank = s.rank || '—';
-    const wavg = s.wavg ? Number(s.wavg).toFixed(3) : '—';
-    const barW = Math.min(100, ((s.wavg || 0) / maxWavg) * 100);
+    const wavg = s.wavg_absfc ? Number(s.wavg_absfc).toFixed(3) : '—';
+    const barW = Math.min(100, ((s.wavg_absfc || 0) / maxWavg) * 100);
     return `
       <div class="score-card fade-up" onclick="selectPatientCategory('${patientId}','${s.id}',this)">
         <div class="score-card__rank rank-${rank}">${rank}</div>
@@ -85,7 +85,7 @@ function selectPatientCategory(patientId, resultId, cardEl) {
         ${s.category}
       </div>
       <div style="margin-bottom:8px;font-size:12px;color:var(--ink4)">
-        WAVG_absFC：<strong style="font-family:var(--font-mono);color:var(--ink2)">${Number(s.wavg).toFixed(4)}</strong>
+        WAVG_absFC：<strong style="font-family:var(--font-mono);color:var(--ink2)">${Number(s.wavg_absfc).toFixed(4)}</strong>
       </div>
       ${metTags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${metTags}</div>` : ''}`;
 
