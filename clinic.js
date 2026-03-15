@@ -44,6 +44,7 @@ async function renderPatientList(patients) {
   // スコアを一括取得（上位ランクのみ表示用）
   list.innerHTML = patients.map(p => `
     <li class="patient-item ${p.id === selectedPatientId ? 'active' : ''}"
+        data-id="${p.id}"
         onclick="selectClinicPatient('${p.id}')">
       <div class="patient-item__dot">${p.id.slice(-3)}</div>
       <div class="patient-item__info">
@@ -59,7 +60,7 @@ async function selectClinicPatient(patientId) {
 
   // リストのactive更新
   document.querySelectorAll('.patient-item').forEach(el => {
-    el.classList.toggle('active', el.getAttribute('onclick').includes(patientId));
+    el.classList.toggle('active', el.dataset.id === patientId);
   });
 
   // 空状態を隠して詳細を表示
@@ -138,7 +139,6 @@ function renderCatTabs(scores, patientId) {
 function selectCatTab(btn, patientId, category) {
   document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  const score = allPatients; // scoresをキャッシュしていないので再取得
   fetchScores(patientId).then(scores => {
     const s = scores.find(s => s.category === category);
     if (s) showCatDetail(patientId, category, s);
