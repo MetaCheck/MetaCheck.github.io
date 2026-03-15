@@ -33,14 +33,17 @@ function renderScoreGrid(scores, patientId) {
     return;
   }
 
+  // スコアをキャッシュ（詳細表示用）
+  window._patientScores = scores;
+
   const maxWavg = Math.max(...scores.map(s => s.wavg_absfc || 0), 1);
 
-  grid.innerHTML = scores.map(s => {
+  grid.innerHTML = scores.map((s, i) => {
     const rank = s.rank || '—';
     const wavg = s.wavg_absfc ? Number(s.wavg_absfc).toFixed(3) : '—';
     const barW = Math.min(100, ((s.wavg_absfc || 0) / maxWavg) * 100);
     return `
-      <div class="score-card fade-up" onclick="selectPatientCategory('${patientId}','${s.id}',this)">
+      <div class="score-card fade-up" onclick="selectPatientCategory(${i}, this)">
         <div class="score-card__rank rank-${rank}">${rank}</div>
         <div class="score-card__name">${s.category}</div>
         <div style="font-size:10px;color:var(--ink4);margin-top:4px;font-family:var(--font-mono)">
@@ -53,8 +56,8 @@ function renderScoreGrid(scores, patientId) {
   }).join('');
 }
 
-// カテゴリ詳細選択
-function selectPatientCategory(patientId, resultId, cardEl) {
+// カテゴリ詳細選択（scoresデータを直接使用）
+function selectPatientCategory(index, cardEl) {
   document.querySelectorAll('.score-card').forEach(c => c.classList.remove('active'));
   cardEl?.classList.add('active');
 
@@ -63,18 +66,17 @@ function selectPatientCategory(patientId, resultId, cardEl) {
   const title = document.getElementById('patient-detail-title');
   if (!section || !card || !title) return;
 
+  const s = window._patientScores?.[index];
+  if (!s) { card.innerHTML = '<div style="color:var(--ink4)">データなし</div>'; return; }
+
   section.style.display = 'block';
+  title.textContent = s.category;
 
-  // category_resultsからデータ取得
-  dbSelect('category_results', `id=eq.${resultId}&select=*`).then(rows => {
-    const s = rows[0];
-    if (!s) { card.innerHTML = '<div style="color:var(--ink4)">データなし</div>'; return; }
+  const rank = s.rank || '—';
 
-    title.textContent = s.category;
-    const rank = s.rank || '—';
-
-    // 代謝物タグ生成
-    const metTags = s.metabolites ? s.metabolites.split('、').map(m => {
+  // category_resultsから代謝物データを取得
+  fetchCategoryResultsByPatientCategory(s).then(cr => {
+    const metTags = cr?.metabolites ? cr.metabolites.split('、').map(m => {
       const dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
       return `<span class="metabolite-tag ${dir}">${m.trim()}</span>`;
     }).join('') : '';
@@ -85,11 +87,21 @@ function selectPatientCategory(patientId, resultId, cardEl) {
         ${s.category}
       </div>
       <div style="margin-bottom:8px;font-size:12px;color:var(--ink4)">
-        WAVG_absFC：<strong style="font-family:var(--font-mono);color:var(--ink2)">${Number(s.wavg_absfc).toFixed(4)}</strong>
+        WAVG_absFC：<strong style="font-family:var(--font-mono);color:var(--ink2)">
+          ${Number(s.wavg_absfc).toFixed(4)}
+        </strong>
       </div>
       ${metTags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${metTags}</div>` : ''}`;
-
-  }).catch(() => {
-    card.innerHTML = '<div style="color:var(--ink4)">データ取得エラー</div>';
   });
+}
+
+// category_resultsから該当カテゴリを取得
+async function fetchCategoryResultsByPatientCategory(score) {
+  try {
+    const rows = await dbSelect('category_results',
+      `category=eq.${encodeURIComponent(score.category)}&select=metabolites&limit=1`);
+    return rows[0] || null;
+  } catch (e) {
+    return null;
+  }
 }
