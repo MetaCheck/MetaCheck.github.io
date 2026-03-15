@@ -1,3 +1,187 @@
+// ═══════════════════════════════════════════════════════════════
+//  Supabase接続設定
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
+
+// グローバルデータストア（Supabaseから読み込む）
+let PATIENT_DATA = {};
+let METABOLITE_DATA = {};
+
+// ─── Supabaseクエリヘルパー ───────────────────────────────────
+async function supabaseQuery(table, params = '') {
+  const url = `${SUPABASE_URL}/rest/v1/${table}${params}`;
+  const res = await fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  });
+  if (!res.ok) throw new Error(`Supabase error: ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+// ─── Supabaseからデータ全量を読み込んでPATIENT_DATA/METABOLITE_DATAを構築 ───
+async function loadDataFromSupabase() {
+  showLoadingScreen('データを読み込んでいます...');
+  try {
+    // 1. patients + scores を一括取得
+    const [patients, scores, facts, categories] = await Promise.all([
+      supabaseQuery('patients', '?select=patient_id,clinic_id,sex,country,measurement_date,is_baseline'),
+      supabaseQuery('scores',   '?select=patient_id,category,wavg_absfc,rank,metabolites,doctor_eval,patient_comment'),
+      supabaseQuery('fact',     '?select=patient_id,compound,sample_value,measurement_date'),
+      supabaseQuery('compound_categories', '?select=compound,category,weight')
+    ]);
+
+    // クリニックIDマッピング（1→AA, 2→AB, 3→AC, 4→AD）
+    const clinicMap = { 1:'AA', 2:'AB', 3:'AC', 4:'AD' };
+    const clinicNameMap = { 1:'クリニックA', 2:'クリニックB', 3:'クリニックC', 4:'クリニックD' };
+
+    // baselineフラグ
+    const baselinePatients = new Set(patients.filter(p => p.is_baseline).map(p => p.patient_id));
+
+    // Baseline計算用: カテゴリ×compound のベースライン平均値
+    const baselineValues = {}; // compound → 平均値
+    const baselineFacts = facts.filter(f => baselinePatients.has(f.patient_id));
+    const compoundAccum = {};
+    baselineFacts.forEach(f => {
+      if (!compoundAccum[f.compound]) compoundAccum[f.compound] = { sum: 0, count: 0 };
+      compoundAccum[f.compound].sum += f.sample_value;
+      compoundAccum[f.compound].count += 1;
+    });
+    Object.keys(compoundAccum).forEach(c => {
+      baselineValues[c] = compoundAccum[c].sum / compoundAccum[c].count;
+    });
+
+    // categoryWeightマップ
+    const catWeightMap = {}; // compound → { category, weight }
+    categories.forEach(r => {
+      catWeightMap[r.compound] = { category: r.category, weight: r.weight };
+    });
+
+    // 非baselineの患者データを処理
+    const nonBaselinePatients = patients.filter(p => !p.is_baseline);
+
+    // PATIENT_DATA構築
+    PATIENT_DATA = {};
+    nonBaselinePatients.forEach(p => {
+      const pid = p.patient_id;
+      const clinicId = clinicMap[p.clinic_id] || String(p.clinic_id);
+      const patScores = scores.filter(s => s.patient_id === pid);
+
+      PATIENT_DATA[pid] = {
+        id: pid,
+        clinic: clinicId,
+        clinic_name: clinicNameMap[p.clinic_id] || clinicId,
+        sex: p.sex || '—',
+        country: p.country || '—',
+        date: p.measurement_date || '—',
+        categories: patScores.map(s => ({
+          category: s.category,
+          rank: s.rank || 'A',
+          wavg: s.wavg_absfc || 0,
+          metabolites: s.metabolites || '',
+          doctor_eval: s.doctor_eval || '',
+          patient_comment: s.patient_comment || '',
+          metabolite_insights: []
+        }))
+      };
+    });
+
+    // METABOLITE_DATA構築（患者×カテゴリ×代謝物）
+    METABOLITE_DATA = {};
+    const nonBaselinePids = new Set(nonBaselinePatients.map(p => p.patient_id));
+    const nonBaselineFacts = facts.filter(f => nonBaselinePids.has(f.patient_id));
+
+    nonBaselineFacts.forEach(f => {
+      const pid = f.patient_id;
+      const cwEntry = catWeightMap[f.compound];
+      if (!cwEntry) return;
+      const { category, weight } = cwEntry;
+      const baseVal = baselineValues[f.compound] || 1;
+      const log2fc = baseVal > 0 ? Math.log2(f.sample_value / baseVal) : 0;
+
+      if (!METABOLITE_DATA[pid]) METABOLITE_DATA[pid] = {};
+      if (!METABOLITE_DATA[pid][category]) METABOLITE_DATA[pid][category] = [];
+
+      METABOLITE_DATA[pid][category].push({
+        compound: f.compound,
+        weight: weight,
+        sample: f.sample_value,
+        baseline: baseVal,
+        log2fc: log2fc
+      });
+    });
+
+    hideLoadingScreen();
+    initApp();
+
+  } catch(err) {
+    console.error('Supabaseデータ読み込みエラー:', err);
+    showLoadingScreen('データ読み込みに失敗しました。ページをリロードしてください。', true);
+  }
+}
+
+// ─── ローディング画面 ─────────────────────────────────────────
+function showLoadingScreen(message, isError = false) {
+  let el = document.getElementById('supabase-loading');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'supabase-loading';
+    el.style.cssText = `
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:rgba(26,60,52,0.95);display:flex;flex-direction:column;
+      align-items:center;justify-content:center;z-index:99999;color:white;
+      font-family:"DM Sans",sans-serif;
+    `;
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `
+    <div style="font-size:32px;margin-bottom:16px">${isError ? '⚠️' : '⏳'}</div>
+    <div style="font-size:18px;font-weight:600;margin-bottom:8px">MetaCheck</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.8)">${message}</div>
+    ${!isError ? '<div style="margin-top:24px;width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite"></div>' : ''}
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  `;
+}
+
+function hideLoadingScreen() {
+  const el = document.getElementById('supabase-loading');
+  if (el) el.remove();
+}
+
+// ─── アプリ初期化（データロード後に呼ぶ） ────────────────────
+function initApp() {
+  const sel = document.getElementById('sel-patient-id');
+  if (sel) {
+    // 既存のオプションをクリア
+    sel.innerHTML = '';
+    Object.keys(PATIENT_DATA).sort().forEach(pid => {
+      const o = document.createElement('option');
+      o.value = pid; o.textContent = pid;
+      sel.appendChild(o);
+    });
+  }
+
+  // クリニックIDリストも更新（任意）
+  const selClinic = document.getElementById('sel-clinic-id');
+  if (selClinic) {
+    const clinics = [...new Set(Object.values(PATIENT_DATA).map(d => d.clinic))].sort();
+    selClinic.innerHTML = '';
+    clinics.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = { AA:'クリニックA', AB:'クリニックB', AC:'クリニックC', AD:'クリニックD' }[c] || c;
+      selClinic.appendChild(o);
+    });
+  }
+}
+
+// ─── ページロード時にSupabaseからデータ取得 ──────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadDataFromSupabase();
+});
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -2357,14 +2541,8 @@ function sortMetabolites(pid, catName, sortType){
 }
 
 
-(function init(){
-  const sel = document.getElementById('sel-patient-id');
-  Object.keys(PATIENT_DATA).sort().forEach(pid=>{
-    const o = document.createElement('option');
-    o.value = pid; o.textContent = pid;
-    sel.appendChild(o);
-  });
-})();
+// ※ 旧init()はSupabase接続版のinitApp()に置き換えました
+// (function init(){ ... })(); ← 削除済み
 
 function selectPatientMode() {
   const pid = document.getElementById('patient-login-id').value.trim();
@@ -2714,4 +2892,3 @@ function drawMetaboliteScatterMultiCanvas(allMeasurementData, catName, canvasId)
 document.addEventListener('click', () => {
   document.querySelectorAll('.lang-dropdown').forEach(d => d.classList.remove('show'));
 });
-
