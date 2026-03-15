@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-//  supabase.js — DB接続・共通クエリ
+//  supabase.js — DB接続・共通クエリ（100行以内）
 // ═══════════════════════════════════════════
 
 const SUPABASE_URL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
@@ -53,9 +53,24 @@ async function fetchPatient(patientId) {
   return rows[0] || null;
 }
 
-// 患者のスコア一覧取得
+// 患者の最新measurement取得
+async function fetchLatestMeasurement(patientId) {
+  const rows = await dbSelect('measurements',
+    `patient_id=eq.${patientId}&is_latest=eq.true&select=*&order=measurement_date.desc&limit=1`);
+  return rows[0] || null;
+}
+
+// measurement_idでカテゴリスコア取得
+async function fetchCategoryResults(measurementId) {
+  return dbSelect('category_results',
+    `measurement_id=eq.${measurementId}&select=*&order=wavg.desc`);
+}
+
+// 患者スコア取得（measurements → category_results）
 async function fetchScores(patientId) {
-  return dbSelect('scores', `patient_id=eq.${patientId}&select=*&order=category`);
+  const m = await fetchLatestMeasurement(patientId);
+  if (!m) return [];
+  return fetchCategoryResults(m.id);
 }
 
 // クリニック一覧取得
