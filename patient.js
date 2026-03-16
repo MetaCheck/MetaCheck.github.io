@@ -32,7 +32,6 @@ async function renderPatientPage(patient) {
   document.getElementById('patient-display-meta').textContent =
     [patient.sex, patient.country].filter(Boolean).join(' / ') || '';
 
-  // 詳細セクションを確実に隠す
   const det = document.getElementById('patient-category-detail');
   if (det) det.setAttribute('hidden', '');
 
@@ -94,33 +93,33 @@ function selectPatientScore(index, el) {
   title.textContent = catName(s.category);
   const rank = s.rank || '—';
 
-  card.innerHTML = `<div style="color:var(--ink4);font-size:12px;padding:8px">読み込み中...</div>`;
+  card.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px">読み込み中...</div>';
 
-  fetchCategoryResults(s.patient_id).then(results => {
-    const cr = results.find(r => r.category === s.category);
-    const metTags = cr?.metabolites ? cr.metabolites.split('、').map(m => {
+  fetchCategoryResults(s.patient_id).then(function(results) {
+    const cr = results.find(function(r) { return r.category === s.category; });
+    const metTags = cr && cr.metabolites ? cr.metabolites.split('、').map(function(m) {
       const dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
-      return `<span class="metabolite-tag ${dir}">${m.trim()}</span>`;
+      return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
     }).join('') : '';
 
-    card.innerHTML = `
-      <div class="detail-card__title">
-        <span class="rank-badge rank-${rank}">${rank}</span> ${catName(s.category)}
-      </div>
-      <div style="font-size:12px;color:var(--ink4);margin-bottom:10px">
-        WAVG_absFC: <strong style="font-family:var(--font-mono);color:var(--ink2)">${Number(s.wavg_absfc).toFixed(4)}</strong>
-      </div>
-      ${metTags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">${metTags}</div>` : ''}
-      <div id="patient-insights-box"></div>
-      <div id="patient-metabolite-table"><div style="color:var(--ink4);font-size:12px;padding:8px">読み込み中...</div></div>`;
+    card.innerHTML =
+      '<div class="detail-card__title">' +
+        '<span class="rank-badge rank-' + rank + '">' + rank + '</span> ' + catName(s.category) +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--ink4);margin-bottom:10px">' +
+        'WAVG_absFC: <strong style="font-family:var(--font-mono);color:var(--ink2)">' + Number(s.wavg_absfc).toFixed(4) + '</strong>' +
+      '</div>' +
+      (metTags ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">' + metTags + '</div>' : '') +
+      '<div id="patient-insights-box"></div>' +
+      '<div id="patient-metabolite-table"><div style="color:var(--ink4);font-size:12px;padding:8px">読み込み中...</div></div>';
 
-    fetchInsightsByCategory(s.patient_id, s.category).then(ins => {
+    fetchInsightsByCategory(s.patient_id, s.category).then(function(ins) {
       const el2 = document.getElementById('patient-insights-box');
       if (!el2 || !ins) return;
-      el2.innerHTML = `
-        ${ins.interpretation ? `<div class="insight-box insight-box--blue"><div class="insight-label">📋 解釈</div><div>${ins.interpretation}</div></div>` : ''}
-        ${ins.recommendation ? `<div class="insight-box insight-box--green"><div class="insight-label">💡 推奨</div><div>${ins.recommendation}</div></div>` : ''}
-        ${ins.patient_comment ? `<div class="insight-box insight-box--amber"><div class="insight-label">🗒 生活で気をつけること</div><div>${ins.patient_comment}</div></div>` : ''}`;
+      el2.innerHTML =
+        (ins.interpretation ? '<div class="insight-box insight-box--blue"><div class="insight-label">📋 解釈</div><div>' + ins.interpretation + '</div></div>' : '') +
+        (ins.recommendation ? '<div class="insight-box insight-box--green"><div class="insight-label">💡 推奨</div><div>' + ins.recommendation + '</div></div>' : '') +
+        (ins.patient_comment ? '<div class="insight-box insight-box--amber"><div class="insight-label">🗒 生活で気をつけること</div><div>' + ins.patient_comment + '</div></div>' : '');
     });
 
     loadMetaboliteTable(s.patient_id, s.category);
@@ -132,24 +131,26 @@ async function loadMetaboliteTable(patientId, category) {
   if (!el) return;
   try {
     const compounds = await dbSelect('compound_categories',
-      `category=eq.${encodeURIComponent(category)}&select=compound,weight&order=weight.desc`);
+      'category=eq.' + encodeURIComponent(category) + '&select=compound,weight&order=weight.desc');
     if (!compounds.length) { el.innerHTML = ''; return; }
-    const compList = compounds.map(c => `"${c.compound}"`).join(',');
+    const compList = compounds.map(function(c) { return '"' + c.compound + '"'; }).join(',');
     const facts = await dbSelect('fact',
-      `patient_id=eq.${patientId}&compound=in.(${compList})&select=compound,sample_value,measured_at`);
+      'patient_id=eq.' + patientId + '&compound=in.(' + compList + ')&select=compound,sample_value,measured_at');
     const factMap = {};
-    facts.forEach(f => { factMap[f.compound] = f; });
-    el.innerHTML = `<table class="score-table" style="margin-top:12px">
-      <thead><tr><th>代謝物</th><th>重要度</th><th>実測値</th><th>測定日</th></tr></thead>
-      <tbody>${compounds.map(c => {
-        const f = factMap[c.compound];
-        return `<tr>
-          <td>${c.compound}</td>
-          <td><span class="rank-badge" style="background:var(--emerald);color:#fff;font-size:11px">${c.weight}</span></td>
-          <td style="font-family:var(--font-mono)">${f ? f.sample_value : '—'}</td>
-          <td style="font-size:11px;color:var(--ink4)">${f ? f.measured_at : '—'}</td>
-        </tr>`;
-      }).join('')}</tbody></table>`;
+    facts.forEach(function(f) { factMap[f.compound] = f; });
+    let rows = '';
+    compounds.forEach(function(c) {
+      const f = factMap[c.compound];
+      rows += '<tr>' +
+        '<td>' + c.compound + '</td>' +
+        '<td><span class="rank-badge" style="background:var(--emerald);color:#fff;font-size:11px">' + c.weight + '</span></td>' +
+        '<td style="font-family:var(--font-mono)">' + (f ? f.sample_value : '—') + '</td>' +
+        '<td style="font-size:11px;color:var(--ink4)">' + (f ? f.measured_at : '—') + '</td>' +
+        '</tr>';
+    });
+    el.innerHTML = '<table class="score-table" style="margin-top:12px">' +
+      '<thead><tr><th>代謝物</th><th>重要度</th><th>実測値</th><th>測定日</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>';
   } catch(e) {
     el.innerHTML = '<div style="color:var(--ink4);font-size:12px">エラー</div>';
   }
