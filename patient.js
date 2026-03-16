@@ -27,7 +27,7 @@ function catName(cat) {
 
 async function renderPatientPage(patient) {
   // 詳細セクションを確実に非表示
-  document.getElementById('patient-category-detail').style.display = 'none';
+  document.getElementById('patient-category-detail').classList.remove('show');
 
   document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
   document.getElementById('patient-name-display').textContent = patient.id + ' さん';
@@ -45,7 +45,7 @@ async function renderPatientPage(patient) {
     setTimeout(() => {
       _allowDetail = true;
       const det = document.getElementById('patient-category-detail');
-      if (det) det.style.display = 'none';
+      if (det) det.classList.remove('show');
     }, 1000);
   } catch(e) { console.error(e); }
 
@@ -102,7 +102,7 @@ function selectPatientScore(index, el) {
   const title = document.getElementById('patient-detail-title');
   if (!section || !card || !title) return;
 
-  section.style.display = 'block';
+  section.classList.add('show');
   title.textContent = catName(s.category);
   const rank = s.rank || '—';
 

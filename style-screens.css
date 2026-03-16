@@ -1,3 +1,4 @@
+#patient-category-detail:not(.show) { display: none !important; }
    PATIENT SCREEN
 ═══════════════════════════════════════════════ */
 #screen-patient {
