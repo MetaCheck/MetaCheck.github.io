@@ -304,35 +304,41 @@
 
 /* ═══════════════════════════════════════════════
 
-/* ─── 患者スコア横長バー ─── */
+/* ─── 患者スコア ─── */
 .patient-alert {
   background: var(--amber-l); border: 1px solid #f0c580;
   border-radius: var(--r-sm); padding: 10px 16px;
   font-size: 13px; color: var(--amber); margin-bottom: 16px;
 }
 
+#patient-score-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  margin-bottom: 20px;
+}
+
 .pt-score-row {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 10px;
   padding: 10px 14px; border-radius: var(--r-sm);
   cursor: pointer; transition: background .15s;
-  border: 1px solid transparent; margin-bottom: 4px;
+  border: 1px solid var(--border); background: var(--white);
 }
-.pt-score-row:hover { background: var(--foam); }
-.pt-score-row.active { background: var(--foam); border-color: var(--sage); }
-.pt-score-row--alert { background: var(--ruby-l); }
-.pt-score-row--alert:hover { background: #fce4e2; }
+.pt-score-row:hover { background: var(--foam); border-color: var(--sage); }
+.pt-score-row.active { background: var(--foam); border-color: var(--emerald); }
 
 .pt-score-name {
-  width: 160px; flex-shrink: 0;
-  font-size: 13px; color: var(--ink2);
+  flex: 1; font-size: 12px; color: var(--ink2);
 }
 
 .pt-score-bar-wrap {
-  flex: 1; height: 6px; background: var(--border); border-radius: 3px;
+  width: 80px; height: 4px; background: var(--border); border-radius: 2px; flex-shrink: 0;
 }
-.pt-score-bar { height: 6px; border-radius: 3px; transition: width .5s ease; }
+.pt-score-bar { height: 4px; border-radius: 2px; transition: width .5s ease; }
 .rank-A-bar { background: var(--rank-a); }
 .rank-B-bar { background: var(--rank-b); }
 .rank-C-bar { background: var(--rank-c); }
 .rank-D-bar { background: var(--rank-d); }
 .rank-E-bar { background: var(--rank-e); }
+
+@media (max-width: 640px) {
+  #patient-score-grid { grid-template-columns: 1fr; }
+}

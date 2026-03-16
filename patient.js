@@ -70,7 +70,7 @@ function renderPatientScores(scores) {
     const wavg = s.wavg_absfc ? Number(s.wavg_absfc).toFixed(3) : '0';
     const barW = Math.min(100, Number(wavg) * 50);
     const name = catName(s.category);
-    return `<div class="pt-score-row ${rank==='E'?'pt-score-row--alert':''}" onclick="selectPatientScore(${i},this)">
+    return `<div class="pt-score-row" onclick="selectPatientScore(${i},this)">
       <span class="pt-score-name">${name}</span>
       <div class="pt-score-bar-wrap"><div class="pt-score-bar rank-${rank}-bar" style="width:${barW}%"></div></div>
       <span class="rank-badge rank-${rank}" style="width:28px;height:28px;font-size:13px">${rank}</span>
