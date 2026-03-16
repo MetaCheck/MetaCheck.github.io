@@ -125,6 +125,7 @@ function selectPatientScore(index, el) {
 
     loadMetaboliteTable(s.patient_id, s.category);
   });
+}
 
 async function loadMetaboliteTable(patientId, category) {
   const el = document.getElementById('patient-metabolite-table');
