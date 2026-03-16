@@ -28,6 +28,9 @@ function catName(cat) {
 }
 
 async function renderPatientPage(patient) {
+  // 詳細セクションを初期化
+  const detailSection = document.getElementById('patient-category-detail');
+  if (detailSection) detailSection.style.display = 'none';
   document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
   document.getElementById('patient-name-display').textContent = patient.id + ' さん';
   document.getElementById('patient-display-id').textContent = '患者ID: ' + patient.id;
