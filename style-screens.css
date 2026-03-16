@@ -1,4 +1,5 @@
-#patient-category-detail:not(.show) { display: none !important; }
+#patient-category-detail { display: none; }
+#patient-category-detail.show { display: block !important; }
    PATIENT SCREEN
 ═══════════════════════════════════════════════ */
 #screen-patient {
