@@ -79,10 +79,11 @@
 ═══════════════════════════════════════════════ */
 #screen-clinic {
   background: var(--white);
+  min-height: 0;
 }
 
 .clinic-layout {
-  flex: 1; display: flex; overflow: hidden;
+  flex: 1; display: flex; overflow: hidden; min-height: 0;
 }
 
 /* Sidebar */
@@ -138,6 +139,7 @@
 /* Clinic main */
 .clinic-main {
   flex: 1; overflow-y: auto; padding: 24px;
+  min-height: 0;
 }
 .clinic-main::-webkit-scrollbar { width: 4px; }
 .clinic-main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
