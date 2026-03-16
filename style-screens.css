@@ -303,3 +303,36 @@
 
 
 /* ═══════════════════════════════════════════════
+
+/* ─── 患者スコア横長バー ─── */
+.patient-alert {
+  background: var(--amber-l); border: 1px solid #f0c580;
+  border-radius: var(--r-sm); padding: 10px 16px;
+  font-size: 13px; color: var(--amber); margin-bottom: 16px;
+}
+
+.pt-score-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: var(--r-sm);
+  cursor: pointer; transition: background .15s;
+  border: 1px solid transparent; margin-bottom: 4px;
+}
+.pt-score-row:hover { background: var(--foam); }
+.pt-score-row.active { background: var(--foam); border-color: var(--sage); }
+.pt-score-row--alert { background: var(--ruby-l); }
+.pt-score-row--alert:hover { background: #fce4e2; }
+
+.pt-score-name {
+  width: 160px; flex-shrink: 0;
+  font-size: 13px; color: var(--ink2);
+}
+
+.pt-score-bar-wrap {
+  flex: 1; height: 6px; background: var(--border); border-radius: 3px;
+}
+.pt-score-bar { height: 6px; border-radius: 3px; transition: width .5s ease; }
+.rank-A-bar { background: var(--rank-a); }
+.rank-B-bar { background: var(--rank-b); }
+.rank-C-bar { background: var(--rank-c); }
+.rank-D-bar { background: var(--rank-d); }
+.rank-E-bar { background: var(--rank-e); }
