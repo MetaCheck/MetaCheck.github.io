@@ -41,6 +41,11 @@ async function renderPatientPage(patient) {
     window._patientScores = scores;
     renderPatientScores(scores);
     renderAlertBanner(scores);
+    // 詳細セクションを確実に非表示（非同期処理後）
+    setTimeout(() => {
+      const det = document.getElementById('patient-category-detail');
+      if (det) det.style.display = 'none';
+    }, 500);
   } catch(e) { console.error(e); }
 
   document.getElementById('btn-request-analysis')
