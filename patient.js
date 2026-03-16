@@ -41,11 +41,12 @@ async function renderPatientPage(patient) {
     window._patientScores = scores;
     renderPatientScores(scores);
     renderAlertBanner(scores);
-    // 詳細セクションを確実に非表示（非同期処理後）
+    // スコア描画後にクリック許可
     setTimeout(() => {
+      _allowDetail = true;
       const det = document.getElementById('patient-category-detail');
       if (det) det.style.display = 'none';
-    }, 500);
+    }, 1000);
   } catch(e) { console.error(e); }
 
   document.getElementById('btn-request-analysis')
@@ -87,7 +88,9 @@ function renderPatientScores(scores) {
   }).join('');
 }
 
+let _allowDetail = false;
 function selectPatientScore(index, el) {
+  if (!_allowDetail) return;
   document.querySelectorAll('.pt-score-row').forEach(r => r.classList.remove('active'));
   el?.classList.add('active');
 
