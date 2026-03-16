@@ -153,4 +153,3 @@ async function loadMetaboliteTable(patientId, category) {
   } catch(e) {
     el.innerHTML = '<div style="color:var(--ink4);font-size:12px">エラー</div>';
   }
-}
