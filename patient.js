@@ -96,7 +96,7 @@ function selectPatientScore(index, el) {
 
   card.innerHTML = `<div style="color:var(--ink4);font-size:12px;padding:8px">読み込み中...</div>`;
 
-  fetchCategoryResult(s.patient_id).then(results => {
+  fetchCategoryResults(s.patient_id).then(results => {
     const cr = results.find(r => r.category === s.category);
     const metTags = cr?.metabolites ? cr.metabolites.split('、').map(m => {
       const dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
