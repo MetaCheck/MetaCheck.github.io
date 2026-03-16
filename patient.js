@@ -1,6 +1,4 @@
-// ═══════════════════════════════════════════
-//  patient.js — 患者マイページ（150行以内）
-// ═══════════════════════════════════════════
+// patient.js — 患者マイページ
 
 const CAT_JA = {
   'Amino acid / BCAA metabolism': 'アミノ酸・BCAA',
@@ -22,13 +20,11 @@ const CAT_JA = {
 };
 
 function catName(cat) {
-  return currentLang === 'ja' ? (CAT_JA[cat] || cat) : cat;
+  if (!cat) return '';
+  return currentLang === 'ja' ? (CAT_JA[cat.trim()] || cat) : cat;
 }
 
 async function renderPatientPage(patient) {
-  // 詳細セクションを確実に非表示
-  document.getElementById('patient-category-detail').style.display = 'none';
-
   document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
   document.getElementById('patient-name-display').textContent = patient.id + ' さん';
   document.getElementById('patient-display-id').textContent = '患者ID: ' + patient.id;
@@ -36,17 +32,15 @@ async function renderPatientPage(patient) {
   document.getElementById('patient-display-meta').textContent =
     [patient.sex, patient.country].filter(Boolean).join(' / ') || '';
 
+  // 詳細セクションを確実に隠す
+  const det = document.getElementById('patient-category-detail');
+  if (det) det.setAttribute('hidden', '');
+
   try {
     const scores = await fetchScores(patient.id);
     window._patientScores = scores;
     renderPatientScores(scores);
     renderAlertBanner(scores);
-    // スコア描画後にクリック許可
-    setTimeout(() => {
-      _allowDetail = true;
-      const det = document.getElementById('patient-category-detail');
-      if (det) det.style.display = 'none';
-    }, 1000);
   } catch(e) { console.error(e); }
 
   document.getElementById('btn-request-analysis')
@@ -57,23 +51,19 @@ function renderAlertBanner(scores) {
   const eCount = scores.filter(s => s.rank === 'E').length;
   const banner = document.getElementById('patient-alert-banner');
   if (!banner) return;
-  if (eCount > 0) {
-    banner.textContent = `⚠ ${eCount}項目で変動が大きく検出されました。詳細はクリニックにご相談ください。`;
-    banner.style.display = 'block';
-  } else {
-    banner.style.display = 'none';
-  }
+  banner.textContent = eCount > 0
+    ? `⚠ ${eCount}項目で変動が大きく検出されました。詳細はクリニックにご相談ください。`
+    : '';
+  banner.style.display = eCount > 0 ? 'block' : 'none';
 }
 
 function renderPatientScores(scores) {
   const grid = document.getElementById('patient-score-grid');
   if (!grid) return;
-
   if (!scores.length) {
     grid.innerHTML = '<div style="color:var(--ink4);padding:20px">スコアデータがありません</div>';
     return;
   }
-
   grid.innerHTML = scores.map((s, i) => {
     const rank = s.rank || '—';
     const wavg = s.wavg_absfc ? Number(s.wavg_absfc).toFixed(3) : '0';
@@ -88,21 +78,19 @@ function renderPatientScores(scores) {
   }).join('');
 }
 
-let _allowDetail = false;
 function selectPatientScore(index, el) {
-  if (!_allowDetail) return;
   document.querySelectorAll('.pt-score-row').forEach(r => r.classList.remove('active'));
   el?.classList.add('active');
 
   const s = window._patientScores?.[index];
   if (!s) return;
 
-  const section = document.getElementById('patient-category-detail');
+  const det = document.getElementById('patient-category-detail');
   const card = document.getElementById('patient-detail-card');
   const title = document.getElementById('patient-detail-title');
-  if (!section || !card || !title) return;
+  if (!det || !card || !title) return;
 
-  section.style.display = 'block';
+  det.removeAttribute('hidden');
   title.textContent = catName(s.category);
   const rank = s.rank || '—';
 
@@ -116,9 +104,7 @@ function selectPatientScore(index, el) {
       <span class="rank-badge rank-${rank}">${rank}</span> ${catName(s.category)}
     </div>
     <div style="font-size:12px;color:var(--ink4);margin-bottom:10px">
-      WAVG_absFC: <strong style="font-family:var(--font-mono);color:var(--ink2)">
-        ${Number(s.wavg_absfc).toFixed(4)}
-      </strong>
+      WAVG_absFC: <strong style="font-family:var(--font-mono);color:var(--ink2)">${Number(s.wavg_absfc).toFixed(4)}</strong>
     </div>
     ${metTags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">${metTags}</div>` : ''}
     <div id="patient-insights-box"></div>
@@ -143,14 +129,11 @@ async function loadMetaboliteTable(patientId, category) {
     const compounds = await dbSelect('compound_categories',
       `category=eq.${encodeURIComponent(category)}&select=compound,weight&order=weight.desc`);
     if (!compounds.length) { el.innerHTML = ''; return; }
-
     const compList = compounds.map(c => `"${c.compound}"`).join(',');
     const facts = await dbSelect('fact',
       `patient_id=eq.${patientId}&compound=in.(${compList})&select=compound,sample_value,measured_at`);
-
     const factMap = {};
     facts.forEach(f => { factMap[f.compound] = f; });
-
     el.innerHTML = `<table class="score-table" style="margin-top:12px">
       <thead><tr><th>代謝物</th><th>重要度</th><th>実測値</th><th>測定日</th></tr></thead>
       <tbody>${compounds.map(c => {
@@ -163,6 +146,6 @@ async function loadMetaboliteTable(patientId, category) {
         </tr>`;
       }).join('')}</tbody></table>`;
   } catch(e) {
-    el.innerHTML = '<div style="color:var(--ink4);font-size:12px">データ取得エラー</div>';
+    el.innerHTML = '<div style="color:var(--ink4);font-size:12px">エラー</div>';
   }
 }
