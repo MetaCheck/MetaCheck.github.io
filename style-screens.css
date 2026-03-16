@@ -145,6 +145,7 @@
 .clinic-main::-webkit-scrollbar { width: 4px; }
 .clinic-main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
+.empty-state.hidden { display: none !important; }
 .empty-state {
   height: 100%; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
