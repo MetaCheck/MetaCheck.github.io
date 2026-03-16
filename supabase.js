@@ -79,3 +79,29 @@ async function fetchClinics() {
 async function insertPatient(data) {
   return dbInsert('patients', data);
 }
+
+// カテゴリ名とpatient_idからmetabolite_insightsを取得
+async function fetchInsightsByCategory(patientId, category) {
+  // まずmeasurementsから最新IDを取得
+  const measurements = await dbSelect('measurements',
+    `patient_id=eq.${patientId}&is_latest=eq.true&select=id&limit=1`);
+  
+  // measurementsがない場合はcategory_resultsから直接カテゴリで検索
+  let crRows = [];
+  if (measurements.length) {
+    crRows = await dbSelect('category_results',
+      `measurement_id=eq.${measurements[0].id}&category=eq.${encodeURIComponent(category)}&select=id&limit=1`);
+  }
+  
+  // category_resultsが見つからない場合はcategoryだけで検索
+  if (!crRows.length) {
+    crRows = await dbSelect('category_results',
+      `category=eq.${encodeURIComponent(category)}&select=id&limit=1`);
+  }
+  
+  if (!crRows.length) return null;
+  
+  const insights = await dbSelect('metabolite_insights',
+    `category_result_id=eq.${crRows[0].id}&select=*&limit=1`);
+  return insights[0] || null;
+}

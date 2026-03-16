@@ -18,6 +18,7 @@ const CAT_JA = {
   'Purine metabolism': 'プリン代謝',
   'Pyrimidine metabolism': 'ピリミジン代謝',
   'Redox balance / Glutathione': '酸化還元・グルタチオン',
+  'Redox balance / Glutathione ': '酸化還元・グルタチオン',
   'TCA Cycle': 'クエン酸回路',
   'Urea Cycle': '尿素回路',
 };
@@ -108,7 +109,19 @@ function selectPatientScore(index, el) {
       WAVG_absFC: <strong style="font-family:var(--font-mono);color:var(--ink2)">${Number(s.wavg_absfc).toFixed(4)}</strong>
     </div>
     ${metTags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">${metTags}</div>` : ''}
+    <div id="patient-insights-box"></div>
     <div id="patient-metabolite-table">読み込み中...</div>`;
+
+  // 臨床解釈を取得
+  fetchInsightsByCategory(s.patient_id, s.category).then(ins => {
+    const el = document.getElementById('patient-insights-box');
+    if (!el || !ins) return;
+    el.innerHTML = `
+      ${ins.interpretation ? `<div class="insight-box insight-box--blue"><div class="insight-label">📋 解釈</div><div>${ins.interpretation}</div></div>` : ''}
+      ${ins.recommendation ? `<div class="insight-box insight-box--green"><div class="insight-label">💡 推奨</div><div>${ins.recommendation}</div></div>` : ''}
+      ${ins.patient_comment ? `<div class="insight-box insight-box--amber"><div class="insight-label">🗒 生活で気をつけること</div><div>${ins.patient_comment}</div></div>` : ''}
+    `;
+  });
 
   // factテーブルから代謝物データを取得
   loadMetaboliteTable(s.patient_id, s.category, s.measured_at);
