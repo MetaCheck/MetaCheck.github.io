@@ -194,8 +194,9 @@ async function renderTrendChart(patientId, category) {
       yAxis += '<text x="' + (padL - 4) + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="#8FAAA0">' + v + '</text>';
     });
 
-    // Y軸ラベル
-    yAxis += '<text x="12" y="' + (padT + chartH / 2) + '" text-anchor="middle" font-size="9" fill="#8FAAA0" transform="rotate(-90,12,' + (padT + chartH / 2) + ')">log2FC（基準値からの乖離）</text>';
+    // Y軸ラベル（上：高い↑赤、下：低い↓青）
+    yAxis += '<text x="14" y="' + (padT + 10) + '" text-anchor="middle" font-size="9" fill="#B03A2E" font-weight="bold">高い↑</text>';
+    yAxis += '<text x="14" y="' + (padT + chartH - 4) + '" text-anchor="middle" font-size="9" fill="#4A90D9" font-weight="bold">低い↓</text>';
 
     // X軸ラベル
     var xLabels = '';
@@ -214,8 +215,6 @@ async function renderTrendChart(patientId, category) {
       return facts.some(function(f) { return f.compound === c.compound && f.log2fc != null; });
     }).slice(0, 8);
     var topCompounds = compoundsWithData.length > 0 ? compoundsWithData : compounds.slice(0, 5);
-    var colors = ['#2D6A4F', '#B03A2E', '#B8860B', '#4A90D9', '#8B5CF6'];
-
     topCompounds.forEach(function(c, ci) {
       var compFacts = facts.filter(function(f) { return f.compound === c.compound && f.log2fc != null; });
       compFacts.forEach(function(f) {
@@ -223,7 +222,7 @@ async function renderTrendChart(patientId, category) {
         if (di === -1) return;
         var x = dates.length === 1 ? padL + chartW / 2 : padL + (chartW / (dates.length - 1)) * di;
         var y = padT + chartH / 2 - (Number(f.log2fc) / maxV) * (chartH / 2);
-        var color = colors[ci % colors.length];
+        var color = Number(f.log2fc) >= 0 ? '#B03A2E' : '#4A90D9';
         dots += '<circle cx="' + x + '" cy="' + y + '" r="5" fill="' + color + '" stroke="#fff" stroke-width="1.5" opacity="0.85"/>';
       });
     });
