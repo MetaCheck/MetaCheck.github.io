@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetaCheck — Metabolic Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ═══ RESET & TOKENS ═══ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --forest:#1A3C34;--emerald:#2D6A4F;--sage:#52B788;--mint:#95D5B2;
+  --foam:#D8F3DC;--paper:#F7FAF8;--white:#FFFFFF;
+  --ink:#0F1F1A;--ink2:#2C4A40;--ink3:#5A7A6E;--ink4:#8FAAA0;
+  --border:#D4E6DD;
+  --amber:#D4811F;--amber-l:#FEF3E2;
+  --ruby:#B03A2E;--ruby-l:#FDECEA;
+  --rank-a:#2D6A4F;--rank-a-bg:#D8F3DC;
+  --rank-b:#3A7D44;--rank-b-bg:#E8F5E9;
+  --rank-c:#B8860B;--rank-c-bg:#FFF9C4;
+  --rank-d:#D4600A;--rank-d-bg:#FFE5CC;
+  --rank-e:#B03A2E;--rank-e-bg:#FDECEA;
+  --r:12px;
+  --shadow:0 2px 12px rgba(26,60,52,.08);
+  --shadow-lg:0 8px 32px rgba(26,60,52,.14);
+  --font-mono:'JetBrains Mono',monospace;
+}
+html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--forest);color:var(--ink)}
+
+/* ═══ SCREENS ═══ */
+.screen{display:none}
+.screen.active{display:block}
+.hidden{display:none!important}
+
+/* ═══ LOGIN SCREEN ═══ */
+#screen-login{
+  position:fixed;inset:0;z-index:1000;
+  background:linear-gradient(135deg,var(--forest) 0%,#0d2820 60%,#162d26 100%);
+  display:flex;align-items:center;justify-content:center;
+}
+#screen-login.active{display:flex}
+.login-lang-switcher{position:absolute;top:24px;right:24px;display:flex;gap:8px;z-index:100}
+.login-lang-btn{
+  width:44px;height:44px;border-radius:12px;
+  border:2px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.08);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .3s;
+}
+.login-lang-btn:hover{background:rgba(255,255,255,.15);transform:translateY(-1px)}
+.login-lang-btn.active{background:linear-gradient(135deg,var(--sage),#40916c);box-shadow:0 4px 16px rgba(82,183,136,.4)}
+.lang-text{font-size:13px;font-weight:700;color:#fff}
+.login-box{
+  width:420px;padding:48px 44px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;backdrop-filter:blur(20px);
+  box-shadow:0 32px 80px rgba(0,0,0,.4);
+}
+.login-logo{font-family:'DM Serif Display',serif;font-size:34px;color:#fff;letter-spacing:-.5px;margin-bottom:4px}
+.login-logo span{color:var(--sage)}
+.login-sub{color:var(--mint);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:36px}
+.login-role{display:flex;gap:8px;margin-bottom:24px}
+.role-tab{
+  flex:1;padding:10px;border:1px solid rgba(255,255,255,.15);
+  background:transparent;color:rgba(255,255,255,.5);
+  border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;
+  font-size:13px;transition:all .2s;
+}
+.role-tab.active{background:var(--sage);border-color:var(--sage);color:var(--forest);font-weight:600}
+.login-field{margin-bottom:14px}
+.login-field label{display:block;color:rgba(255,255,255,.5);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.login-field input{
+  width:100%;padding:12px 14px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;
+  outline:none;transition:border-color .2s;
+}
+.login-field input:focus{border-color:var(--sage)}
+.login-btn{
+  width:100%;padding:13px;margin-top:6px;
+  background:var(--sage);border:none;border-radius:8px;
+  color:var(--forest);font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.login-btn:hover{background:var(--mint);transform:translateY(-1px);box-shadow:0 4px 20px rgba(82,183,136,.4)}
+.login-error-msg{color:#ff8a80;font-size:12px;text-align:center;margin-bottom:8px}
+.login-hint{color:rgba(255,255,255,.25);font-size:11px;text-align:center;margin-top:16px}
+.login-link{background:none;border:none;color:var(--mint);font-size:12px;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif}
+
+/* ═══ APP LAYOUT ═══ */
+#screen-patient,#screen-clinic{
+  display:none;min-height:100vh;
+}
+#screen-patient.active,#screen-clinic.active{display:flex;flex-direction:column}
+
+/* ═══ TOPBAR ═══ */
+.topbar{
+  height:52px;display:flex;align-items:center;padding:0 20px;
+  border-bottom:1px solid var(--border);flex-shrink:0;gap:10px;
+}
+.topbar--dark{background:var(--forest);border-bottom-color:rgba(255,255,255,.1)}
+.topbar--light{background:var(--white)}
+.topbar-logo{font-family:'DM Serif Display',serif;font-size:18px;color:#fff;letter-spacing:-.3px}
+.topbar-logo span{color:var(--sage)}
+.topbar-logo--light{font-family:'DM Serif Display',serif;font-size:18px;color:var(--forest);letter-spacing:-.3px}
+.topbar-logo--light span{color:var(--emerald)}
+.topbar-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4)}
+.topbar-label--light{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4)}
+.topbar-sep{width:1px;height:18px;background:rgba(255,255,255,.15)}
+.topbar-spacer{flex:1}
+.topbar-user{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.7)}
+.topbar-user--light{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink3)}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--forest);flex-shrink:0}
+.avatar--clinic{background:var(--foam);color:var(--emerald)}
+.logout-btn{padding:5px 12px;border:1px solid rgba(255,255,255,.2);background:transparent;border-radius:6px;color:rgba(255,255,255,.6);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.logout-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.logout-btn--light{padding:5px 12px;border:1px solid var(--border);background:transparent;border-radius:6px;color:var(--ink4);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.logout-btn--light:hover{border-color:var(--emerald);color:var(--emerald)}
+
+/* Lang switcher in topbar */
+.lang-switcher-wrap{position:relative;display:inline-block}
+.lang-switcher-btn{
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;
+  font-family:'DM Sans',sans-serif;
+}
+.lang-switcher-btn--light{
+  background:var(--foam);border:1px solid var(--border);
+  color:var(--emerald);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;
+  font-family:'DM Sans',sans-serif;
+}
+.lang-dropdown{
+  position:absolute;top:110%;right:0;background:#fff;border-radius:10px;
+  box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px;min-width:80px;
+  display:none;z-index:1000;
+}
+.lang-dropdown.open{display:block}
+.lang-opt{
+  display:block;width:100%;padding:7px 12px;border:none;background:transparent;
+  color:var(--ink2);font-size:12px;font-weight:600;cursor:pointer;
+  border-radius:6px;text-align:center;font-family:'DM Sans',sans-serif;
+}
+.lang-opt:hover{background:var(--foam)}
+.lang-opt.active{background:var(--foam);color:var(--emerald)}
+
+/* ═══ PATIENT SCREEN ═══ */
+.patient-body{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:var(--paper);padding:20px}
+.patient-body::-webkit-scrollbar{width:4px}
+.patient-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.pt-header{background:var(--forest);border-radius:var(--r);padding:18px 22px;margin-bottom:16px;color:#fff}
+.pt-id{font-family:var(--font-mono);font-size:11px;color:var(--mint);letter-spacing:1px;margin-bottom:3px}
+.pt-name{font-size:19px;font-weight:500;margin-bottom:6px}
+.pt-meta{display:flex;gap:14px;font-size:12px;color:rgba(255,255,255,.5)}
+
+.alert-banner{
+  background:var(--amber-l);border:1px solid #f0c580;border-radius:8px;
+  padding:10px 16px;margin-bottom:14px;font-size:12px;color:var(--amber);
+  display:none;
+}
+
+.section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:10px;padding-left:2px}
+
+/* Score list */
+.pt-score-list{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.pt-score-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--white);border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;cursor:pointer;transition:all .2s;
+}
+.pt-score-row:hover{border-color:var(--sage);transform:translateX(2px)}
+.pt-score-row.active{border-color:var(--emerald);box-shadow:0 0 0 2px var(--foam)}
+.pt-score-name{font-size:12px;color:var(--ink2);flex:1;line-height:1.3}
+.pt-score-bar-wrap{width:80px;height:5px;background:var(--border);border-radius:3px;flex-shrink:0}
+.pt-score-bar{height:5px;border-radius:3px;transition:width .5s ease}
+.rank-A-bar{background:var(--rank-a)}
+.rank-B-bar{background:var(--rank-b)}
+.rank-C-bar{background:var(--rank-c)}
+.rank-D-bar{background:var(--rank-d)}
+.rank-E-bar{background:var(--rank-e)}
+
+/* Category detail */
+.patient-detail-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px}
+.detail-card__title{font-size:14px;font-weight:600;color:var(--forest);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* Tabs */
+.pt-tab{
+  padding:8px 14px;font-size:12px;cursor:pointer;
+  color:var(--ink4);border:none;background:transparent;
+  border-bottom:2px solid transparent;transition:all .15s;font-family:'DM Sans',sans-serif;
+}
+.pt-tab--active{color:var(--emerald);border-bottom-color:var(--emerald)}
+.pt-tab:hover:not(.pt-tab--active){color:var(--ink2)}
+
+/* Insight boxes */
+.insight-box{border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:13px;line-height:1.8}
+.insight-box--blue{background:#EEF6FF;border:1px solid #BAD7F2;color:#1a4a7a}
+.insight-box--green{background:var(--foam);border:1px solid var(--sage);color:var(--ink2)}
+.insight-box--amber{background:var(--amber-l);border:1px solid #f0c580;color:var(--ink2)}
+.insight-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;color:var(--ink3)}
+
+/* ═══ CLINIC SCREEN ═══ */
+#screen-clinic.active{display:flex;flex-direction:column}
+.clinic-body{flex:1;display:flex;overflow:hidden}
+
+/* Sidebar */
+.clinic-sidebar{width:256px;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--paper);flex-shrink:0}
+.sidebar-search{padding:10px 14px;border-bottom:1px solid var(--border)}
+.sidebar-search input{
+  width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:13px;background:var(--white);
+  outline:none;color:var(--ink);
+}
+.sidebar-search input:focus{border-color:var(--sage)}
+.sidebar-actions{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:6px}
+.sidebar-btn{
+  flex:1;padding:6px 8px;border-radius:6px;font-size:11px;font-weight:500;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;border:none;
+}
+.sidebar-btn--primary{background:var(--emerald);color:#fff}
+.sidebar-btn--primary:hover{background:var(--forest)}
+.sidebar-btn--secondary{background:var(--foam);color:var(--emerald);border:1px solid var(--sage)}
+.sidebar-btn--secondary:hover{background:var(--mint);color:var(--forest)}
+.clinic-patient-list{flex:1;overflow-y:auto;list-style:none}
+.clinic-patient-list::-webkit-scrollbar{width:3px}
+.clinic-patient-list::-webkit-scrollbar-thumb{background:var(--border)}
+.patient-item{
+  padding:10px 14px;border-bottom:1px solid rgba(212,230,221,.5);
+  cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:10px;
+}
+.patient-item:hover{background:var(--foam)}
+.patient-item.active{background:var(--foam);border-left:3px solid var(--emerald)}
+.patient-item__dot{
+  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  background:var(--foam);display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:10px;color:var(--emerald);font-weight:600;
+}
+.patient-item__id{font-family:var(--font-mono);font-size:11px;color:var(--ink3);margin-bottom:1px}
+
+/* Clinic main */
+.clinic-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.clinic-main-scroll{flex:1;overflow-y:auto;padding:20px}
+.clinic-main-scroll::-webkit-scrollbar{width:4px}
+.clinic-main-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.clinic-empty{
+  height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  color:var(--ink4);gap:12px;padding:40px;
+}
+.clinic-empty__icon{font-size:48px;opacity:.3}
+.clinic-empty__title{font-size:15px;font-weight:500;color:var(--ink3)}
+
+/* Clinic detail */
+.clinic-detail-header{
+  background:var(--paper);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 22px;margin-bottom:16px;
+}
+.clinic-detail-id{font-family:var(--font-mono);font-size:11px;color:var(--ink4);margin-bottom:3px}
+.clinic-detail-name{font-size:19px;font-weight:600;color:var(--forest);margin-bottom:8px}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.badge--green{background:var(--foam);color:var(--emerald)}
+
+.date-tabs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.date-tab{
+  padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;
+  border:1px solid var(--border);background:var(--white);color:var(--ink3);
+  transition:all .15s;font-family:'DM Sans',sans-serif;
+}
+.date-tab--active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.date-tab--compare{background:var(--amber-l);color:var(--amber);border-color:#f0c580}
+.date-tab:hover:not(.date-tab--active){border-color:var(--sage);color:var(--emerald)}
+
+.score-ov-card{
+  background:var(--white);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;margin-bottom:16px;
+}
+.score-ov-card__label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:4px}
+
+/* Cat grid */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.cat-grid-card{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 12px;border-radius:10px;border:1px solid var(--border);
+  background:var(--white);cursor:pointer;transition:all .2s;
+}
+.cat-grid-card:hover{border-color:var(--sage);transform:translateY(-1px)}
+.cat-grid-card.active{border-color:var(--emerald);box-shadow:0 0 0 2px var(--foam)}
+.cat-grid-card--E{border-left:3px solid var(--rank-e)}
+.cat-grid-card--D{border-left:3px solid var(--rank-d)}
+.cat-grid-card__name{font-size:11px;color:var(--ink2);line-height:1.4}
+
+/* Cat detail panel */
+.clinic-cat-detail{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+
+/* Score table */
+.score-table{width:100%;border-collapse:collapse}
+.score-table th{
+  text-align:left;padding:9px 12px;background:var(--paper);
+  font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink4);
+  border-bottom:1px solid var(--border);
+}
+.score-table td{padding:9px 12px;border-bottom:1px solid rgba(212,230,221,.4);font-size:13px;color:var(--ink2)}
+.score-table tr{cursor:pointer;transition:background .15s}
+.score-table tr:hover td{background:var(--foam)}
+
+/* Rank badges */
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-weight:700}
+.rank-A{background:var(--rank-a-bg);color:var(--rank-a)}
+.rank-B{background:var(--rank-b-bg);color:var(--rank-b)}
+.rank-C{background:var(--rank-c-bg);color:var(--rank-c)}
+.rank-D{background:var(--rank-d-bg);color:var(--rank-d)}
+.rank-E{background:var(--rank-e-bg);color:var(--rank-e)}
+
+/* Metabolite tags */
+.metabolite-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-family:var(--font-mono)}
+.metabolite-tag.down{background:#FDECEA;color:#B03A2E}
+.metabolite-tag.up{background:#E8F5E9;color:#2E7D32}
+.metabolite-tag.neutral{background:var(--border);color:var(--ink3)}
+
+/* ═══ MODALS ═══ */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-backdrop.hidden{display:none!important}
+.modal-box{
+  background:var(--white);border-radius:16px;padding:28px;
+  width:420px;max-width:90vw;box-shadow:var(--shadow-lg);
+}
+.modal-title{font-size:16px;font-weight:600;color:var(--forest);margin-bottom:20px}
+.modal-field{margin-bottom:14px}
+.modal-field label{display:block;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink4);margin-bottom:6px}
+.modal-field input,.modal-field select{
+  width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);outline:none;
+}
+.modal-field input:focus,.modal-field select:focus{border-color:var(--sage)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.modal-btn{
+  padding:9px 20px;border-radius:8px;font-size:13px;font-weight:500;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;border:none;
+}
+.modal-btn--primary{background:var(--emerald);color:#fff}
+.modal-btn--primary:hover{background:var(--forest)}
+.modal-btn--secondary{background:var(--foam);color:var(--emerald);border:1px solid var(--sage)}
+
+/* Toast */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{
+  padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;
+  background:var(--forest);color:#fff;box-shadow:var(--shadow-lg);
+  animation:slideIn .3s ease;
+}
+.toast--success{background:var(--emerald)}
+.toast--error{background:var(--ruby)}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Memo */
+.memo-box{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-top:16px}
+.memo-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:8px}
+.memo-textarea{
+  width:100%;min-height:72px;padding:10px;border:1px solid var(--border);
+  border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;
+  color:var(--ink2);resize:vertical;outline:none;
+}
+.memo-textarea:focus{border-color:var(--sage)}
+.memo-saved{font-size:11px;color:var(--sage);margin-top:4px;opacity:0;transition:opacity .3s}
+.memo-saved.show{opacity:1}
+
+/* Chart tooltip */
+#chart-tooltip{
+  position:fixed;background:rgba(15,31,26,.9);color:#fff;
+  padding:8px 12px;border-radius:8px;font-size:11px;pointer-events:none;
+  z-index:9999;display:none;white-space:nowrap;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){
+  .clinic-body{flex-direction:column}
+  .clinic-sidebar{width:100%;max-height:180px}
+  .cat-grid{grid-template-columns:1fr}
+  .login-box{width:90%;max-width:420px;padding:32px 24px}
+}
+@media(max-width:640px){
+  .topbar{padding:0 12px;height:46px}
+  .topbar-logo,.topbar-logo--light{font-size:16px}
+  .topbar-label,.topbar-label--light{display:none}
+  .patient-body,.clinic-main-scroll{padding:12px}
+  .cat-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SCREEN: LOGIN ══════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-lang-switcher">
+    <button class="login-lang-btn active" onclick="setLoginLang('ja')"><span class="lang-text">JA</span></button>
+    <button class="login-lang-btn" onclick="setLoginLang('en')"><span class="lang-text">EN</span></button>
+    <button class="login-lang-btn" onclick="setLoginLang('vi')"><span class="lang-text">VI</span></button>
+    <button class="login-lang-btn" onclick="setLoginLang('cn')"><span class="lang-text">CN</span></button>
+  </div>
+  <div class="login-box">
+    <div class="login-logo">Meta<span>Check</span></div>
+    <div class="login-sub">Metabolic Intelligence Platform</div>
+
+    <!-- ログインセクション -->
+    <div id="login-section">
+      <div class="login-role">
+        <button class="role-tab active" data-role="individual">👤 個人</button>
+        <button class="role-tab" data-role="clinic">🏥 クリニック</button>
+      </div>
+      <div id="form-individual">
+        <div class="login-field">
+          <label>メールアドレス</label>
+          <input type="email" id="input-individual-email" placeholder="example@email.com">
+        </div>
+        <div class="login-field">
+          <label>パスワード</label>
+          <input type="password" id="input-individual-pw" placeholder="••••••••">
+        </div>
+      </div>
+      <div id="form-clinic" style="display:none">
+        <div class="login-field">
+          <label>メールアドレス</label>
+          <input type="email" id="input-clinic-email" placeholder="clinic@example.com">
+        </div>
+        <div class="login-field">
+          <label>パスワード</label>
+          <input type="password" id="input-clinic-pw" placeholder="••••••••">
+        </div>
+      </div>
+      <div id="login-error" class="login-error-msg hidden">メールアドレスまたはパスワードが正しくありません</div>
+      <button class="login-btn" id="btn-login">ログイン</button>
+      <div style="text-align:center;margin-top:14px;display:flex;justify-content:space-between">
+        <button class="login-link" id="btn-show-register">新規登録はこちら</button>
+        <button class="login-link" id="btn-show-forgot">パスワードを忘れた方</button>
+      </div>
+    </div>
+
+    <!-- クリニック新規登録セクション -->
+    <div id="clinic-register-section" style="display:none">
+      <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:20px">🏥 クリニック登録</div>
+      <div class="login-field">
+        <label>クリニック名</label>
+        <input type="text" id="input-clinic-reg-name" placeholder="例：〇〇クリニック">
+      </div>
+      <div class="login-field">
+        <label>メールアドレス</label>
+        <input type="email" id="input-clinic-reg-email" placeholder="clinic@example.com">
+      </div>
+      <div class="login-field">
+        <label>パスワード（8文字以上）</label>
+        <input type="password" id="input-clinic-reg-pw" placeholder="••••••••">
+      </div>
+      <div class="login-field">
+        <label>パスワード（確認）</label>
+        <input type="password" id="input-clinic-reg-pw2" placeholder="••••••••">
+      </div>
+      <div id="clinic-register-error" class="login-error-msg hidden"></div>
+      <button class="login-btn" id="btn-clinic-register-submit">登録する</button>
+      <div style="text-align:center;margin-top:12px">
+        <button class="login-link" id="btn-back-from-clinic-register">← ログインに戻る</button>
+      </div>
+    </div>
+
+    <!-- クリニック登録完了セクション -->
+    <div id="clinic-register-done-section" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:48px;margin-bottom:16px">🏥</div>
+      <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:8px">登録が完了しました</div>
+      <div style="color:var(--mint);font-size:13px;line-height:1.7">確認メールをお送りしました。<br>メールのリンクをクリックして<br>アカウントを有効化してください。</div>
+      <div style="margin-top:20px">
+        <button class="login-link" id="btn-back-from-clinic-done">← ログインに戻る</button>
+      </div>
+    </div>
+
+    <!-- パスワードリセットセクション -->
+    <div id="forgot-section" style="display:none">
+      <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:20px">パスワードをリセット</div>
+      <div class="login-field">
+        <label>メールアドレス</label>
+        <input type="email" id="input-forgot-email" placeholder="example@email.com">
+      </div>
+      <div id="forgot-error" class="login-error-msg hidden"></div>
+      <div id="forgot-success" style="display:none;color:var(--mint);font-size:13px;text-align:center;margin-bottom:8px">リセットメールを送信しました</div>
+      <button class="login-btn" id="btn-forgot-submit">送信</button>
+      <div style="text-align:center;margin-top:12px">
+        <button class="login-link" id="btn-back-from-forgot">← ログインに戻る</button>
+      </div>
+    </div>
+
+    <!-- 新規登録セクション -->
+    <div id="register-section" style="display:none">
+      <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:20px">アカウント作成</div>
+      <div class="login-field">
+        <label>メールアドレス</label>
+        <input type="email" id="input-register-email" placeholder="example@email.com">
+      </div>
+      <div class="login-field">
+        <label>パスワード（8文字以上）</label>
+        <input type="password" id="input-register-pw" placeholder="••••••••">
+      </div>
+      <div class="login-field">
+        <label>パスワード（確認）</label>
+        <input type="password" id="input-register-pw2" placeholder="••••••••">
+      </div>
+      <div class="login-field">
+        <label>ニックネーム</label>
+        <input type="text" id="input-register-nickname" placeholder="例：田中">
+      </div>
+      <div class="login-field">
+        <label>解析ID（キットに記載）</label>
+        <input type="text" id="input-register-analysis-id" placeholder="例：241210AB001">
+      </div>
+      <div id="register-error" class="login-error-msg hidden"></div>
+      <button class="login-btn" id="btn-register-submit">アカウント作成</button>
+      <div style="text-align:center;margin-top:12px">
+        <button class="login-link" id="btn-back-to-login">← ログインに戻る</button>
+      </div>
+    </div>
+
+    <!-- メール確認セクション -->
+    <div id="check-email-section" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:48px;margin-bottom:16px">📧</div>
+      <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:8px">確認メールを送信しました</div>
+      <div style="color:var(--mint);font-size:13px;line-height:1.7">メールのリンクをクリックして<br>アカウントを有効化してください</div>
+      <div style="margin-top:20px">
+        <button class="login-link" id="btn-back-to-login2">← ログインに戻る</button>
+      </div>
+    </div>
+
+    <!-- 解析ID紐付けセクション -->
+    <div id="link-analysis-section" style="display:none">
+      <div style="color:#fff;font-size:14px;margin-bottom:16px">解析IDを入力してください</div>
+      <div class="login-field">
+        <label>解析ID（キットに記載）</label>
+        <input type="text" id="input-link-analysis-id" placeholder="例：241210AB001">
+      </div>
+      <div id="link-error" class="login-error-msg"></div>
+      <button class="login-btn" id="btn-link-analysis">紐付ける</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: PATIENT ══════════════ -->
+<div id="screen-patient" class="screen">
+  <div class="topbar topbar--dark">
+    <div class="topbar-logo">Meta<span>Check</span></div>
+    <div class="topbar-label">マイページ</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-user">
+      <div class="avatar" id="patient-avatar">P</div>
+      <span id="patient-name-display">—</span>
+    </div>
+    <div class="lang-switcher-wrap" id="lang-switcher-patient">
+      <button class="lang-switcher-btn" onclick="document.getElementById('lang-dd-patient').classList.toggle('open');event.stopPropagation()" id="lang-btn-patient">JA</button>
+      <div class="lang-dropdown" id="lang-dd-patient">
+        <button class="lang-opt active" onclick="changeLanguage('ja');document.getElementById('lang-dd-patient').classList.remove('open');document.getElementById('lang-btn-patient').textContent='JA'">JA</button>
+        <button class="lang-opt" onclick="changeLanguage('en');document.getElementById('lang-dd-patient').classList.remove('open');document.getElementById('lang-btn-patient').textContent='EN'">EN</button>
+        <button class="lang-opt" onclick="changeLanguage('vi');document.getElementById('lang-dd-patient').classList.remove('open');document.getElementById('lang-btn-patient').textContent='VI'">VI</button>
+        <button class="lang-opt" onclick="changeLanguage('cn');document.getElementById('lang-dd-patient').classList.remove('open');document.getElementById('lang-btn-patient').textContent='CN'">CN</button>
+      </div>
+    </div>
+    <button class="logout-btn" id="btn-patient-logout">ログアウト</button>
+  </div>
+  <div class="patient-body">
+    <div class="pt-header">
+      <div class="pt-id" id="patient-display-id">—</div>
+      <div class="pt-name" id="patient-display-name">—</div>
+      <div class="pt-meta" id="patient-display-meta"></div>
+    </div>
+    <div class="alert-banner" id="patient-alert-banner"></div>
+    <div class="section-title">カテゴリ別スコア</div>
+    <div class="pt-score-list" id="patient-score-grid"></div>
+    <div id="patient-category-detail" hidden>
+      <div class="patient-detail-panel" id="patient-detail-card"></div>
+    </div>
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+      <div class="section-title">アカウント設定</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="openModal('modal-change-pw')" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)">🔑 パスワード変更</button>
+        <button onclick="openModal('modal-change-email')" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)">✉️ メールアドレス変更</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: CLINIC ══════════════ -->
+<div id="screen-clinic" class="screen">
+  <div class="topbar topbar--light">
+    <div class="topbar-logo--light">Meta<span>Check</span></div>
+    <div class="topbar-label--light">クリニックポータル</div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-user--light">
+      <div class="avatar avatar--clinic" id="clinic-avatar">C</div>
+      <span id="clinic-name-display">—</span>
+    </div>
+    <div class="lang-switcher-wrap" id="lang-switcher-clinic">
+      <button class="lang-switcher-btn--light" onclick="document.getElementById('lang-dd-clinic').classList.toggle('open');event.stopPropagation()" id="lang-btn-clinic">JA</button>
+      <div class="lang-dropdown" id="lang-dd-clinic">
+        <button class="lang-opt active" onclick="changeLanguage('ja');document.getElementById('lang-dd-clinic').classList.remove('open');document.getElementById('lang-btn-clinic').textContent='JA'">JA</button>
+        <button class="lang-opt" onclick="changeLanguage('en');document.getElementById('lang-dd-clinic').classList.remove('open');document.getElementById('lang-btn-clinic').textContent='EN'">EN</button>
+        <button class="lang-opt" onclick="changeLanguage('vi');document.getElementById('lang-dd-clinic').classList.remove('open');document.getElementById('lang-btn-clinic').textContent='VI'">VI</button>
+        <button class="lang-opt" onclick="changeLanguage('cn');document.getElementById('lang-dd-clinic').classList.remove('open');document.getElementById('lang-btn-clinic').textContent='CN'">CN</button>
+      </div>
+    </div>
+    <button class="logout-btn--light" id="btn-clinic-logout">ログアウト</button>
+  </div>
+  <div class="clinic-body">
+    <!-- Sidebar -->
+    <div class="clinic-sidebar">
+      <div class="sidebar-search">
+        <input type="text" id="clinic-search" placeholder="患者IDで検索...">
+      </div>
+      <div class="sidebar-actions">
+        <button class="sidebar-btn sidebar-btn--primary" id="btn-add-patient">＋ 患者追加</button>
+      </div>
+      <ul class="clinic-patient-list" id="clinic-patient-list"></ul>
+    </div>
+    <!-- Main -->
+    <div class="clinic-main">
+      <div class="clinic-main-scroll">
+        <div id="clinic-empty-state" class="clinic-empty">
+          <div class="clinic-empty__icon">🔬</div>
+          <div class="clinic-empty__title">患者を選択してください</div>
+        </div>
+        <div id="clinic-trial-state" class="hidden" style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;gap:16px">
+          <div style="font-size:48px">🏥</div>
+          <div style="font-size:18px;font-weight:600;color:var(--forest)">ようこそ、MetaCheckへ</div>
+          <div style="font-size:13px;color:var(--ink3);line-height:1.8;max-width:400px">
+            現在、患者データが登録されていません。<br>
+            MetaCheckのご利用開始には、契約手続きが必要です。<br>
+            下記よりお気軽にお問い合わせください。
+          </div>
+          <a href="https://cpc-bank.com/collab/#contact" target="_blank" style="background:var(--emerald);color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;display:inline-block;margin-top:8px">
+            📩 お問い合わせ・契約はこちら
+          </a>
+          <div style="font-size:11px;color:var(--ink4);margin-top:8px">クリニックID: <span id="clinic-trial-id" style="font-family:var(--font-mono)"></span></div>
+        </div>
+        <div id="clinic-detail" class="hidden">
+          <div class="clinic-detail-header">
+            <div class="clinic-detail-id" id="clinic-detail-id">—</div>
+            <div class="clinic-detail-name" id="clinic-detail-name">—</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="clinic-detail-meta"></div>
+          </div>
+          <div class="date-tabs" id="clinic-date-tabs"></div>
+          <div id="clinic-score-overview"></div>
+          <div class="section-title">カテゴリ別スコア</div>
+          <div class="cat-grid" id="clinic-cat-grid"></div>
+          <div class="clinic-cat-detail" id="clinic-cat-detail"></div>
+          <div class="memo-box">
+            <div class="memo-title">📝 メモ</div>
+            <textarea class="memo-textarea" id="clinic-memo" placeholder="クリニックメモ..."></textarea>
+            <div class="memo-saved hidden" id="memo-saved">保存しました</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+<!-- 患者追加 -->
+<div class="modal-backdrop hidden" id="modal-add-patient">
+  <div class="modal-box">
+    <div class="modal-title">患者追加</div>
+    <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:8px">発行される解析ID</div>
+    <div id="preview-analysis-id" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--forest);padding:14px 18px;background:var(--foam);border-radius:10px;border:1px solid var(--sage);margin-bottom:8px;letter-spacing:3px">——————————</div>
+    <div style="font-size:12px;color:var(--ink4);margin-bottom:24px">登録ボタンを押すと自動で発行されます</div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--secondary" id="btn-cancel-add-patient">キャンセル</button>
+      <button class="modal-btn modal-btn--primary" id="btn-confirm-add-patient">登録して発行</button>
+    </div>
+  </div>
+</div>
+
+<!-- 解析依頼 -->
+<div class="modal-backdrop hidden" id="modal-request">
+  <div class="modal-box">
+    <div class="modal-title">解析依頼</div>
+    <div class="modal-field">
+      <label>依頼種別</label>
+      <select id="request-type">
+        <option value="new">新規解析</option>
+        <option value="reanalysis">再解析</option>
+        <option value="question">結果への質問</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>メッセージ</label>
+      <textarea id="request-message" style="width:100%;min-height:80px;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;resize:vertical;outline:none" placeholder="内容を入力..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--secondary" id="btn-cancel-request">キャンセル</button>
+      <button class="modal-btn modal-btn--primary" id="btn-submit-request">送信</button>
+    </div>
+  </div>
+</div>
+
+<!-- Excel Upload -->
+<div class="modal-backdrop hidden" id="modal-upload">
+  <div class="modal-box">
+    <div class="modal-title">Excelアップロード</div>
+    <div style="color:var(--ink3);font-size:13px;line-height:1.7;margin-bottom:20px">
+      所定フォーマットのExcelファイルをアップロードしてください。<br>データは自動でSupabaseに取り込まれます。
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--secondary" id="btn-cancel-upload">キャンセル</button>
+      <button class="modal-btn modal-btn--primary" id="btn-close-upload">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chart tooltip -->
+<div id="chart-tooltip"></div>
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- パスワード変更 -->
+<div class="modal-backdrop hidden" id="modal-change-pw">
+  <div class="modal-box">
+    <div class="modal-title">🔑 パスワード変更</div>
+    <div class="modal-field">
+      <label>新しいパスワード（8文字以上）</label>
+      <input type="password" id="input-new-pw" placeholder="••••••••">
+    </div>
+    <div class="modal-field">
+      <label>新しいパスワード（確認）</label>
+      <input type="password" id="input-new-pw2" placeholder="••••••••">
+    </div>
+    <div id="change-pw-error" style="color:#B03A2E;font-size:12px;margin-bottom:8px;display:none"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--secondary" onclick="closeModal('modal-change-pw')">キャンセル</button>
+      <button class="modal-btn modal-btn--primary" onclick="doChangePw()">変更する</button>
+    </div>
+  </div>
+</div>
+
+<!-- メールアドレス変更 -->
+<div class="modal-backdrop hidden" id="modal-change-email">
+  <div class="modal-box">
+    <div class="modal-title">✉️ メールアドレス変更</div>
+    <div class="modal-field">
+      <label>新しいメールアドレス</label>
+      <input type="email" id="input-new-email" placeholder="new@email.com">
+    </div>
+    <div id="change-email-error" style="color:#B03A2E;font-size:12px;margin-bottom:8px;display:none"></div>
+    <div id="change-email-success" style="color:#2D6A4F;font-size:12px;margin-bottom:8px;display:none">確認メールを送信しました</div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--secondary" onclick="closeModal('modal-change-email')">キャンセル</button>
+      <button class="modal-btn modal-btn--primary" onclick="doChangeEmail()">変更する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// チャートツールチップ
+function showChartTooltip(e, text) {
+  const el = document.getElementById('chart-tooltip');
+  if (!el) return;
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.left = (e.clientX + 12) + 'px';
+  el.style.top = (e.clientY - 28) + 'px';
+}
+function hideChartTooltip() {
+  const el = document.getElementById('chart-tooltip');
+  if (el) el.style.display = 'none';
+}
+
+// ログイン画面の言語切替
+function setLoginLang(lang) {
+  document.querySelectorAll('.login-lang-btn').forEach(function(b, i) {
+    b.classList.toggle('active', ['ja','en','vi'][i] === lang);
+  });
+  if (typeof changeLanguage === 'function') changeLanguage(lang);
+}
+</script>
+
+<script src="supabase.js"></script>
+<script src="i18n.js"></script>
+<script src="auth.js"></script>
+<script src="patient.js"></script>
+<script src="clinic.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
