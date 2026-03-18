@@ -208,9 +208,12 @@ async function renderTrendChart(patientId, category) {
     // X軸ラベル
     xLabels += '<text x="' + (padL + chartW / 2) + '" y="' + (H - 22) + '" text-anchor="middle" font-size="9" fill="#8FAAA0">測定回</text>';
 
-    // 化合物ごとにプロット（上位5件のみ）
+    // log2fcがある化合物だけプロット（最大8件）
     var dots = '';
-    var topCompounds = compounds.slice(0, 5);
+    var compoundsWithData = compounds.filter(function(c) {
+      return facts.some(function(f) { return f.compound === c.compound && f.log2fc != null; });
+    }).slice(0, 8);
+    var topCompounds = compoundsWithData.length > 0 ? compoundsWithData : compounds.slice(0, 5);
     var colors = ['#2D6A4F', '#B03A2E', '#B8860B', '#4A90D9', '#8B5CF6'];
 
     topCompounds.forEach(function(c, ci) {
