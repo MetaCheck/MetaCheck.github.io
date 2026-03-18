@@ -106,27 +106,35 @@ function selectPatientScore(index, el) {
       '<div class="detail-card__title">' +
         '<span class="rank-badge rank-' + rank + '">' + rank + '</span> ' + catName(s.category) +
       '</div>' +
-      '<div style="font-size:12px;color:var(--ink4);margin-bottom:10px">' +
-        'WAVG_absFC: <strong style="font-family:var(--font-mono);color:var(--ink2)">' + Number(s.wavg_absfc).toFixed(4) + '</strong>' +
+      (metTags ? '<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--ink4);margin-bottom:6px">主な変動</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + metTags + '</div></div>' : '') +
+      '<div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:16px">' +
+        '<button class="pt-tab pt-tab--active" onclick="switchPatientTab(this,\'metabolite\')" data-tab="metabolite">🔬 個別代謝物</button>' +
+        '<button class="pt-tab" onclick="switchPatientTab(this,\'advice\')" data-tab="advice">🌿 生活で気をつけること</button>' +
       '</div>' +
-      (metTags ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">' + metTags + '</div>' : '') +
-      '<div id="patient-trend-chart" style="margin-bottom:16px"></div>' +
-      '<div id="patient-insights-box"></div>' +
-      '<div id="patient-metabolite-table"><div style="color:var(--ink4);font-size:12px;padding:8px">読み込み中...</div></div>';
+      '<div id="patient-tab-metabolite">' +
+        '<div id="patient-trend-chart" style="margin-bottom:16px"></div>' +
+        '<div id="patient-metabolite-table"><div style="color:var(--ink4);font-size:12px;padding:8px">読み込み中...</div></div>' +
+      '</div>' +
+      '<div id="patient-tab-advice" style="display:none"><div id="patient-insights-box"></div></div>';
 
     renderTrendChart(s.patient_id, s.category);
+    loadMetaboliteTable(s.patient_id, s.category);
 
-    // 患者向け：生活で気をつけることのみ表示
     fetchInsightsByCategory(s.patient_id, s.category).then(function(ins) {
       const el2 = document.getElementById('patient-insights-box');
-      if (!el2 || !ins) return;
-      el2.innerHTML = ins.patient_comment
+      if (!el2) return;
+      el2.innerHTML = ins && ins.patient_comment
         ? '<div class="insight-box insight-box--amber"><div class="insight-label">🗒 生活で気をつけること</div><div>' + ins.patient_comment + '</div></div>'
-        : '';
+        : '<div style="color:var(--ink4);font-size:13px;padding:12px">データがありません</div>';
     });
-
-    loadMetaboliteTable(s.patient_id, s.category);
   });
+}
+
+function switchPatientTab(btn, tab) {
+  document.querySelectorAll('.pt-tab').forEach(function(b) { b.classList.remove('pt-tab--active'); });
+  btn.classList.add('pt-tab--active');
+  document.getElementById('patient-tab-metabolite').style.display = tab === 'metabolite' ? '' : 'none';
+  document.getElementById('patient-tab-advice').style.display = tab === 'advice' ? '' : 'none';
 }
 
 async function renderTrendChart(patientId, category) {
@@ -138,46 +146,90 @@ async function renderTrendChart(patientId, category) {
       if (c === '/') return '%2F';
       return c;
     }).join('');
-    const allScores = await dbSelect('scores',
-      'patient_id=eq.' + patientId + '&category=eq.' + encoded + '&select=wavg_absfc,rank,measured_at&order=measured_at.asc');
-    if (!allScores.length) { el.innerHTML = ''; return; }
 
-    const W = Math.max(el.offsetWidth || 300, 260);
-    const H = 160;
-    const padL = 48, padR = 16, padT = 20, padB = 36;
+    // カテゴリの化合物を取得
+    const compounds = await dbSelect('compound_categories',
+      'category=eq.' + encodeURIComponent(category) + '&select=compound,weight&order=weight.desc');
+    if (!compounds.length) { el.innerHTML = ''; return; }
+
+    const compList = compounds.map(function(c) { return '"' + c.compound + '"'; }).join(',');
+
+    // 全測定日のfactデータを取得
+    const facts = await dbSelect('fact',
+      'patient_id=eq.' + patientId + '&compound=in.(' + compList + ')&select=compound,sample_value,baseline,log2fc,measured_at&order=measured_at.asc');
+
+    if (!facts.length) { el.innerHTML = ''; return; }
+
+    // 測定日一覧
+    const dates = [];
+    facts.forEach(function(f) {
+      if (f.measured_at && dates.indexOf(f.measured_at) === -1) dates.push(f.measured_at);
+    });
+    dates.sort();
+
+    const W = Math.max(el.offsetWidth || 400, 300);
+    const H = 200;
+    const padL = 52, padR = 20, padT = 24, padB = 40;
     const chartW = W - padL - padR;
     const chartH = H - padT - padB;
-    const vals = allScores.map(function(s) { return Number(s.wavg_absfc) || 0; });
-    const maxV = Math.max.apply(null, vals) * 1.2 || 1;
-    const rankColor = { A: '#2D6A4F', B: '#3A7D44', C: '#B8860B', D: '#D4600A', E: '#B03A2E' };
 
-    var circles = '', labels = '', polyline = '';
-    var points = [];
-    allScores.forEach(function(s, i) {
-      var x = allScores.length === 1 ? padL + chartW / 2 : padL + (chartW / (allScores.length - 1)) * i;
-      var y = padT + chartH - (vals[i] / maxV) * chartH;
-      var color = rankColor[s.rank] || '#8FAAA0';
-      points.push(x + ',' + y);
-      circles += '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + color + '" stroke="#fff" stroke-width="2"/>';
-      circles += '<text x="' + x + '" y="' + (y - 10) + '" text-anchor="middle" font-size="10" fill="' + color + '" font-weight="bold">' + s.rank + '</text>';
-      var dateStr = s.measured_at ? s.measured_at.slice(0, 10) : '';
-      labels += '<text x="' + x + '" y="' + (H - 4) + '" text-anchor="middle" font-size="9" fill="#8FAAA0">' + dateStr + '</text>';
-    });
-    if (points.length > 1) {
-      polyline = '<polyline points="' + points.join(' ') + '" fill="none" stroke="#52B788" stroke-width="2" stroke-dasharray="4,2"/>';
-    }
+    // log2FCの範囲
+    const log2fcs = facts.filter(function(f) { return f.log2fc != null; }).map(function(f) { return Number(f.log2fc); });
+    if (!log2fcs.length) { el.innerHTML = ''; return; }
+    const maxV = Math.max(Math.abs(Math.max.apply(null, log2fcs)), Math.abs(Math.min.apply(null, log2fcs)), 1) * 1.2;
+
+    // Y軸（-maxV〜+maxV）
     var yAxis = '';
-    for (var i = 0; i <= 4; i++) {
-      var yv = (maxV / 4) * i;
-      var y = padT + chartH - (yv / maxV) * chartH;
-      yAxis += '<line x1="' + (padL - 4) + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#D4E6DD" stroke-width="1"/>';
-      yAxis += '<text x="' + (padL - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="#8FAAA0">' + yv.toFixed(2) + '</text>';
-    }
+    var zeroY = padT + chartH / 2;
+
+    // ゼロライン
+    yAxis += '<line x1="' + padL + '" y1="' + zeroY + '" x2="' + (W - padR) + '" y2="' + zeroY + '" stroke="#2D6A4F" stroke-width="1" stroke-dasharray="2,2"/>';
+    yAxis += '<text x="' + (padL - 4) + '" y="' + (zeroY + 4) + '" text-anchor="end" font-size="9" fill="#8FAAA0">0</text>';
+
+    // Y軸グリッド
+    [-2, -1, 1, 2].forEach(function(v) {
+      if (Math.abs(v) > maxV) return;
+      var y = padT + chartH / 2 - (v / maxV) * (chartH / 2);
+      yAxis += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#D4E6DD" stroke-width="1"/>';
+      yAxis += '<text x="' + (padL - 4) + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="#8FAAA0">' + v + '</text>';
+    });
+
+    // Y軸ラベル
+    yAxis += '<text x="12" y="' + (padT + chartH / 2) + '" text-anchor="middle" font-size="9" fill="#8FAAA0" transform="rotate(-90,12,' + (padT + chartH / 2) + ')">log2FC（基準値からの乖離）</text>';
+
+    // X軸ラベル
+    var xLabels = '';
+    dates.forEach(function(d, i) {
+      var x = dates.length === 1 ? padL + chartW / 2 : padL + (chartW / (dates.length - 1)) * i;
+      xLabels += '<text x="' + x + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" fill="#8FAAA0">' + d.slice(0, 10) + '</text>';
+      xLabels += '<line x1="' + x + '" y1="' + padT + '" x2="' + x + '" y2="' + (padT + chartH) + '" stroke="#D4E6DD" stroke-width="1"/>';
+    });
+
+    // X軸ラベル
+    xLabels += '<text x="' + (padL + chartW / 2) + '" y="' + (H - 22) + '" text-anchor="middle" font-size="9" fill="#8FAAA0">測定回</text>';
+
+    // 化合物ごとにプロット（上位5件のみ）
+    var dots = '';
+    var topCompounds = compounds.slice(0, 5);
+    var colors = ['#2D6A4F', '#B03A2E', '#B8860B', '#4A90D9', '#8B5CF6'];
+
+    topCompounds.forEach(function(c, ci) {
+      var compFacts = facts.filter(function(f) { return f.compound === c.compound && f.log2fc != null; });
+      compFacts.forEach(function(f) {
+        var di = dates.indexOf(f.measured_at);
+        if (di === -1) return;
+        var x = dates.length === 1 ? padL + chartW / 2 : padL + (chartW / (dates.length - 1)) * di;
+        var y = padT + chartH / 2 - (Number(f.log2fc) / maxV) * (chartH / 2);
+        var color = colors[ci % colors.length];
+        dots += '<circle cx="' + x + '" cy="' + y + '" r="5" fill="' + color + '" stroke="#fff" stroke-width="1.5" opacity="0.85"/>';
+      });
+    });
+
     el.innerHTML =
-      '<div style="font-size:11px;color:var(--ink4);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">📈 推移グラフ</div>' +
-      '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="overflow:visible">' +
-        yAxis + polyline + circles + labels +
+      '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="overflow:visible;display:block">' +
+        yAxis + xLabels + dots +
       '</svg>';
+
   } catch(e) { el.innerHTML = ''; }
 }
 
@@ -190,21 +242,71 @@ async function loadMetaboliteTable(patientId, category) {
     if (!compounds.length) { el.innerHTML = ''; return; }
     const compList = compounds.map(function(c) { return '"' + c.compound + '"'; }).join(',');
     const facts = await dbSelect('fact',
-      'patient_id=eq.' + patientId + '&compound=in.(' + compList + ')&select=compound,sample_value,baseline,measured_at');
-    const factMap = {};
-    facts.forEach(function(f) { factMap[f.compound] = f; });
-    let rows = '';
+      'patient_id=eq.' + patientId + '&compound=in.(' + compList + ')&select=compound,sample_value,baseline,measured_at&order=measured_at.asc');
+
+    // 測定日一覧
+    var dates = [];
+    facts.forEach(function(f) {
+      if (f.measured_at && dates.indexOf(f.measured_at) === -1) dates.push(f.measured_at);
+    });
+    dates.sort();
+
+    // compound→日付→値のマップ
+    var factMap = {};
+    facts.forEach(function(f) {
+      if (!factMap[f.compound]) factMap[f.compound] = {};
+      factMap[f.compound][f.measured_at] = f;
+    });
+
+    // ヘッダー
+    var thDates = dates.map(function(d) {
+      return '<th>実測値 (' + d.slice(0, 10).replace(/-/g, '/') + ')</th>';
+    }).join('');
+
+    var rows = '';
     compounds.forEach(function(c) {
-      const f = factMap[c.compound];
+      var baseline = '—';
+      var prevVal = null;
+      var cells = '';
+
+      dates.forEach(function(d, di) {
+        var f = factMap[c.compound] && factMap[c.compound][d];
+        var val = f && f.sample_value != null ? Number(f.sample_value) : null;
+        if (f && f.baseline != null && baseline === '—') baseline = Number(f.baseline).toFixed(2);
+
+        var prevCell = '';
+        if (di === dates.length - 1 && dates.length > 1 && prevVal != null && val != null) {
+          var diff = val - prevVal;
+          var sign = diff > 0 ? '+' : '';
+          prevCell = '<td style="font-size:11px;color:' + (diff > 0 ? '#B03A2E' : '#2D6A4F') + '">' + sign + diff.toFixed(2) + '</td>';
+        }
+        cells += '<td style="font-family:var(--font-mono)">' + (val != null ? val.toFixed(2) : '—') + '</td>';
+        prevVal = val;
+      });
+
+      // 前回比（最後の列）
+      var lastF = factMap[c.compound] && dates.length > 0 ? factMap[c.compound][dates[dates.length - 1]] : null;
+      var prevF = factMap[c.compound] && dates.length > 1 ? factMap[c.compound][dates[dates.length - 2]] : null;
+      var prevCompare = '—';
+      if (lastF && prevF && lastF.sample_value != null && prevF.sample_value != null) {
+        var diff = Number(lastF.sample_value) - Number(prevF.sample_value);
+        var sign = diff > 0 ? '+' : '';
+        prevCompare = '<span style="color:' + (diff > 0 ? '#B03A2E' : '#2D6A4F') + '">' + sign + diff.toFixed(2) + '</span>';
+      }
+
       rows += '<tr>' +
         '<td>' + c.compound + '</td>' +
         '<td><span class="rank-badge" style="background:var(--emerald);color:#fff;font-size:11px">' + c.weight + '</span></td>' +
-        '<td style="font-family:var(--font-mono)">' + (f && f.sample_value != null ? Number(f.sample_value).toFixed(2) : '—') + '</td>' +
-        '<td style="font-family:var(--font-mono);color:var(--ink4)">' + (f && f.baseline != null ? Number(f.baseline).toFixed(2) : '—') + '</td>' +
+        '<td style="font-family:var(--font-mono);color:var(--ink4)">' + baseline + '</td>' +
+        cells +
+        '<td>' + prevCompare + '</td>' +
         '</tr>';
     });
-    el.innerHTML = '<table class="score-table" style="margin-top:12px">' +
-      '<thead><tr><th>代謝物</th><th>重要度</th><th>実測値</th><th>基準値</th></tr></thead>' +
+
+    var thPrev = dates.length > 1 ? '<th>前回比</th>' : '<th>前回比</th>';
+
+    el.innerHTML = '<table class="score-table" style="margin-top:4px;width:100%">' +
+      '<thead><tr><th>代謝物</th><th>重要度</th><th>基準値</th>' + thDates + thPrev + '</tr></thead>' +
       '<tbody>' + rows + '</tbody></table>';
   } catch(e) {
     el.innerHTML = '<div style="color:var(--ink4);font-size:12px">エラー</div>';
