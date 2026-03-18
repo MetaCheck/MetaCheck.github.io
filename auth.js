@@ -220,6 +220,40 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-patient-logout')?.addEventListener('click', doLogout);
   document.getElementById('btn-clinic-logout')?.addEventListener('click', doLogout);
 
+  // メール確認リンクからのトークン処理
+  const params = new URLSearchParams(window.location.search);
+  const tokenHash = params.get('token_hash');
+  const type = params.get('type');
+
+  if (tokenHash && type) {
+    fetch(SUPABASE_AUTH_URL + '/verify', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token_hash: tokenHash, type: type })
+    }).then(function(res) { return res.json(); }).then(function(data) {
+      if (data.access_token) {
+        currentAccessToken = data.access_token;
+        const userId = data.user.id;
+        getAnalysisIds(userId).then(function(links) {
+          if (!links.length) {
+            showRegisterSection('link-analysis');
+            window._pendingUserId = userId;
+            return;
+          }
+          const patientId = links[0].patient_id;
+          fetchPatient(patientId).then(function(patient) {
+            if (!patient) return;
+            currentUser = { role: 'individual', id: patientId, userId: userId, allIds: links.map(function(l) { return l.patient_id; }) };
+            showScreen('screen-patient');
+            renderPatientPage(patient);
+          });
+        });
+      } else {
+        showRegisterSection('check-email');
+      }
+    }).catch(function(e) { console.error(e); });
+  }
+  
   document.querySelectorAll('.lang-pill').forEach(function(btn) {
     btn.addEventListener('click', function() { changeLanguage(btn.dataset.lang); });
   });
