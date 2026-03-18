@@ -362,3 +362,41 @@
 }
 .pt-tab:hover { color: var(--ink2); }
 .pt-tab--active { color: var(--emerald); border-bottom-color: var(--emerald); font-weight: 600; }
+
+/* ─── クリニック カテゴリグリッド ─── */
+.cat-grid-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-radius: var(--r-sm);
+  border: 1px solid var(--border); cursor: pointer;
+  transition: all .15s; font-size: 12px;
+  background: var(--white);
+}
+.cat-grid-card:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.cat-grid-card.active { border-width: 2px; }
+.cat-grid-card__name { flex: 1; font-size: 11px; color: var(--ink2); line-height: 1.4; padding-right: 6px; }
+.cat-grid-card--A { border-color: var(--rank-a); background: var(--rank-a-bg); }
+.cat-grid-card--A.active { box-shadow: 0 0 0 2px var(--rank-a); }
+.cat-grid-card--B { border-color: var(--rank-b); background: var(--rank-b-bg); }
+.cat-grid-card--B.active { box-shadow: 0 0 0 2px var(--rank-b); }
+.cat-grid-card--C { border-color: var(--rank-c); background: var(--rank-c-bg); }
+.cat-grid-card--C.active { box-shadow: 0 0 0 2px var(--rank-c); }
+.cat-grid-card--D { border-color: var(--rank-d); background: var(--rank-d-bg); }
+.cat-grid-card--D.active { box-shadow: 0 0 0 2px var(--rank-d); }
+.cat-grid-card--E { border-color: var(--rank-e); background: var(--rank-e-bg); }
+.cat-grid-card--E.active { box-shadow: 0 0 0 2px var(--rank-e); }
+
+/* ─── 日付タブ ─── */
+.date-tab {
+  padding: 5px 14px; border-radius: 20px; font-size: 12px;
+  border: 1px solid var(--sage); background: var(--white);
+  color: var(--emerald); cursor: pointer; font-family: var(--font-sans);
+  transition: all .2s; font-weight: 500;
+}
+.date-tab:hover { background: var(--sage); color: var(--forest); }
+.date-tab--active { background: var(--emerald); color: #fff; border-color: var(--emerald); }
+.date-tab--compare { background: var(--amber-l); color: var(--amber); border-color: #f0c580; }
+.date-tab--compare.active { background: var(--amber); color: #fff; }
+
+@media (max-width: 1024px) {
+  #clinic-cat-grid { grid-template-columns: repeat(2,1fr); }
+}

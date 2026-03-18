@@ -4,170 +4,356 @@
 
 let allPatients = [];
 let selectedPatientId = null;
+let selectedDate = null;
 
 async function renderClinicPage(clinicId) {
-  // ヘッダー
   document.getElementById('clinic-avatar').textContent = clinicId;
-  document.getElementById('clinic-name-display').textContent = `クリニック ${clinicId}`;
+  document.getElementById('clinic-name-display').textContent = 'クリニック ' + clinicId;
 
-  // 患者リスト取得
   try {
     allPatients = await fetchPatientsByClinic(clinicId);
     renderPatientList(allPatients);
-  } catch (e) {
-    console.error('患者取得失敗', e);
-  }
+  } catch(e) { console.error(e); }
 
-  // 検索
-  document.getElementById('clinic-search')?.addEventListener('input', e => {
+  document.getElementById('clinic-search')?.addEventListener('input', function(e) {
     const q = e.target.value.toLowerCase();
-    renderPatientList(allPatients.filter(p => p.id.toLowerCase().includes(q)));
+    renderPatientList(allPatients.filter(function(p) { return p.id.toLowerCase().includes(q); }));
   });
 
-  // 患者追加モーダル
-  document.getElementById('btn-add-patient')?.addEventListener('click', () => openModal('modal-add-patient'));
-
-  // Excelアップロードモーダル
-  document.getElementById('btn-upload-excel')?.addEventListener('click', () => openModal('modal-upload'));
+  document.getElementById('btn-add-patient')?.addEventListener('click', function() { openModal('modal-add-patient'); });
+  document.getElementById('btn-upload-excel')?.addEventListener('click', function() { openModal('modal-upload'); });
 }
 
-// 患者リスト描画
-async function renderPatientList(patients) {
+function renderPatientList(patients) {
   const list = document.getElementById('clinic-patient-list');
   if (!list) return;
-
   if (!patients.length) {
     list.innerHTML = '<li style="padding:16px;color:var(--ink4);font-size:13px">患者がいません</li>';
     return;
   }
-
-  // スコアを一括取得（上位ランクのみ表示用）
-  list.innerHTML = patients.map(p => `
-    <li class="patient-item ${p.id === selectedPatientId ? 'active' : ''}"
-        data-id="${p.id}"
-        onclick="selectClinicPatient('${p.id}')">
-      <div class="patient-item__dot">${p.id.slice(-3)}</div>
-      <div class="patient-item__info">
-        <div class="patient-item__id">${p.id}</div>
-        <div style="font-size:11px;color:var(--ink4)">${[p.sex, p.country].filter(Boolean).join(' / ') || '—'}</div>
-      </div>
-    </li>`).join('');
+  list.innerHTML = patients.map(function(p) {
+    return '<li class="patient-item ' + (p.id === selectedPatientId ? 'active' : '') + '" data-id="' + p.id + '" onclick="selectClinicPatient(\'' + p.id + '\')">' +
+      '<div class="patient-item__dot">' + p.id.slice(-3) + '</div>' +
+      '<div class="patient-item__info">' +
+        '<div class="patient-item__id">' + p.id + '</div>' +
+        '<div style="font-size:11px;color:var(--ink4)">' + ([p.sex, p.country].filter(Boolean).join(' / ') || '—') + '</div>' +
+      '</div></li>';
+  }).join('');
 }
 
-// 患者選択
 async function selectClinicPatient(patientId) {
   selectedPatientId = patientId;
-
-  // リストのactive更新
-  document.querySelectorAll('.patient-item').forEach(el => {
+  document.querySelectorAll('.patient-item').forEach(function(el) {
     el.classList.toggle('active', el.dataset.id === patientId);
   });
 
-  // 空状態を隠して詳細を表示
   document.getElementById('clinic-empty-state')?.classList.add('hidden');
   const detail = document.getElementById('clinic-detail');
-  detail?.classList.remove('hidden');
+  if (detail) detail.classList.remove('hidden');
 
-  // 患者情報セット
-  const patient = allPatients.find(p => p.id === patientId);
+  const patient = allPatients.find(function(p) { return p.id === patientId; });
   if (!patient) return;
 
   document.getElementById('clinic-detail-id').textContent = patient.id;
   document.getElementById('clinic-detail-name').textContent = patient.id;
 
-  const meta = [patient.sex, patient.country, patient.age ? patient.age + '歳' : '', patient.disease]
-    .filter(Boolean);
+  const meta = [patient.sex, patient.country, patient.age ? patient.age + '歳' : '', patient.disease].filter(Boolean);
   document.getElementById('clinic-detail-meta').innerHTML =
-    meta.map(m => `<span class="badge badge--green">${m}</span>`).join('');
+    meta.map(function(m) { return '<span class="badge badge--green">' + m + '</span>'; }).join('');
 
-  // スコア取得・描画
   try {
     const scores = await fetchScores(patientId);
-    renderScoreOverview(scores);
-    renderCatTabs(scores, patientId);
-  } catch (e) {
-    console.error('スコア取得失敗', e);
-  }
+
+    // 測定日一覧取得
+    const datesSet = {};
+    scores.forEach(function(s) { if (s.measured_at) datesSet[s.measured_at] = true; });
+    const dates = Object.keys(datesSet).sort();
+    selectedDate = dates[dates.length - 1] || null;
+
+    renderDateTabs(dates, patientId);
+    renderScoreOverview(scores.filter(function(s) { return s.measured_at === selectedDate; }));
+    renderCatGrid(scores.filter(function(s) { return s.measured_at === selectedDate; }), patientId);
+  } catch(e) { console.error(e); }
 }
 
-// スコア概要カード（4枚）
+function renderDateTabs(dates, patientId) {
+  const el = document.getElementById('clinic-date-tabs');
+  if (!el) return;
+
+  if (dates.length <= 1) {
+    el.innerHTML = dates.length === 1
+      ? '<span style="font-size:12px;color:var(--ink3);padding:6px 12px;background:var(--foam);border-radius:20px;border:1px solid var(--sage)">📅 ' + dates[0] + '</span>'
+      : '';
+    return;
+  }
+
+  el.innerHTML = '<span style="font-size:11px;color:var(--ink4);margin-right:8px">📅 測定履歴</span>' +
+    dates.map(function(d) {
+      return '<button class="date-tab ' + (d === selectedDate ? 'date-tab--active' : '') + '" onclick="switchDate(\'' + d + '\',\'' + patientId + '\')">' + d + '</button>';
+    }).join('') +
+    '<span style="margin-left:auto;font-size:11px;color:var(--ink4)">比較</span>' +
+    dates.map(function(d) {
+      return '<button class="date-tab date-tab--compare" onclick="compareDate(\'' + d + '\')">' + d + '</button>';
+    }).join('');
+}
+
+async function switchDate(date, patientId) {
+  selectedDate = date;
+  document.querySelectorAll('.date-tab:not(.date-tab--compare)').forEach(function(b) {
+    b.classList.toggle('date-tab--active', b.textContent.trim() === date);
+  });
+  const scores = await fetchScores(patientId);
+  const filtered = scores.filter(function(s) { return s.measured_at === date; });
+  renderScoreOverview(filtered);
+  renderCatGrid(filtered, patientId);
+}
+
 function renderScoreOverview(scores) {
   const el = document.getElementById('clinic-score-overview');
   if (!el) return;
-
   const rankCounts = { A:0, B:0, C:0, D:0, E:0 };
-  scores.forEach(s => { if (s.rank) rankCounts[s.rank] = (rankCounts[s.rank]||0)+1; });
+  scores.forEach(function(s) { if (s.rank) rankCounts[s.rank] = (rankCounts[s.rank]||0)+1; });
+  const sorted = scores.slice().sort(function(a,b) { return (b.wavg_absfc||0)-(a.wavg_absfc||0); });
+  const worst = sorted[0];
 
-  const worst = scores.sort((a,b) => (b.wavg_absfc||0) - (a.wavg_absfc||0))[0];
-  const best  = scores.sort((a,b) => (a.wavg_absfc||0) - (b.wavg_absfc||0))[0];
-
-  el.innerHTML = `
-    <div class="score-ov-card">
-      <div class="score-ov-card__label">カテゴリ数</div>
-      <div class="score-ov-card__val">${scores.length}</div>
-    </div>
-    <div class="score-ov-card">
-      <div class="score-ov-card__label">E ランク</div>
-      <div class="score-ov-card__val" style="color:var(--rank-e)">${rankCounts.E}</div>
-    </div>
-    <div class="score-ov-card">
-      <div class="score-ov-card__label">最も要注意</div>
-      <div class="score-ov-card__val" style="font-size:14px;margin-top:4px">${worst?.category?.split('/')[0] || '—'}</div>
-      <div class="score-ov-card__sub"><span class="rank-badge rank-${worst?.rank}">${worst?.rank||'—'}</span></div>
-    </div>
-    <div class="score-ov-card">
-      <div class="score-ov-card__label">A ランク</div>
-      <div class="score-ov-card__val" style="color:var(--rank-a)">${rankCounts.A}</div>
-    </div>`;
+  el.innerHTML =
+    '<div class="score-ov-card"><div class="score-ov-card__label">カテゴリ数</div><div class="score-ov-card__val">' + scores.length + '</div></div>' +
+    '<div class="score-ov-card"><div class="score-ov-card__label">E ランク</div><div class="score-ov-card__val" style="color:var(--rank-e)">' + rankCounts.E + '</div></div>' +
+    '<div class="score-ov-card"><div class="score-ov-card__label">最も要注意</div><div style="font-size:13px;font-weight:600;color:var(--forest);margin-top:4px">' + (worst ? worst.category.split('/')[0].trim() : '—') + '</div><div style="margin-top:4px"><span class="rank-badge rank-' + (worst?.rank||'') + '">' + (worst?.rank||'—') + '</span></div></div>' +
+    '<div class="score-ov-card"><div class="score-ov-card__label">A ランク</div><div class="score-ov-card__val" style="color:var(--rank-a)">' + rankCounts.A + '</div></div>';
 }
 
-// カテゴリタブ
-function renderCatTabs(scores, patientId) {
-  const tabs = document.getElementById('clinic-cat-tabs');
-  if (!tabs) return;
+function renderCatGrid(scores, patientId) {
+  const el = document.getElementById('clinic-cat-grid');
+  if (!el) return;
 
-  tabs.innerHTML = scores.map((s, i) => `
-    <button class="cat-tab ${i===0?'active':''} rank-${s.rank}"
-      onclick="selectCatTab(this,'${patientId}','${s.category}')">
-      ${s.rank} ${s.category.split('/')[0].trim()}
-    </button>`).join('');
+  el.innerHTML = scores.map(function(s) {
+    const rank = s.rank || '—';
+    return '<div class="cat-grid-card cat-grid-card--' + rank + '" onclick="selectClinicCat(this,\'' + patientId + '\',\'' + s.category.replace(/'/g, "\\'") + '\')">' +
+      '<span class="cat-grid-card__name">' + (window.CAT_JA && CAT_JA[s.category] ? CAT_JA[s.category] : s.category) + '</span>' +
+      '<span class="rank-badge rank-' + rank + '" style="width:24px;height:24px;font-size:12px;flex-shrink:0">' + rank + '</span>' +
+    '</div>';
+  }).join('');
 
-  // 最初のカテゴリを表示
-  if (scores.length) showCatDetail(patientId, scores[0].category, scores[0]);
+  // 最初のカテゴリを自動選択
+  if (scores.length) {
+    const firstCard = el.querySelector('.cat-grid-card');
+    if (firstCard) selectClinicCat(firstCard, patientId, scores[0].category);
+  }
 }
 
-function selectCatTab(btn, patientId, category) {
-  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  fetchScores(patientId).then(scores => {
-    const s = scores.find(s => s.category === category);
-    if (s) showCatDetail(patientId, category, s);
+async function selectClinicCat(cardEl, patientId, category) {
+  document.querySelectorAll('.cat-grid-card').forEach(function(c) { c.classList.remove('active'); });
+  if (cardEl) cardEl.classList.add('active');
+
+  const detail = document.getElementById('clinic-cat-detail');
+  if (!detail) return;
+  detail.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:12px">読み込み中...</div>';
+
+  try {
+    const scores = await fetchScores(patientId);
+    const s = scores.find(function(x) { return x.category === category && x.measured_at === selectedDate; })
+      || scores.find(function(x) { return x.category === category; });
+    if (!s) return;
+
+    const rank = s.rank || '—';
+    const catJa = (window.CAT_JA && CAT_JA[category]) ? CAT_JA[category] : category;
+
+    // category_resultsからmetabolitesタグ取得
+    const crRows = await (async function() {
+      try {
+        const encoded = category.split('').map(function(c) {
+          if (c === ' ') return '%20'; if (c === '/') return '%2F'; return c;
+        }).join('');
+        return await dbSelect('category_results', 'category=eq.' + encoded + '&select=id,metabolites&limit=1');
+      } catch(e) { return []; }
+    })();
+    const cr = crRows[0];
+    const metTags = cr && cr.metabolites ? cr.metabolites.split('、').map(function(m) {
+      const dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
+      return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
+    }).join('') : '';
+
+    detail.innerHTML =
+      '<div style="font-size:18px;font-weight:700;color:var(--forest);margin-bottom:4px;display:flex;align-items:center;gap:10px">' +
+        '<span class="rank-badge rank-' + rank + '" style="width:36px;height:36px;font-size:18px">' + rank + '</span>' + catJa +
+      '</div>' +
+      (metTags ? '<div style="margin:12px 0"><div style="font-size:11px;color:var(--ink4);margin-bottom:6px">主な変動代謝物</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + metTags + '</div></div>' : '') +
+      '<div style="display:flex;border-bottom:1px solid var(--border);margin:14px 0 16px">' +
+        '<button class="pt-tab pt-tab--active" onclick="switchClinicTab(this,\'metabolite\')">🔬 個別代謝物</button>' +
+        '<button class="pt-tab" onclick="switchClinicTab(this,\'clinical\')">🏥 臨床解釈・介入</button>' +
+        '<button class="pt-tab" onclick="switchClinicTab(this,\'patient\')">👤 患者向けコメント</button>' +
+      '</div>' +
+      '<div id="clinic-tab-metabolite">' +
+        '<div id="clinic-trend-chart" style="margin-bottom:12px"></div>' +
+        '<div id="clinic-metabolite-table"><div style="color:var(--ink4);font-size:12px">読み込み中...</div></div>' +
+      '</div>' +
+      '<div id="clinic-tab-clinical" style="display:none"><div id="clinic-insights-clinical"></div></div>' +
+      '<div id="clinic-tab-patient" style="display:none"><div id="clinic-insights-patient"></div></div>';
+
+    // 代謝物テーブル・グラフ
+    loadClinicMetaboliteData(patientId, category);
+
+    // インサイト
+    fetchInsightsByCategory(patientId, category).then(function(ins) {
+      const clinEl = document.getElementById('clinic-insights-clinical');
+      const patEl = document.getElementById('clinic-insights-patient');
+      if (clinEl) {
+        clinEl.innerHTML = ins
+          ? (ins.interpretation ? '<div class="insight-box insight-box--blue"><div class="insight-label">📋 臨床解釈</div><div>' + ins.interpretation + '</div></div>' : '') +
+            (ins.recommendation ? '<div class="insight-box insight-box--green"><div class="insight-label">💊 介入・推奨</div><div>' + ins.recommendation + '</div></div>' : '')
+          : '<div style="color:var(--ink4);font-size:13px;padding:12px">データなし</div>';
+      }
+      if (patEl) {
+        patEl.innerHTML = ins && ins.patient_comment
+          ? '<div class="insight-box insight-box--amber"><div class="insight-label">🗒 患者向けコメント</div><div>' + ins.patient_comment + '</div></div>'
+          : '<div style="color:var(--ink4);font-size:13px;padding:12px">データなし</div>';
+      }
+    });
+
+  } catch(e) {
+    const detail2 = document.getElementById('clinic-cat-detail');
+    if (detail2) detail2.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:12px">エラー</div>';
+  }
+}
+
+function switchClinicTab(btn, tab) {
+  document.querySelectorAll('#clinic-cat-detail .pt-tab').forEach(function(b) { b.classList.remove('pt-tab--active'); });
+  btn.classList.add('pt-tab--active');
+  ['metabolite','clinical','patient'].forEach(function(t) {
+    const el = document.getElementById('clinic-tab-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
   });
 }
 
-function showCatDetail(patientId, category, score) {
-  const el = document.getElementById('clinic-cat-detail');
-  if (!el) return;
+async function loadClinicMetaboliteData(patientId, category) {
+  const chartEl = document.getElementById('clinic-trend-chart');
+  const tableEl = document.getElementById('clinic-metabolite-table');
 
-  const rank = score.rank || '—';
-  el.innerHTML = `
-    <div class="chart-wrap">
-      <div class="chart-wrap__title">${category}</div>
-      <div style="display:flex;align-items:center;gap:16px;padding:8px 0">
-        <span class="rank-badge rank-${rank}" style="width:40px;height:40px;font-size:20px">${rank}</span>
-        <div>
-          <div style="font-size:11px;color:var(--ink4)">WAVG_absFC</div>
-          <div style="font-family:var(--font-mono);font-size:18px;color:var(--forest)">
-            ${score.wavg_absfc?.toFixed(4) || '—'}
-          </div>
-        </div>
-      </div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-        <div style="display:flex;gap:12px;font-size:12px;color:var(--ink3)">
-          <span>num_sum: <strong style="font-family:var(--font-mono)">${score.num_sum?.toFixed(3)||'—'}</strong></span>
-          <span>den_sum: <strong style="font-family:var(--font-mono)">${score.den_sum?.toFixed(3)||'—'}</strong></span>
-          <span>測定日: <strong>${score.measured_at||'—'}</strong></span>
-        </div>
-      </div>
-    </div>`;
+  try {
+    const compounds = await dbSelect('compound_categories',
+      'category=eq.' + encodeURIComponent(category) + '&select=compound,weight&order=weight.desc');
+    if (!compounds.length) {
+      if (tableEl) tableEl.innerHTML = '';
+      if (chartEl) chartEl.innerHTML = '';
+      return;
+    }
+
+    const compList = compounds.map(function(c) { return '"' + c.compound + '"'; }).join(',');
+    const facts = await dbSelect('fact',
+      'patient_id=eq.' + patientId + '&compound=in.(' + compList + ')&select=compound,sample_value,baseline,log2fc,measured_at&order=measured_at.asc');
+
+    // 測定日一覧
+    var dates = [];
+    facts.forEach(function(f) { if (f.measured_at && dates.indexOf(f.measured_at) === -1) dates.push(f.measured_at); });
+    dates.sort();
+
+    // グラフ描画
+    if (chartEl) renderClinicChart(chartEl, facts, compounds, dates);
+
+    // テーブル描画
+    if (tableEl) renderClinicTable(tableEl, facts, compounds, dates);
+
+  } catch(e) {
+    if (tableEl) tableEl.innerHTML = '<div style="color:var(--ink4);font-size:12px">エラー</div>';
+  }
+}
+
+function renderClinicChart(el, facts, compounds, dates) {
+  const factsWithLog2fc = facts.filter(function(f) { return f.log2fc != null; });
+  if (!factsWithLog2fc.length) { el.innerHTML = ''; return; }
+
+  const W = Math.max(el.offsetWidth || 600, 400);
+  const H = 200;
+  const padL = 52, padR = 20, padT = 24, padB = 40;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const log2fcs = factsWithLog2fc.map(function(f) { return Number(f.log2fc); });
+  const maxV = Math.max(Math.abs(Math.max.apply(null, log2fcs)), Math.abs(Math.min.apply(null, log2fcs)), 1) * 1.2;
+
+  var yAxis = '';
+  var zeroY = padT + chartH / 2;
+  yAxis += '<line x1="' + padL + '" y1="' + zeroY + '" x2="' + (W-padR) + '" y2="' + zeroY + '" stroke="#2D6A4F" stroke-width="1" stroke-dasharray="2,2"/>';
+  [-2,-1,1,2].forEach(function(v) {
+    if (Math.abs(v) > maxV) return;
+    var y = padT + chartH/2 - (v/maxV)*(chartH/2);
+    yAxis += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W-padR) + '" y2="' + y + '" stroke="#D4E6DD" stroke-width="1"/>';
+    yAxis += '<text x="' + (padL-4) + '" y="' + (y+4) + '" text-anchor="end" font-size="9" fill="#8FAAA0">' + v + '</text>';
+  });
+  yAxis += '<text x="14" y="' + (padT+10) + '" text-anchor="middle" font-size="9" fill="#B03A2E" font-weight="bold">高い↑</text>';
+  yAxis += '<text x="14" y="' + (padT+chartH-4) + '" text-anchor="middle" font-size="9" fill="#4A90D9" font-weight="bold">低い↓</text>';
+
+  var xLabels = '';
+  dates.forEach(function(d, i) {
+    var x = dates.length === 1 ? padL+chartW/2 : padL+(chartW/(dates.length-1))*i;
+    xLabels += '<text x="' + x + '" y="' + (H-6) + '" text-anchor="middle" font-size="9" fill="#8FAAA0">' + d.slice(0,10) + '</text>';
+    xLabels += '<line x1="' + x + '" y1="' + padT + '" x2="' + x + '" y2="' + (padT+chartH) + '" stroke="#D4E6DD" stroke-width="1"/>';
+  });
+  xLabels += '<text x="' + (padL+chartW/2) + '" y="' + (H-22) + '" text-anchor="middle" font-size="9" fill="#8FAAA0">測定回</text>';
+
+  var compoundsWithData = compounds.filter(function(c) {
+    return facts.some(function(f) { return f.compound === c.compound && f.log2fc != null; });
+  }).slice(0, 8);
+
+  var dots = '';
+  compoundsWithData.forEach(function(c) {
+    var compFacts = facts.filter(function(f) { return f.compound === c.compound && f.log2fc != null; });
+    compFacts.forEach(function(f) {
+      var di = dates.indexOf(f.measured_at);
+      if (di === -1) return;
+      var x = dates.length === 1 ? padL+chartW/2 : padL+(chartW/(dates.length-1))*di;
+      var y = padT + chartH/2 - (Number(f.log2fc)/maxV)*(chartH/2);
+      var color = Number(f.log2fc) >= 0 ? '#B03A2E' : '#4A90D9';
+      dots += '<circle cx="' + x + '" cy="' + y + '" r="5" fill="' + color + '" stroke="#fff" stroke-width="1.5" opacity="0.85"/>';
+    });
+  });
+
+  el.innerHTML = '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="overflow:visible;display:block">' + yAxis + xLabels + dots + '</svg>';
+}
+
+function renderClinicTable(el, facts, compounds, dates) {
+  var factMap = {};
+  facts.forEach(function(f) {
+    if (!factMap[f.compound]) factMap[f.compound] = {};
+    factMap[f.compound][f.measured_at] = f;
+  });
+
+  var thDates = dates.map(function(d) {
+    return '<th>実測値 (' + d.slice(0,10).replace(/-/g,'/') + ')</th>';
+  }).join('');
+
+  var rows = '';
+  compounds.forEach(function(c) {
+    var baseline = '—';
+    var prevVal = null;
+    var cells = '';
+
+    dates.forEach(function(d, di) {
+      var f = factMap[c.compound] && factMap[c.compound][d];
+      var val = f && f.sample_value != null ? Number(f.sample_value) : null;
+      if (f && f.baseline != null && baseline === '—') baseline = Number(f.baseline).toFixed(2);
+      cells += '<td style="font-family:var(--font-mono)">' + (val != null ? val.toFixed(2) : '—') + '</td>';
+      prevVal = val;
+    });
+
+    var lastF = factMap[c.compound] && dates.length > 0 ? factMap[c.compound][dates[dates.length-1]] : null;
+    var prevF = factMap[c.compound] && dates.length > 1 ? factMap[c.compound][dates[dates.length-2]] : null;
+    var prevCompare = '—';
+    if (lastF && prevF && lastF.sample_value != null && prevF.sample_value != null) {
+      var diff = Number(lastF.sample_value) - Number(prevF.sample_value);
+      var sign = diff > 0 ? '+' : '';
+      prevCompare = '<span style="color:' + (diff > 0 ? '#B03A2E' : '#2D6A4F') + '">' + sign + diff.toFixed(2) + '</span>';
+    }
+
+    rows += '<tr><td>' + c.compound + '</td>' +
+      '<td><span class="rank-badge" style="background:var(--emerald);color:#fff;font-size:11px">' + c.weight + '</span></td>' +
+      '<td style="font-family:var(--font-mono);color:var(--ink4)">' + baseline + '</td>' +
+      cells +
+      '<td>' + prevCompare + '</td></tr>';
+  });
+
+  el.innerHTML = '<table class="score-table" style="width:100%;margin-top:4px">' +
+    '<thead><tr><th>代謝物</th><th>重要度</th><th>基準値</th>' + thDates + '<th>前回比</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table>';
 }
