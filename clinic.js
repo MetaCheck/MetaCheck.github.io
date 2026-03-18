@@ -330,7 +330,10 @@ function renderClinicChart(el, facts, compounds, dates) {
       var x = dates.length === 1 ? padL+chartW/2 : padL+(chartW/(dates.length-1))*di;
       var y = padT + chartH/2 - (Number(f.log2fc)/maxV)*(chartH/2);
       var color = Number(f.log2fc) >= 0 ? '#B03A2E' : '#4A90D9';
-      dots += '<circle cx="' + x + '" cy="' + y + '" r="5" fill="' + color + '" stroke="#fff" stroke-width="1.5" opacity="0.85"/>';
+      var tipText = c.compound + ' | 実測値:' + (f.sample_value != null ? Number(f.sample_value).toFixed(2) : '—') + ' | 基準値:' + (f.baseline != null ? Number(f.baseline).toFixed(2) : '—') + ' | log2FC:' + Number(f.log2fc).toFixed(3);
+        dots += '<circle cx="' + x + '" cy="' + y + '" r="5" fill="' + color + '" stroke="#fff" stroke-width="1.5" opacity="0.85"' +
+          ' onmouseover="showChartTooltip(event,\'' + tipText.replace(/'/g, '') + '\')"' +
+          ' onmouseout="hideChartTooltip()"/>';
     });
   });
 
