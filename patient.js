@@ -51,7 +51,7 @@ function renderAlertBanner(scores) {
   const banner = document.getElementById('patient-alert-banner');
   if (!banner) return;
   banner.textContent = eCount > 0
-    ? `⚠ ${eCount}項目で変動が大きく検出されました。詳細はクリニックにご相談ください。`
+    ? '⚠ ' + eCount + '項目で変動が大きく検出されました。詳細はクリニックにご相談ください。'
     : '';
   banner.style.display = eCount > 0 ? 'block' : 'none';
 }
@@ -63,25 +63,25 @@ function renderPatientScores(scores) {
     grid.innerHTML = '<div style="color:var(--ink4);padding:20px">スコアデータがありません</div>';
     return;
   }
-  grid.innerHTML = scores.map((s, i) => {
+  grid.innerHTML = scores.map(function(s, i) {
     const rank = s.rank || '—';
     const wavg = s.wavg_absfc ? Number(s.wavg_absfc).toFixed(3) : '0';
     const barW = Math.min(100, Number(wavg) * 50);
-    return `<div class="pt-score-row" onclick="selectPatientScore(${i},this)">
-      <span class="pt-score-name">${catName(s.category)}</span>
-      <div class="pt-score-bar-wrap">
-        <div class="pt-score-bar rank-${rank}-bar" style="width:${barW}%"></div>
-      </div>
-      <span class="rank-badge rank-${rank}" style="width:28px;height:28px;font-size:13px">${rank}</span>
-    </div>`;
+    return '<div class="pt-score-row" onclick="selectPatientScore(' + i + ',this)">' +
+      '<span class="pt-score-name">' + catName(s.category) + '</span>' +
+      '<div class="pt-score-bar-wrap">' +
+        '<div class="pt-score-bar rank-' + rank + '-bar" style="width:' + barW + '%"></div>' +
+      '</div>' +
+      '<span class="rank-badge rank-' + rank + '" style="width:28px;height:28px;font-size:13px">' + rank + '</span>' +
+    '</div>';
   }).join('');
 }
 
 function selectPatientScore(index, el) {
-  document.querySelectorAll('.pt-score-row').forEach(r => r.classList.remove('active'));
-  el?.classList.add('active');
+  document.querySelectorAll('.pt-score-row').forEach(function(r) { r.classList.remove('active'); });
+  if (el) el.classList.add('active');
 
-  const s = window._patientScores?.[index];
+  const s = window._patientScores && window._patientScores[index];
   if (!s) return;
 
   const det = document.getElementById('patient-category-detail');
@@ -110,8 +110,12 @@ function selectPatientScore(index, el) {
         'WAVG_absFC: <strong style="font-family:var(--font-mono);color:var(--ink2)">' + Number(s.wavg_absfc).toFixed(4) + '</strong>' +
       '</div>' +
       (metTags ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">' + metTags + '</div>' : '') +
+      '<div id="patient-trend-chart" style="margin-bottom:16px"></div>' +
       '<div id="patient-insights-box"></div>' +
       '<div id="patient-metabolite-table"><div style="color:var(--ink4);font-size:12px;padding:8px">読み込み中...</div></div>';
+
+    // 推移グラフ描画
+    renderTrendChart(s.patient_id, s.category);
 
     fetchInsightsByCategory(s.patient_id, s.category).then(function(ins) {
       const el2 = document.getElementById('patient-insights-box');
@@ -124,6 +128,75 @@ function selectPatientScore(index, el) {
 
     loadMetaboliteTable(s.patient_id, s.category);
   });
+}
+
+async function renderTrendChart(patientId, category) {
+  const el = document.getElementById('patient-trend-chart');
+  if (!el) return;
+
+  try {
+    const encoded = category.split('').map(function(c) {
+      if (c === ' ') return '%20';
+      if (c === '/') return '%2F';
+      return c;
+    }).join('');
+    const allScores = await dbSelect('scores',
+      'patient_id=eq.' + patientId + '&category=eq.' + encoded + '&select=wavg_absfc,rank,measured_at&order=measured_at.asc');
+
+    if (!allScores.length) { el.innerHTML = ''; return; }
+
+    const W = el.offsetWidth || 300;
+    const H = 160;
+    const padL = 48, padR = 16, padT = 20, padB = 36;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    const vals = allScores.map(function(s) { return Number(s.wavg_absfc) || 0; });
+    const maxV = Math.max.apply(null, vals) * 1.2 || 1;
+
+    const rankColor = { A: '#2D6A4F', B: '#3A7D44', C: '#B8860B', D: '#D4600A', E: '#B03A2E' };
+
+    // SVGで描画
+    let circles = '';
+    let labels = '';
+    let polyline = '';
+    const points = [];
+
+    allScores.forEach(function(s, i) {
+      const x = allScores.length === 1
+        ? padL + chartW / 2
+        : padL + (chartW / (allScores.length - 1)) * i;
+      const y = padT + chartH - (vals[i] / maxV) * chartH;
+      const color = rankColor[s.rank] || '#8FAAA0';
+      points.push(x + ',' + y);
+      circles += '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + color + '" stroke="#fff" stroke-width="2"/>';
+      circles += '<text x="' + x + '" y="' + (y - 10) + '" text-anchor="middle" font-size="10" fill="' + color + '" font-weight="bold">' + s.rank + '</text>';
+      const dateStr = s.measured_at ? s.measured_at.slice(0, 10) : '';
+      labels += '<text x="' + x + '" y="' + (H - 4) + '" text-anchor="middle" font-size="9" fill="#8FAAA0">' + dateStr + '</text>';
+    });
+
+    if (points.length > 1) {
+      polyline = '<polyline points="' + points.join(' ') + '" fill="none" stroke="#52B788" stroke-width="2" stroke-dasharray="4,2"/>';
+    }
+
+    // Y軸
+    let yAxis = '';
+    for (var i = 0; i <= 4; i++) {
+      const yv = (maxV / 4) * i;
+      const y = padT + chartH - (yv / maxV) * chartH;
+      yAxis += '<line x1="' + (padL - 4) + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#D4E6DD" stroke-width="1"/>';
+      yAxis += '<text x="' + (padL - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="#8FAAA0">' + yv.toFixed(2) + '</text>';
+    }
+
+    el.innerHTML =
+      '<div style="font-size:11px;color:var(--ink4);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">📈 推移グラフ</div>' +
+      '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="overflow:visible">' +
+        yAxis + polyline + circles + labels +
+      '</svg>';
+
+  } catch(e) {
+    el.innerHTML = '';
+  }
 }
 
 async function loadMetaboliteTable(patientId, category) {
