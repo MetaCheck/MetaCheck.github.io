@@ -142,10 +142,7 @@ function renderScoreOverview(scores) {
   const worst = sorted[0];
 
   el.innerHTML =
-    '<div class="score-ov-card"><div class="score-ov-card__label">カテゴリ数</div><div class="score-ov-card__val">' + scores.length + '</div></div>' +
-    '<div class="score-ov-card"><div class="score-ov-card__label">E ランク</div><div class="score-ov-card__val" style="color:var(--rank-e)">' + rankCounts.E + '</div></div>' +
-    '<div class="score-ov-card"><div class="score-ov-card__label">最も要注意</div><div style="font-size:13px;font-weight:600;color:var(--forest);margin-top:4px">' + (worst ? worst.category.split('/')[0].trim() : '—') + '</div><div style="margin-top:4px"><span class="rank-badge rank-' + (worst?.rank||'') + '">' + (worst?.rank||'—') + '</span></div></div>' +
-    '<div class="score-ov-card"><div class="score-ov-card__label">A ランク</div><div class="score-ov-card__val" style="color:var(--rank-a)">' + rankCounts.A + '</div></div>';
+    '<div class="score-ov-card"><div class="score-ov-card__label">最も要注意</div><div style="font-size:14px;font-weight:600;color:var(--forest);margin-top:4px">' + (worst ? catJaName(worst.category) : '—') + '</div><div style="margin-top:6px"><span class="rank-badge rank-' + (worst ? worst.rank||'' : '') + '" style="width:32px;height:32px;font-size:16px">' + (worst ? worst.rank||'—' : '—') + '</span></div></div>';
 }
 
 function renderCatGrid(scores, patientId) {

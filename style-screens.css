@@ -449,3 +449,26 @@
   .score-ov-card { padding: 10px 12px; }
   .score-ov-card__val { font-size: 22px; }
 }
+
+/* ─── ログイン画面 モバイル対応 ─── */
+@media (max-width: 480px) {
+  .login-lang {
+    position: fixed;
+    top: 16px; right: 16px;
+  }
+  .lang-pill { padding: 5px 10px; font-size: 11px; }
+
+  .login-card {
+    width: calc(100vw - 32px) !important;
+    padding: 36px 24px !important;
+    margin: 0 16px;
+  }
+
+  .login-brand__logo { font-size: 30px !important; }
+
+  #screen-login {
+    padding: 20px 0;
+    align-items: flex-start;
+    padding-top: 80px;
+  }
+}
