@@ -73,10 +73,14 @@ async function fetchInsightsByCategory(patientId, category) {
     if (c === '/') return '%2F';
     return c;
   }).join('');
+  // category_resultsを全件取得してinsightsがあるものを探す
   const crRows = await dbSelect('category_results',
-    'category=eq.' + encoded + '&select=id&limit=1');
+    'category=eq.' + encoded + '&select=id');
   if (!crRows.length) return null;
-  const insights = await dbSelect('metabolite_insights',
-    'category_result_id=eq.' + crRows[0].id + '&select=*&limit=1');
-  return insights[0] || null;
+  for (var i = 0; i < crRows.length; i++) {
+    const insights = await dbSelect('metabolite_insights',
+      'category_result_id=eq.' + crRows[i].id + '&select=*&limit=1');
+    if (insights.length) return insights[0];
+  }
+  return null;
 }
