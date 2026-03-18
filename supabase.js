@@ -84,3 +84,79 @@ async function fetchInsightsByCategory(patientId, category) {
   }
   return null;
 }
+
+// ─── AI翻訳 ───────────────────────────────
+const _translateCache = {};
+
+async function translateText(text, targetLang) {
+  if (!text || targetLang === 'ja') return text;
+  const cacheKey = targetLang + ':' + text.slice(0, 50);
+  if (_translateCache[cacheKey]) return _translateCache[cacheKey];
+
+  const langNames = { en: 'English', vi: 'Vietnamese', cn: 'Chinese (Simplified)' };
+  const langName = langNames[targetLang] || 'English';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: 'Translate the following Japanese medical text to ' + langName + '. Return only the translated text, no explanation:\n\n' + text
+        }]
+      })
+    });
+    const data = await res.json();
+    const translated = data.content && data.content[0] && data.content[0].text ? data.content[0].text.trim() : text;
+    _translateCache[cacheKey] = translated;
+    return translated;
+  } catch(e) {
+    return text;
+  }
+}
+
+// ─── Supabase Auth ────────────────────────
+const SUPABASE_AUTH_URL = SUPABASE_URL + '/auth/v1';
+
+// メール＋PW でサインアップ
+async function authSignUp(email, password) {
+  const res = await fetch(SUPABASE_AUTH_URL + '/signup', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.msg || data.error_description || '登録に失敗しました');
+  return data;
+}
+
+// メール＋PW でサインイン
+async function authSignIn(email, password) {
+  const res = await fetch(SUPABASE_AUTH_URL + '/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.msg || data.error_description || 'ログインに失敗しました');
+  return data; // { access_token, user, ... }
+}
+
+// 解析IDとユーザーを紐付け
+async function linkAnalysisId(userId, analysisId) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', {
+    method: 'POST',
+    headers: { ...HEADERS, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ user_id: userId, patient_id: analysisId })
+  });
+  if (!res.ok) throw new Error('解析IDの紐付けに失敗しました');
+  return res.json();
+}
+
+// ユーザーに紐付いた解析IDを取得
+async function getAnalysisIds(userId) {
+  return dbSelect('user_analysis_ids', 'user_id=eq.' + userId + '&select=patient_id,linked_at&order=linked_at.asc');
+}
