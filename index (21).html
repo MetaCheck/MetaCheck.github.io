@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetaCheck — Metabolic Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-base.css?v=2">
+<link rel="stylesheet" href="style-screens.css?v=2">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: LOGIN
+══════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-bg">
+    <div class="login-bg-orb login-bg-orb--1"></div>
+    <div class="login-bg-orb login-bg-orb--2"></div>
+  </div>
+
+  <div class="login-lang">
+    <button class="lang-pill active" data-lang="ja">JA</button>
+    <button class="lang-pill" data-lang="en">EN</button>
+    <button class="lang-pill" data-lang="vi">VI</button>
+    <button class="lang-pill" data-lang="cn">CN</button>
+  </div>
+
+  <div class="login-card">
+    <div class="login-brand">
+      <span class="login-brand__logo">Meta<em>Check</em></span>
+      <span class="login-brand__sub" data-i18n="login.subtitle">Metabolic Intelligence Platform</span>
+    </div>
+
+    <div class="login-role-tabs">
+      <button class="role-tab active" data-role="patient" id="tab-patient">
+        <span class="role-tab__icon">👤</span>
+        <span data-i18n="login.patient">患者</span>
+      </button>
+      <button class="role-tab" data-role="clinic" id="tab-clinic">
+        <span class="role-tab__icon">🏥</span>
+        <span data-i18n="login.clinic">クリニック</span>
+      </button>
+    </div>
+
+    <!-- 患者ログインフォーム -->
+    <div class="login-form" id="form-patient">
+      <div class="field">
+        <label class="field__label" data-i18n="login.patientId">患者ID</label>
+        <input class="field__input" id="input-patient-id" type="text" placeholder="例: 241210AB001">
+      </div>
+      <div class="field">
+        <label class="field__label" data-i18n="login.password">パスワード</label>
+        <input class="field__input" id="input-patient-pw" type="password" placeholder="••••••••">
+      </div>
+    </div>
+
+    <!-- クリニックログインフォーム -->
+    <div class="login-form hidden" id="form-clinic">
+      <div class="field">
+        <label class="field__label" data-i18n="login.clinicId">クリニックID</label>
+        <input class="field__input" id="input-clinic-id" type="text" placeholder="例: AB">
+      </div>
+      <div class="field">
+        <label class="field__label" data-i18n="login.password">パスワード</label>
+        <input class="field__input" id="input-clinic-pw" type="password" placeholder="••••••••">
+      </div>
+    </div>
+
+    <div class="login-error hidden" id="login-error">
+      <span data-i18n="login.error">IDまたはパスワードが正しくありません</span>
+    </div>
+
+    <button class="btn-primary btn--full" id="btn-login" data-i18n="login.submit">
+      ログイン
+    </button>
+
+    <div class="login-footer">
+      <span class="login-footer__hint" data-i18n="login.demo">※ デモ環境 / パスワード: demo1234</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     SCREEN: PATIENT — マイページ
+══════════════════════════════════════════ -->
+<div id="screen-patient" class="screen hidden">
+
+  <!-- トップバー -->
+  <header class="topbar topbar--patient">
+    <div class="topbar__brand">
+      <span class="brand-logo">Meta<em>Check</em></span>
+      <span class="topbar__label" data-i18n="patient.mypage">マイページ</span>
+    </div>
+    <div class="topbar__actions">
+      <div class="lang-switcher" id="lang-switcher-patient"></div>
+      <div class="user-chip" id="patient-user-chip">
+        <span class="user-chip__avatar" id="patient-avatar">P</span>
+        <span class="user-chip__name" id="patient-name-display">—</span>
+      </div>
+      <button class="btn-ghost btn-ghost--light" id="btn-patient-logout" data-i18n="common.logout">ログアウト</button>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="patient-main" id="patient-main">
+
+    <!-- 患者プロフィールバナー -->
+    <section class="patient-banner" id="patient-banner">
+      <div class="patient-banner__id" id="patient-display-id">—</div>
+      <div class="patient-banner__name" id="patient-display-name">—</div>
+      <div class="patient-banner__meta" id="patient-display-meta"></div>
+      <div class="patient-banner__date" id="patient-display-date"></div>
+    </section>
+
+    <!-- 警告バナー -->
+    <div id="patient-alert-banner" class="patient-alert" style="display:none"></div>
+
+    <!-- スコアサマリー -->
+    <section class="section">
+      <h2 class="section__title" data-i18n="patient.scoreOverview">代謝スコア一覧</h2>
+      <div id="patient-score-grid"></div>
+    </section>
+
+    <!-- 選択カテゴリの詳細 -->
+    <div id="patient-category-detail" hidden style="padding-bottom:20px">
+      <h2 class="section__title" id="patient-detail-title">カテゴリ詳細</h2>
+      <div class="detail-card" id="patient-detail-card">
+        <!-- app.jsが動的に生成 -->
+      </div>
+    </div>
+
+    <!-- CTAバナー -->
+
+  </main>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     SCREEN: CLINIC — クリニックポータル
+══════════════════════════════════════════ -->
+<div id="screen-clinic" class="screen hidden">
+
+  <!-- トップバー -->
+  <header class="topbar topbar--clinic">
+    <div class="topbar__brand">
+      <span class="brand-logo brand-logo--dark">Meta<em>Check</em></span>
+      <span class="topbar__label topbar__label--dark" data-i18n="clinic.portal">クリニックポータル</span>
+    </div>
+    <div class="topbar__actions">
+      <div class="lang-switcher" id="lang-switcher-clinic"></div>
+      <div class="user-chip user-chip--clinic" id="clinic-user-chip">
+        <span class="user-chip__avatar user-chip__avatar--clinic" id="clinic-avatar">C</span>
+        <span class="user-chip__name" id="clinic-name-display">—</span>
+      </div>
+      <button class="btn-ghost" id="btn-clinic-logout" data-i18n="common.logout">ログアウト</button>
+    </div>
+  </header>
+
+  <div class="clinic-layout" style="overflow:visible;height:auto">
+
+    <!-- サイドバー：患者リスト -->
+    <aside class="clinic-sidebar">
+      <div class="sidebar-search">
+        <input class="sidebar-search__input" id="clinic-search" type="text"
+          placeholder="患者IDを検索..." data-i18n-placeholder="clinic.searchPlaceholder">
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="btn-sm btn-primary" id="btn-add-patient" data-i18n="clinic.addPatient">
+          ＋ 患者追加
+        </button>
+        <button class="btn-sm btn-secondary" id="btn-upload-excel" data-i18n="clinic.uploadExcel">
+          📊 Excel投入
+        </button>
+      </div>
+
+      <ul class="patient-list" id="clinic-patient-list">
+        <!-- app.jsが動的に生成 -->
+      </ul>
+    </aside>
+
+    <!-- メイン：患者詳細 -->
+    <main class="clinic-main" id="clinic-main">
+
+      <!-- 患者未選択の状態 -->
+      <div class="empty-state" id="clinic-empty-state">
+        <div class="empty-state__icon">🔬</div>
+        <div class="empty-state__title" data-i18n="clinic.selectPatient">患者を選択してください</div>
+        <div class="empty-state__sub" data-i18n="clinic.selectPatientSub">左のリストから患者を選択すると詳細が表示されます</div>
+      </div>
+
+      <!-- 患者詳細（選択後） -->
+      <div class="clinic-detail hidden" id="clinic-detail">
+
+        <!-- 患者ヘッダー -->
+        <div class="clinic-patient-header">
+          <div class="clinic-patient-header__left">
+            <div class="clinic-patient-header__id" id="clinic-detail-id">—</div>
+            <div class="clinic-patient-header__name" id="clinic-detail-name">—</div>
+            <div class="clinic-patient-header__meta" id="clinic-detail-meta"></div>
+          </div>
+          <div class="clinic-patient-header__actions">
+            <button class="btn-secondary btn-sm" id="btn-compare" data-i18n="clinic.compare">比較</button>
+            <button class="btn-primary btn-sm" id="btn-export" data-i18n="clinic.export">レポート出力</button>
+          </div>
+        </div>
+
+        <!-- スコア概要（4枚カード） -->
+        <div class="score-overview" id="clinic-score-overview" style="grid-template-columns:1fr;margin-bottom:12px">
+          <!-- app.jsが動的に生成 -->
+        </div>
+
+        <!-- 測定履歴タブ -->
+        <div id="clinic-date-tabs" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--foam);border:1px solid var(--sage);border-radius:10px;padding:10px 16px;margin-bottom:16px"></div>
+
+        <!-- 診察メモ -->
+        <div class="memo-box" style="margin-bottom:16px">
+          <div class="memo-box__title">📝 診察メモ・カルテ記入</div>
+          <textarea class="memo-box__textarea" id="clinic-memo-top" placeholder="医師向けメモ・カルテ内容をここに記入してください..." style="min-height:100px"></textarea>
+        </div>
+
+        <!-- カテゴリグリッド -->
+        <div style="font-size:11px;color:var(--ink4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">🗂 カテゴリ選択</div>
+        <div id="clinic-cat-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px"></div>
+
+        <!-- カテゴリ詳細 -->
+        <div style="font-size:11px;color:var(--ink4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px" id="clinic-cat-detail-label">🔬 カテゴリ詳細</div>
+        <div id="clinic-cat-detail" style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px">
+          <!-- app.jsが動的に生成 -->
+        </div>
+
+        <!-- メモ -->
+        <div class="memo-box">
+          <div class="memo-box__title" data-i18n="clinic.memo">📝 クリニックメモ</div>
+          <textarea class="memo-box__textarea" id="clinic-memo" 
+            placeholder="患者へのメモ・指示事項..." data-i18n-placeholder="clinic.memoPlaceholder"></textarea>
+          <div class="memo-box__saved hidden" id="memo-saved" data-i18n="clinic.memoSaved">保存しました ✓</div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: 解析依頼
+══════════════════════════════════════════ -->
+<div id="modal-request" class="modal hidden">
+  <div class="modal__backdrop" id="modal-request-backdrop"></div>
+  <div class="modal__box">
+    <div class="modal__header">
+      <h2 class="modal__title" data-i18n="request.title">解析依頼</h2>
+      <button class="modal__close" id="btn-close-request">✕</button>
+    </div>
+    <div class="modal__body">
+      <div class="field">
+        <label class="field__label" data-i18n="request.type">依頼種別</label>
+        <select class="field__select" id="request-type">
+          <option value="new" data-i18n="request.typeNew">新規測定</option>
+          <option value="recheck" data-i18n="request.typeRecheck">再検査</option>
+          <option value="consult" data-i18n="request.typeConsult">相談</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field__label" data-i18n="request.message">メッセージ</label>
+        <textarea class="field__textarea" id="request-message" rows="4"
+          placeholder="気になる症状や質問を入力..." data-i18n-placeholder="request.messagePlaceholder"></textarea>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn-ghost" id="btn-cancel-request" data-i18n="common.cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-submit-request" data-i18n="request.submit">依頼を送る</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: Excelアップロード
+══════════════════════════════════════════ -->
+<div id="modal-upload" class="modal hidden">
+  <div class="modal__backdrop" id="modal-upload-backdrop"></div>
+  <div class="modal__box">
+    <div class="modal__header">
+      <h2 class="modal__title" data-i18n="upload.title">Excelデータ投入</h2>
+      <button class="modal__close" id="btn-close-upload">✕</button>
+    </div>
+    <div class="modal__body">
+      <div class="upload-zone" id="upload-zone">
+        <div class="upload-zone__icon">📊</div>
+        <div class="upload-zone__text" data-i18n="upload.dropzone">
+          Excelファイルをドロップ、またはクリックして選択
+        </div>
+        <div class="upload-zone__hint" data-i18n="upload.hint">
+          Metabo_DWH_*.xlsx 形式
+        </div>
+        <input type="file" id="upload-input" accept=".xlsx,.xls" class="upload-zone__input">
+      </div>
+
+      <!-- アップロード後のプレビュー -->
+      <div class="upload-preview hidden" id="upload-preview">
+        <div class="upload-preview__title" data-i18n="upload.preview">確認</div>
+        <div class="upload-preview__stats" id="upload-stats"></div>
+      </div>
+
+      <!-- プログレス -->
+      <div class="upload-progress hidden" id="upload-progress">
+        <div class="upload-progress__bar">
+          <div class="upload-progress__fill" id="upload-progress-fill"></div>
+        </div>
+        <div class="upload-progress__text" id="upload-progress-text"></div>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn-ghost" id="btn-cancel-upload" data-i18n="common.cancel">キャンセル</button>
+      <button class="btn-primary hidden" id="btn-confirm-upload" data-i18n="upload.confirm">投入開始</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: 患者追加
+══════════════════════════════════════════ -->
+<div id="modal-add-patient" class="modal hidden">
+  <div class="modal__backdrop" id="modal-add-patient-backdrop"></div>
+  <div class="modal__box">
+    <div class="modal__header">
+      <h2 class="modal__title" data-i18n="addPatient.title">患者追加</h2>
+      <button class="modal__close" id="btn-close-add-patient">✕</button>
+    </div>
+    <div class="modal__body">
+      <div class="field-row">
+        <div class="field">
+          <label class="field__label" data-i18n="addPatient.id">患者ID</label>
+          <input class="field__input" id="new-patient-id" type="text" placeholder="241210AB001">
+        </div>
+        <div class="field">
+          <label class="field__label" data-i18n="addPatient.sex">性別</label>
+          <select class="field__select" id="new-patient-sex">
+            <option value="">—</option>
+            <option value="M">男性</option>
+            <option value="F">女性</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field__label" data-i18n="addPatient.age">年齢</label>
+          <input class="field__input" id="new-patient-age" type="number" placeholder="40">
+        </div>
+        <div class="field">
+          <label class="field__label" data-i18n="addPatient.country">国籍</label>
+          <input class="field__input" id="new-patient-country" type="text" placeholder="JP">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field__label" data-i18n="addPatient.disease">疾患・メモ</label>
+        <input class="field__input" id="new-patient-disease" type="text" placeholder="任意">
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn-ghost" id="btn-cancel-add-patient" data-i18n="common.cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-confirm-add-patient" data-i18n="addPatient.submit">追加</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     TOAST通知
+══════════════════════════════════════════ -->
+<div id="toast-container" class="toast-container"></div>
+
+
+<!-- ══════════════════════════════════════════
+     JS読み込み順序（依存関係に注意）
+══════════════════════════════════════════ -->
+<script src="i18n.js"></script>       <!-- 多言語（依存なし） -->
+<script src="supabase.js"></script>   <!-- Supabase接続（依存なし） -->
+<script src="auth.js"></script>       <!-- 認証（supabase.js必要） -->
+<script src="patient.js"></script>    <!-- 患者画面（supabase.js必要） -->
+<script src="clinic.js"></script>     <!-- クリニック画面（supabase.js必要） -->
+<script src="upload.js"></script>     <!-- Excelアップロード（supabase.js必要） -->
+<script src="app.js"></script>        <!-- メイン制御（全JS読み込み後） -->
+
+</body>
+</html>

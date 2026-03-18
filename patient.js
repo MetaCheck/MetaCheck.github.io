@@ -1,28 +1,6 @@
 // patient.js — 患者マイページ
 
-const CAT_JA = {
-  'Amino acid / BCAA metabolism': 'アミノ酸・BCAA',
-  'Cofactors / Vitamin B': '補酵素・ビタミンB',
-  'Electrolyte / Minerals': '電解質・ミネラル',
-  'Energy currency / OXPHOS': 'エネルギー産生',
-  'Fatty acid metabolism': '脂肪酸代謝',
-  'Folate / Methionine-SAM cycle': '葉酸・メチオニン回路',
-  'Glycolysis': '解糖系',
-  'Ketone body metabolism': 'ケトン体代謝',
-  'Lipid detail': '脂質詳細',
-  'Pentose Phosphate Pathway': 'ペントースリン酸回路',
-  'Polyamine metabolism': 'ポリアミン代謝',
-  'Purine metabolism': 'プリン代謝',
-  'Pyrimidine metabolism': 'ピリミジン代謝',
-  'Redox balance / Glutathione': '酸化還元・グルタチオン',
-  'TCA Cycle': 'クエン酸回路',
-  'Urea Cycle': '尿素回路',
-};
-
-function catName(cat) {
-  if (!cat) return '';
-  return currentLang === 'ja' ? (CAT_JA[cat.trim()] || cat) : cat;
-}
+// catName is defined in i18n.js
 
 async function renderPatientPage(patient) {
   document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
@@ -42,8 +20,6 @@ async function renderPatientPage(patient) {
     renderAlertBanner(scores);
   } catch(e) { console.error(e); }
 
-  document.getElementById('btn-request-analysis')
-    ?.addEventListener('click', () => openModal('modal-request'));
 }
 
 function renderAlertBanner(scores) {
@@ -120,12 +96,16 @@ function selectPatientScore(index, el) {
     renderTrendChart(s.patient_id, s.category);
     loadMetaboliteTable(s.patient_id, s.category);
 
-    fetchInsightsByCategory(s.patient_id, s.category).then(function(ins) {
+    fetchInsightsByCategory(s.patient_id, s.category).then(async function(ins) {
       const el2 = document.getElementById('patient-insights-box');
       if (!el2) return;
-      el2.innerHTML = ins && ins.patient_comment
-        ? '<div class="insight-box insight-box--amber"><div class="insight-label">🗒 生活で気をつけること</div><div>' + ins.patient_comment + '</div></div>'
-        : '<div style="color:var(--ink4);font-size:13px;padding:12px">データがありません</div>';
+      if (!ins || !ins.patient_comment) {
+        el2.innerHTML = '<div style="color:var(--ink4);font-size:13px;padding:12px">' + t('patient.noData') + '</div>';
+        return;
+      }
+      el2.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px">' + t('patient.loading') + '</div>';
+      const translated = await translateText(ins.patient_comment, currentLang);
+      el2.innerHTML = '<div class="insight-box insight-box--amber"><div class="insight-label">🗒 ' + t('patient.advice') + '</div><div>' + translated + '</div></div>';
     });
   });
 }
@@ -308,10 +288,8 @@ async function loadMetaboliteTable(patientId, category) {
         '</tr>';
     });
 
-    var thPrev = dates.length > 1 ? '<th>前回比</th>' : '<th>前回比</th>';
-
     el.innerHTML = '<table class="score-table" style="margin-top:4px;width:100%">' +
-      '<thead><tr><th>代謝物</th><th>重要度</th><th>基準値</th>' + thDates + thPrev + '</tr></thead>' +
+      '<thead><tr><th>' + t('patient.compound') + '</th><th>' + t('patient.weight') + '</th><th>' + t('patient.baseline') + '</th>' + thDates + t('patient.prevDiff') + '</th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table>';
   } catch(e) {
     el.innerHTML = '<div style="color:var(--ink4);font-size:12px">エラー</div>';
