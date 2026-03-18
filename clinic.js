@@ -2,6 +2,31 @@
 //  clinic.js — クリニックポータル
 // ═══════════════════════════════════════════
 
+const CAT_JA_CLINIC = {
+  'Amino acid / BCAA metabolism': 'アミノ酸・BCAA代謝状態',
+  'Cofactors / Vitamin B': '補酵素・ビタミンB機能',
+  'Electrolyte / Minerals': '電解質・ミネラル恒常性',
+  'Energy currency / OXPHOS': '細胞エネルギー産生機能',
+  'Fatty acid metabolism': '脂肪酸代謝機能',
+  'Folate / Methionine-SAM cycle': 'メチル化・一炭素代謝機能',
+  'Folate / Methionine–SAM cycle': 'メチル化・一炭素代謝機能',
+  'Glycolysis': '糖代謝（解糖系）活性',
+  'Ketone body metabolism': 'ケトン体利用機能',
+  'Lipid detail': '脂質組成・質的バランス',
+  'Pentose Phosphate Pathway': '還元力・核酸供給経路機能',
+  'Polyamine metabolism': 'ポリアミン代謝',
+  'Purine metabolism': 'プリン・尿酸代謝機能',
+  'Pyrimidine metabolism': '核酸合成（ピリミジン）代謝',
+  'Redox balance / Glutathione': '酸化還元（抗酸化）バランス',
+  'TCA Cycle': 'クエン酸回路',
+  'Urea Cycle': 'アンモニア解毒（尿素回路）機能',
+};
+
+function catJaName(cat) {
+  if (!cat) return '';
+  return CAT_JA_CLINIC[cat.trim()] || cat;
+}
+
 let allPatients = [];
 let selectedPatientId = null;
 let selectedDate = null;
@@ -130,7 +155,7 @@ function renderCatGrid(scores, patientId) {
   el.innerHTML = scores.map(function(s) {
     const rank = s.rank || '—';
     return '<div class="cat-grid-card cat-grid-card--' + rank + '" onclick="selectClinicCat(this,\'' + patientId + '\',\'' + s.category.replace(/'/g, "\\'") + '\')">' +
-      '<span class="cat-grid-card__name">' + (window.CAT_JA && CAT_JA[s.category] ? CAT_JA[s.category] : s.category) + '</span>' +
+      '<span class="cat-grid-card__name">' + (window.catJaName(s.category)) + '</span>' +
       '<span class="rank-badge rank-' + rank + '" style="width:24px;height:24px;font-size:12px;flex-shrink:0">' + rank + '</span>' +
     '</div>';
   }).join('');
