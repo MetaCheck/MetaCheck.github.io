@@ -246,7 +246,7 @@ async function selectClinicCat(cardEl, patientId, category) {
     if (!s) return;
 
     const rank = s.rank || '—';
-    const catJa = (window.CAT_JA && CAT_JA[category]) ? CAT_JA[category] : category;
+    const catJa = (typeof catName === 'function') ? catName(category) : ((window.CAT_JA && CAT_JA[category]) ? CAT_JA[category] : category);
 
     // category_resultsからmetabolitesタグ取得
     const crRows = await (async function() {
