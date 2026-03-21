@@ -116,10 +116,13 @@ function selectPatientScore(index, el) {
       return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
     }).join('') : '';
 
+    var catDescText = (typeof CAT_DESC !== 'undefined' && CAT_DESC[currentLang] && CAT_DESC[currentLang][s.category]) || '';
+
     card.innerHTML =
       '<div class="detail-card__title">' +
         '<span class="rank-badge rank-' + rank + '">' + rank + '</span> ' + catName(s.category) +
       '</div>' +
+      (catDescText ? '<div style="margin:10px 0;padding:10px 14px;background:var(--foam);border-left:3px solid var(--sage);border-radius:0 8px 8px 0;font-size:12px;color:var(--ink2);line-height:1.7">' + catDescText + '</div>' : '') +
       (metTags ? '<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--ink4);margin-bottom:6px">主な変動</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + metTags + '</div></div>' : '') +
       '<div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:16px">' +
         '<button class="pt-tab pt-tab--active" onclick="switchPatientTab(this,\'metabolite\')" data-tab="metabolite">'+t('patient.metabolite')+'</button>' +

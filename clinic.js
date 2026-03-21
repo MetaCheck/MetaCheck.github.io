@@ -263,10 +263,13 @@ async function selectClinicCat(cardEl, patientId, category) {
       return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
     }).join('') : '';
 
+    var catDescText = (typeof CAT_DESC !== 'undefined' && CAT_DESC[currentLang] && CAT_DESC[currentLang][category]) || '';
+
     detail.innerHTML =
       '<div style="font-size:18px;font-weight:700;color:var(--forest);margin-bottom:4px;display:flex;align-items:center;gap:10px">' +
         '<span class="rank-badge rank-' + rank + '" style="width:36px;height:36px;font-size:18px">' + rank + '</span>' + catJa +
       '</div>' +
+      (catDescText ? '<div style="margin:10px 0;padding:10px 14px;background:var(--foam);border-left:3px solid var(--sage);border-radius:0 8px 8px 0;font-size:12px;color:var(--ink2);line-height:1.7">' + catDescText + '</div>' : '') +
       (metTags ? '<div style="margin:12px 0"><div style="font-size:11px;color:var(--ink4);margin-bottom:6px">' + t('clinic.mainChange') + '</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + metTags + '</div></div>' : '') +
       '<div style="display:flex;border-bottom:1px solid var(--border);margin:14px 0 16px">' +
         '<button class="pt-tab pt-tab--active" onclick="switchClinicTab(this,\'metabolite\')">' + t('clinic.tab.metabolite') + '</button>' +
