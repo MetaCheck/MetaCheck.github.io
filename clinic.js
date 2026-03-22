@@ -445,8 +445,8 @@ function renderClinicChart(el, facts, compounds, dates) {
     yAxis += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W-padR) + '" y2="' + y + '" stroke="#D4E6DD" stroke-width="1"/>';
     yAxis += '<text x="' + (padL-4) + '" y="' + (y+4) + '" text-anchor="end" font-size="9" fill="#8FAAA0">' + v + '</text>';
   });
-  yAxis += '<text x="14" y="' + (padT+10) + '" text-anchor="middle" font-size="9" fill="#B03A2E" font-weight="bold">高い↑</text>';
-  yAxis += '<text x="14" y="' + (padT+chartH-4) + '" text-anchor="middle" font-size="9" fill="#4A90D9" font-weight="bold">低い↓</text>';
+  yAxis += '<text x="14" y="' + (padT+10) + '" text-anchor="middle" font-size="9" fill="#B03A2E" font-weight="bold">'+t('clinic.highUp')+'</text>';
+  yAxis += '<text x="14" y="' + (padT+chartH-4) + '" text-anchor="middle" font-size="9" fill="#4A90D9" font-weight="bold">'+t('clinic.lowDown')+'</text>';
 
   var xLabels = '';
   dates.forEach(function(d, i) {
@@ -534,7 +534,7 @@ function renderClinicTable(el, facts, compounds, dates) {
 
     rows += '<tr>' +
       '<td><span style="color:' + dirColor + ';font-weight:600;margin-right:4px">' + dirSymbol + '</span>' + c.compound + '</td>' +
-      '<td style="text-align:center"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:var(--emerald);color:#fff;font-size:10px;font-weight:700;font-family:var(--font-mono)">' + c.weight + '</span></td>' +
+      '<td><span class="rank-badge" style="background:var(--emerald);color:#fff;font-size:11px">' + c.weight + '</span></td>' +
       '<td style="font-family:var(--font-mono);color:var(--ink4)">' + baseline + '</td>' +
       cells + '</tr>';
   });
