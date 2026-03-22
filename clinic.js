@@ -131,6 +131,7 @@ async function selectClinicPatient(patientId) {
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
       '<button onclick="showKitSentModal(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)">' + t('clinic.kitSent') + '</button>' +
       '<button onclick="releaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--emerald);color:#fff;border:none">' + t('clinic.releaseScores') + '</button>' +
+      '<button onclick="unreleaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--ink3);border:1px solid var(--border)">' + t('clinic.unrelease') + '</button>' +
     '</div>';
 
   try {
@@ -584,6 +585,23 @@ async function submitKitSent(patientId) {
 }
 
 // ─── 結果公開 ────────────────────────────
+async function unreleaseScores(patientId) {
+  if (!confirm(t('clinic.unreleaseConfirm'))) return;
+  try {
+    const allIds = window._clinicAllIds || [patientId];
+    for (var i = 0; i < allIds.length; i++) {
+      await fetch(SUPABASE_URL + '/rest/v1/scores?patient_id=eq.' + allIds[i], {
+        method: 'PATCH',
+        headers: Object.assign({}, HEADERS, { 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ is_released: false })
+      });
+    }
+    if (typeof showToast === 'function') showToast(t('clinic.unreleaseToast'), 'success');
+  } catch(e) {
+    if (typeof showToast === 'function') showToast(t('clinic.errorToast'), 'error');
+  }
+}
+
 async function releaseScores(patientId) {
   if (!confirm(t('clinic.releaseConfirm'))) return;
 
