@@ -428,7 +428,7 @@ function renderClinicChart(el, facts, compounds, dates) {
   if (!factsWithLog2fc.length) { el.innerHTML = ''; return; }
 
   const W = Math.max(el.offsetWidth || 600, 400);
-  const H = 200;
+  const H = 300;
   const padL = 52, padR = 20, padT = 24, padB = 40;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
@@ -534,13 +534,13 @@ function renderClinicTable(el, facts, compounds, dates) {
 
     rows += '<tr>' +
       '<td><span style="color:' + dirColor + ';font-weight:600;margin-right:4px">' + dirSymbol + '</span>' + c.compound + '</td>' +
-      '<td style="text-align:center"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:var(--emerald);color:#fff;font-size:10px;font-weight:700;font-family:var(--font-mono)">' + c.weight + '</span></td>' +
+      '<td><span class="rank-badge" style="background:var(--emerald);color:#fff;font-size:11px">' + c.weight + '</span></td>' +
       '<td style="font-family:var(--font-mono);color:var(--ink4)">' + baseline + '</td>' +
       cells + '</tr>';
   });
 
   el.innerHTML = '<div class="score-table-wrap"><table class="score-table" style="width:100%;margin-top:4px">' +
-    '<thead><tr><th>' + t('patient.compound') + '</th><th>' + t('patient.weight') + '</th><th>' + t('patient.baseline') + '</th>' + thDates + '</tr></thead>' +
+    '<thead><tr><th style="min-width:100px">' + t('patient.compound') + '</th><th style="white-space:nowrap;width:44px;text-align:center">' + t('patient.weight') + '</th><th style="white-space:nowrap;min-width:70px">' + t('patient.baseline') + '</th>' + thDates + '</tr></thead>' +
     '<tbody>' + rows + '</tbody></table></div>';
 }
 
