@@ -408,6 +408,30 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
   .score-table td{padding:8px 8px;font-size:11px}
   .table-scroll-wrap .score-table{min-width:360px}
 }
+
+/* ─── PWAインストールバナー ─── */
+#pwa-banner{
+  position:fixed;top:0;left:0;right:0;z-index:9998;
+  background:linear-gradient(135deg,var(--forest),var(--emerald));
+  color:#fff;padding:10px 16px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 2px 12px rgba(0,0,0,.3);
+  transform:translateY(-100%);transition:transform .4s ease;
+}
+#pwa-banner.show{transform:translateY(0)}
+.pwa-banner__icon{font-size:24px;flex-shrink:0}
+.pwa-banner__text{flex:1;font-size:12px;line-height:1.5}
+.pwa-banner__title{font-weight:600;font-size:13px}
+.pwa-banner__btn{
+  padding:6px 14px;background:#fff;color:var(--forest);
+  border:none;border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;
+  flex-shrink:0;
+}
+.pwa-banner__close{
+  background:none;border:none;color:rgba(255,255,255,.6);
+  font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0;
+}
 </style>
 </head>
 <body>
@@ -762,11 +786,89 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
   </div>
 </div>
 
+
+<!-- ─── PWAインストールバナー ─── -->
+<div id="pwa-banner">
+  <div class="pwa-banner__icon">📲</div>
+  <div class="pwa-banner__text">
+    <div class="pwa-banner__title" id="pwa-banner-title">アプリとして使えます</div>
+    <div id="pwa-banner-sub">ホーム画面に追加するとアプリのように起動できます</div>
+  </div>
+  <button class="pwa-banner__btn" id="pwa-banner-btn" onclick="pwaInstall()">追加する</button>
+  <button class="pwa-banner__close" onclick="pwaDismiss()">✕</button>
+</div>
 <div id="chart-tooltip"></div>
 <div id="toast-container"></div>
 
 <script>
 // チャートツールチップ
+
+// ─── PWAインストールバナー ───
+var _deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _deferredPrompt = e;
+  showPwaBanner();
+});
+
+function showPwaBanner() {
+  // 1週間以内に閉じた場合は表示しない
+  var lastDismiss = localStorage.getItem('pwa_dismiss');
+  if (lastDismiss && Date.now() - parseInt(lastDismiss) < 7 * 24 * 60 * 60 * 1000) return;
+  // 既にインストール済みの場合は表示しない
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+
+  var lang = typeof currentLang !== 'undefined' ? currentLang : 'ja';
+  var titles = { ja:'アプリとして使えます', en:'Use as an App', vi:'Dùng như ứng dụng', cn:'作为应用使用' };
+  var subs = {
+    ja:'ホーム画面に追加するとアプリのように起動できます',
+    en:'Add to home screen to launch like a native app',
+    vi:'Thêm vào màn hình chính để dùng như ứng dụng',
+    cn:'添加到主屏幕，像原生应用一样启动'
+  };
+  var btns = { ja:'追加する', en:'Add', vi:'Thêm', cn:'添加' };
+
+  var titleEl = document.getElementById('pwa-banner-title');
+  var subEl = document.getElementById('pwa-banner-sub');
+  var btnEl = document.getElementById('pwa-banner-btn');
+  if (titleEl) titleEl.textContent = titles[lang] || titles.ja;
+  if (subEl) subEl.textContent = subs[lang] || subs.ja;
+  if (btnEl) btnEl.textContent = btns[lang] || btns.ja;
+
+  setTimeout(function() {
+    var banner = document.getElementById('pwa-banner');
+    if (banner) banner.classList.add('show');
+  }, 2000);
+}
+
+function pwaInstall() {
+  if (_deferredPrompt) {
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(function() {
+      _deferredPrompt = null;
+      pwaDismiss();
+    });
+  } else {
+    // iOS向け案内
+    var lang = typeof currentLang !== 'undefined' ? currentLang : 'ja';
+    var msgs = {
+      ja: 'iOSの場合：Safariの共有ボタン（□↑）→「ホーム画面に追加」をタップしてください',
+      en: 'On iOS: Tap the Share button (□↑) in Safari → "Add to Home Screen"',
+      vi: 'Trên iOS: Nhấn nút Chia sẻ (□↑) trong Safari → "Thêm vào màn hình chính"',
+      cn: '在iOS上：点击Safari中的分享按钮(□↑)→"添加到主屏幕"'
+    };
+    alert(msgs[lang] || msgs.ja);
+    pwaDismiss();
+  }
+}
+
+function pwaDismiss() {
+  var banner = document.getElementById('pwa-banner');
+  if (banner) banner.classList.remove('show');
+  localStorage.setItem('pwa_dismiss', Date.now().toString());
+}
+
 function showChartTooltip(e, text) {
   const el = document.getElementById('chart-tooltip');
   if (!el) return;
