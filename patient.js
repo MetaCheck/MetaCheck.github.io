@@ -15,7 +15,6 @@ function insightField(ins, field) {
 }
 
 async function renderPatientPage(patient) {
-  window._currentPatient = patient;
   const displayName = patient.name || patient.id;
   document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
   document.getElementById('patient-name-display').textContent = displayName + ' ' + t('patient.san');
@@ -364,7 +363,7 @@ async function loadMetaboliteTable(patientIds, category) {
         '</tr>';
     });
 
-    el.innerHTML = '<div class="score-table-wrap"><table class="score-table" style="margin-top:4px;width:100%">' +
+    el.innerHTML = '<div class="table-scroll-wrap"><table class="score-table" style="min-width:480px;margin-top:4px">' +
       '<thead><tr><th>' + t('patient.compound') + '</th><th>' + t('patient.weight') + '</th><th>' + t('patient.baseline') + '</th>' + thDates + '</tr></thead>' +
       '<tbody>' + rows + '</tbody></table></div>';
   } catch(e) {
