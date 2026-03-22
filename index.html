@@ -819,7 +819,19 @@ function showPwaBanner() {
   // 既にインストール済みの場合は表示しない
   if (window.matchMedia('(display-mode: standalone)').matches) return;
 
-  var lang = typeof currentLang !== 'undefined' ? currentLang : 'ja';
+  // 言語判定：currentLang → localStorage → ブラウザ言語の順で取得
+  var lang = 'ja';
+  if (typeof currentLang !== 'undefined' && currentLang) {
+    lang = currentLang;
+  } else if (localStorage.getItem('lang')) {
+    lang = localStorage.getItem('lang');
+  } else {
+    var bl = (navigator.language || navigator.userLanguage || 'ja').toLowerCase();
+    if (bl.startsWith('vi')) lang = 'vi';
+    else if (bl.startsWith('zh') || bl.startsWith('cn')) lang = 'cn';
+    else if (bl.startsWith('en')) lang = 'en';
+    else lang = 'ja';
+  }
   var titles = { ja:'アプリとして使えます', en:'Use as an App', vi:'Dùng như ứng dụng', cn:'作为应用使用' };
   var subs = {
     ja:'ホーム画面に追加するとアプリのように起動できます',
