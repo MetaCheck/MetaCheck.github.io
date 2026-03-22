@@ -395,7 +395,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 @media(max-width:1024px){
   .clinic-body{flex-direction:column}
   .clinic-sidebar{width:100%;max-height:180px}
-  .cat-grid{grid-template-columns:1fr 1fr}
+  .cat-grid{grid-template-columns:1fr}
   .login-box{width:90%;max-width:420px;padding:32px 24px}
 }
 @media(max-width:640px){
@@ -403,7 +403,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
   .topbar-logo,.topbar-logo--light{font-size:16px}
   .topbar-label,.topbar-label--light{display:none}
   .patient-body,.clinic-main-scroll{padding:12px}
-  .cat-grid{grid-template-columns:1fr 1fr}
+  .cat-grid{grid-template-columns:1fr}
   .score-table th{padding:8px 8px;font-size:10px}
   .score-table td{padding:8px 8px;font-size:11px}
   .table-scroll-wrap .score-table{min-width:360px}
@@ -880,9 +880,42 @@ function pwaInstall() {
       pwaDismiss();
     });
   } else {
-    // iOS向けインライン案内を表示
-    showIosGuide();
+    var ua = navigator.userAgent || '';
+    var isAndroid = /Android/i.test(ua);
+    if (isAndroid) {
+      showAndroidGuide();
+    } else {
+      showIosGuide();
+    }
   }
+}
+
+function showAndroidGuide() {
+  var lang = typeof currentLang !== 'undefined' ? currentLang : 'ja';
+  var msgs = {
+    ja: 'Chromeのメニュー（⋮）→「ホーム画面に追加」を選択してください',
+    en: 'Tap the Chrome menu (⋮) then select "Add to Home screen"',
+    vi: 'Nhan menu Chrome (⋮) roi chon "Them vao man hinh chinh"',
+    cn: '点击Chrome菜单（⋮），选择"添加到主屏幕"'
+  };
+  var existing = document.getElementById('android-guide');
+  if (existing) { existing.remove(); return; }
+  var msg = msgs[lang] || msgs.ja;
+  var guide = document.createElement('div');
+  guide.id = 'android-guide';
+  guide.style.cssText = 'position:fixed;bottom:80px;left:16px;right:16px;z-index:9999;background:#1A3C34;border:1px solid #52B788;border-radius:16px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,.4)';
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = lang === 'en' ? 'Close' : lang === 'vi' ? 'Dong' : lang === 'cn' ? '关闭' : '閉じる';
+  closeBtn.style.cssText = 'padding:6px 16px;background:#52B788;border:none;border-radius:20px;color:#1A3C34;font-size:12px;font-weight:600;cursor:pointer;font-family:sans-serif;margin-top:12px;display:block;margin-left:auto';
+  closeBtn.onclick = function() { guide.remove(); };
+  guide.innerHTML =
+    '<div style="display:flex;align-items:flex-start;gap:12px">' +
+    '<div style="font-size:28px;flex-shrink:0">📱</div>' +
+    '<div><div style="color:#95D5B2;font-size:11px;font-weight:600;margin-bottom:6px">App Install</div>' +
+    '<div style="color:#fff;font-size:13px;line-height:1.7">' + msg + '</div></div></div>';
+  guide.appendChild(closeBtn);
+  document.body.appendChild(guide);
+  setTimeout(function() { if (document.getElementById('android-guide')) guide.remove(); }, 8000);
 }
 
 function showIosGuide() {
