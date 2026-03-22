@@ -513,7 +513,12 @@ const I18N = {
     'common.accountSettings': 'Cài đặt tài khoản',
     'common.changePw':     '🔑 Đổi mật khẩu',
     'common.changeEmail':  '✉️ Đổi email',
+    'auth.register':       'Đăng ký',
     'auth.forgotPw':       'Quên mật khẩu?',
+    'auth.email':          'Địa chỉ email',
+    'auth.registerTitle':  'Tạo tài khoản',
+    'auth.registerSubmit': 'Tạo tài khoản',
+    'auth.registerHint':   'Email xác nhận sẽ được gửi sau khi đăng ký',
     'auth.clinicRegTitle': '🏥 Đăng ký phòng khám',
     'auth.clinicName':     'Tên phòng khám',
     'auth.clinicRegSubmit':'Đăng ký',
@@ -657,7 +662,12 @@ const I18N = {
     'common.accountSettings': '账户设置',
     'common.changePw':     '🔑 修改密码',
     'common.changeEmail':  '✉️ 修改邮箱',
+    'auth.register':       '注册',
     'auth.forgotPw':       '忘记密码？',
+    'auth.email':          '电子邮件地址',
+    'auth.registerTitle':  '创建账户',
+    'auth.registerSubmit': '创建账户',
+    'auth.registerHint':   '注册后将发送确认邮件',
     'auth.clinicRegTitle': '🏥 诊所注册',
     'auth.clinicName':     '诊所名称',
     'auth.clinicRegSubmit':'注册',
@@ -724,6 +734,11 @@ function changeLanguage(lang) {
     btn.textContent = lang.toUpperCase();
   });
   localStorage.setItem('lang', lang);
+
+  // ダウンロードボタンのテキスト更新
+  var dlBtnTexts = { ja:'アプリをダウンロード', en:'Download App', vi:'Tải ứng dụng', cn:'下载应用' };
+  var dlBtn = document.getElementById('pwa-dl-btn-text');
+  if (dlBtn) dlBtn.textContent = dlBtnTexts[lang] || dlBtnTexts.ja;
 
   // 患者画面を再描画
   if (window._patientScores && typeof renderPatientScores === 'function') {
