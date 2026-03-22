@@ -818,6 +818,13 @@ window.addEventListener('beforeinstallprompt', function(e) {
   showPwaBanner();
 });
 
+// iOSやインストール済み以外の全環境でバナー表示
+window.addEventListener('load', function() {
+  if (!window.matchMedia('(display-mode: standalone)').matches) {
+    showPwaBanner();
+  }
+});
+
 function showPwaBanner() {
   // 1週間以内に閉じた場合は表示しない
   var lastDismiss = localStorage.getItem('pwa_dismiss');
@@ -873,17 +880,38 @@ function pwaInstall() {
       pwaDismiss();
     });
   } else {
-    // iOS向け案内
-    var lang = typeof currentLang !== 'undefined' ? currentLang : 'ja';
-    var msgs = {
-      ja: 'iOSの場合：Safariの共有ボタン（□↑）→「ホーム画面に追加」をタップしてください',
-      en: 'On iOS: Tap the Share button (□↑) in Safari → "Add to Home Screen"',
-      vi: 'Trên iOS: Nhấn nút Chia sẻ (□↑) trong Safari → "Thêm vào màn hình chính"',
-      cn: '在iOS上：点击Safari中的分享按钮(□↑)→"添加到主屏幕"'
-    };
-    alert(msgs[lang] || msgs.ja);
-    pwaDismiss();
+    // iOS向けインライン案内を表示
+    showIosGuide();
   }
+}
+
+function showIosGuide() {
+  var lang = typeof currentLang !== 'undefined' ? currentLang : 'ja';
+  var msgs = {
+    ja: 'Safari下部の共有ボタン（□↑）をタップ→「ホーム画面に追加」を選択してください',
+    en: 'Tap the Share button at the bottom of Safari then select Add to Home Screen',
+    vi: 'Nhan nut Chia se o cuoi Safari roi chon Them vao man hinh chinh',
+    cn: '点击Safari底部的分享按鈕，选择“添加到主屏幕”'
+  };
+  var existing = document.getElementById('ios-guide');
+  if (existing) { existing.remove(); return; }
+
+  var msg = msgs[lang] || msgs.ja;
+  var guide = document.createElement('div');
+  guide.id = 'ios-guide';
+  guide.style.cssText = 'position:fixed;bottom:80px;left:16px;right:16px;z-index:9999;background:#1A3C34;border:1px solid #52B788;border-radius:16px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,.4)';
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = lang === 'en' ? 'Close' : lang === 'vi' ? 'Dong' : lang === 'cn' ? '关闭' : '閉じる';
+  closeBtn.style.cssText = 'padding:6px 16px;background:#52B788;border:none;border-radius:20px;color:#1A3C34;font-size:12px;font-weight:600;cursor:pointer;font-family:sans-serif;margin-top:12px;display:block;margin-left:auto';
+  closeBtn.onclick = function() { guide.remove(); };
+  guide.innerHTML =
+    '<div style="display:flex;align-items:flex-start;gap:12px">' +
+    '<div style="font-size:28px;flex-shrink:0">📱</div>' +
+    '<div><div style="color:#95D5B2;font-size:11px;font-weight:600;margin-bottom:6px">App Install</div>' +
+    '<div style="color:#fff;font-size:13px;line-height:1.7">' + msg + '</div></div></div>';
+  guide.appendChild(closeBtn);
+  document.body.appendChild(guide);
+  setTimeout(function() { if (document.getElementById('ios-guide')) guide.remove(); }, 8000);
 }
 
 function pwaDismiss() {
