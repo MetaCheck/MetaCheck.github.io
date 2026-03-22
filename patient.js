@@ -15,6 +15,7 @@ function insightField(ins, field) {
 }
 
 async function renderPatientPage(patient) {
+  window._currentPatient = patient;
   const displayName = patient.name || patient.id;
   document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
   document.getElementById('patient-name-display').textContent = displayName + ' ' + t('patient.san');

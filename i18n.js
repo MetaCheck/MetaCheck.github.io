@@ -744,6 +744,20 @@ function changeLanguage(lang) {
   var dlBtn = document.getElementById('pwa-dl-btn-text');
   if (dlBtn) dlBtn.textContent = dlBtnTexts[lang] || dlBtnTexts.ja;
 
+  // 患者ヘッダー（ID・名前・アラート）を再描画
+  if (window._currentPatient) {
+    var p = window._currentPatient;
+    var displayName = p.name || p.id;
+    var elId = document.getElementById('patient-display-id');
+    var elName = document.getElementById('patient-display-name');
+    var elNameDisp = document.getElementById('patient-name-display');
+    if (elId) elId.textContent = t('patient.analysisId') + ': ' + p.id;
+    if (elName) elName.textContent = displayName + ' ' + t('patient.san');
+    if (elNameDisp) elNameDisp.textContent = displayName + ' ' + t('patient.san');
+  }
+  if (window._patientScores && typeof renderAlertBanner === 'function') {
+    renderAlertBanner(window._patientScores);
+  }
   // 患者画面を再描画
   if (window._patientScores && typeof renderPatientScores === 'function') {
     renderPatientScores(window._patientScores);

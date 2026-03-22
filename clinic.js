@@ -534,7 +534,7 @@ function renderClinicTable(el, facts, compounds, dates) {
 
     rows += '<tr>' +
       '<td><span style="color:' + dirColor + ';font-weight:600;margin-right:4px">' + dirSymbol + '</span>' + c.compound + '</td>' +
-      '<td><span class="rank-badge" style="background:var(--emerald);color:#fff;font-size:11px">' + c.weight + '</span></td>' +
+      '<td style="text-align:center"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:var(--emerald);color:#fff;font-size:10px;font-weight:700;font-family:var(--font-mono)">' + c.weight + '</span></td>' +
       '<td style="font-family:var(--font-mono);color:var(--ink4)">' + baseline + '</td>' +
       cells + '</tr>';
   });
