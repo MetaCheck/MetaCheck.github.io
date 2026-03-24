@@ -46,11 +46,11 @@ async function fetchScoresMulti(patientIds) {
 }
 
 async function fetchPatientsByClinic(clinicId) {
-  return dbSelect('patients', 'clinic_id=eq.' + clinicId + '&select=*&order=id');
+  return dbSelect('patients', 'clinic_id=eq.' + clinicId + '&select=*&order=id.desc');
 }
 
 async function fetchAllPatients() {
-  return dbSelect('patients', 'select=*&order=clinic_id,id');
+  return dbSelect('patients', 'select=*&order=id.desc');
 }
 
 async function fetchPatient(patientId) {
