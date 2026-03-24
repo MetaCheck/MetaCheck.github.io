@@ -664,7 +664,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
         <input type="text" id="clinic-search" data-i18n-placeholder="clinic.searchPlaceholder" placeholder="解析IDで検索...">
       </div>
       <div class="sidebar-actions">
-        <button class="sidebar-btn sidebar-btn--primary" id="btn-add-patient" data-i18n="clinic.addPatient">＋ 患者追加</button>
+        <button class="sidebar-btn sidebar-btn--primary" id="btn-add-patient" data-i18n="clinic.addPatient">＋ 新規解析</button>
       </div>
       <ul class="clinic-patient-list" id="clinic-patient-list"></ul>
     </div>
@@ -721,7 +721,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 <!-- 患者追加 -->
 <div class="modal-backdrop hidden" id="modal-add-patient">
   <div class="modal-box">
-    <div class="modal-title" data-i18n="addPatient.title">患者追加</div>
+    <div class="modal-title" data-i18n="addPatient.title">新規解析</div>
     <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:8px" data-i18n="addPatient.previewLabel">発行される解析ID</div>
     <div id="preview-analysis-id" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--forest);padding:14px 18px;background:var(--foam);border-radius:10px;border:1px solid var(--sage);margin-bottom:8px;letter-spacing:3px">——————————</div>
     <div style="font-size:12px;color:var(--ink4);margin-bottom:24px" data-i18n="addPatient.previewHint">登録ボタンを押すと自動で発行されます</div>
