@@ -49,6 +49,7 @@ async function submitAddPatient() {
     showToast('解析ID ' + newId + ' を発行しました', 'success');
     // リスト更新して新患者を選択
     allPatients = await fetchPatientsByClinic(currentUser.clinicId);
+    allPatients = (allPatients || []).sort((a, b) => b.id.localeCompare(a.id));
     renderPatientList(allPatients);
     if (typeof selectClinicPatient === 'function') selectClinicPatient(newId);
   } catch (e) {
