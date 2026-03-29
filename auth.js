@@ -308,6 +308,84 @@ function showScreen(screenId) {
   }
 }
 
+
+// ─── 同意確認 ────────────────────────────
+function doTermsNext() {
+  var chkTerms = document.getElementById('chk-terms')?.checked;
+  var chkPrivacy = document.getElementById('chk-privacy')?.checked;
+  var chkSensitive = document.getElementById('chk-sensitive')?.checked;
+  var errEl = document.getElementById('terms-error');
+  if (!chkTerms || !chkPrivacy || !chkSensitive) {
+    if (errEl) { errEl.textContent = t('auth.termsAllRequired') || '全ての項目に同意してください'; errEl.classList.remove('hidden'); }
+    return;
+  }
+  if (errEl) errEl.classList.add('hidden');
+  showRegisterSection('body-info');
+}
+
+// ─── 身体情報送信・登録完了 ───────────────
+async function doBodyInfoSubmit() {
+  var errEl = document.getElementById('body-info-error');
+  var data = window._pendingRegData;
+  if (!data) return;
+
+  function getChecked(containerId) {
+    return Array.from(document.querySelectorAll('#' + containerId + ' input[type="checkbox"]:checked'))
+      .map(function(el) { return el.value; });
+  }
+
+  var bodyInfo = {
+    height_cm: parseFloat(document.getElementById('body-height')?.value) || null,
+    weight_kg: parseFloat(document.getElementById('body-weight')?.value) || null,
+    sex: document.getElementById('body-sex')?.value || null,
+    birth_date: document.getElementById('body-birth-date')?.value || null,
+    smoking: document.getElementById('body-smoking')?.value || 'none',
+    drinking: document.getElementById('body-drinking')?.value || 'none',
+    exercise: document.getElementById('body-exercise')?.value || 'none',
+    diet_note: document.getElementById('body-diet')?.value || 'none',
+    menstrual: document.getElementById('body-menstrual')?.value || 'na',
+    medical_history: getChecked('chk-medical-history'),
+    medications: getChecked('chk-medications'),
+    supplements: getChecked('chk-supplements'),
+    supplements_other: document.getElementById('body-supplements-other')?.value.trim() || null,
+  };
+
+  try {
+    var result = await authSignUp(data.email, data.pw);
+    var userId = result.user?.id;
+
+    if (userId) {
+      await linkAnalysisId(userId, data.analysisId, data.email);
+
+      if (data.nickname) {
+        await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + data.analysisId, {
+          method: 'PATCH',
+          headers: Object.assign({}, HEADERS, { 'Prefer': 'return=representation' }),
+          body: JSON.stringify({ name: data.nickname })
+        });
+      }
+
+      await fetch(SUPABASE_URL + '/rest/v1/patient_profiles', {
+        method: 'POST',
+        headers: Object.assign({}, getHeaders(), { 'Prefer': 'return=minimal' }),
+        body: JSON.stringify(Object.assign({ user_id: userId }, bodyInfo))
+      });
+
+      await fetch(SUPABASE_URL + '/rest/v1/analysis_snapshots', {
+        method: 'POST',
+        headers: Object.assign({}, getHeaders(), { 'Prefer': 'return=minimal' }),
+        body: JSON.stringify(Object.assign({ user_id: userId, analysis_id: data.analysisId }, bodyInfo))
+      });
+    }
+
+    window._pendingRegData = null;
+    showRegisterSection('check-email');
+
+  } catch(e) {
+    if (errEl) { errEl.textContent = e.message || '登録に失敗しました'; errEl.classList.remove('hidden'); }
+  }
+}
+
 // ─── イベント登録 ────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-login')?.addEventListener('click', doLogin);
