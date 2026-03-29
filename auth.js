@@ -6,6 +6,27 @@ let currentUser = null;
 let currentAccessToken = null;
 
 // ─── ログイン ────────────────────────────
+// ─── ログイン後に身体情報をpatient_profilesに保存 ──
+async function savePendingBodyInfo(userId) {
+  var raw = localStorage.getItem('_pendingBodyInfo');
+  if (!raw) return;
+  try {
+    var bodyInfo = JSON.parse(raw);
+    await fetch(SUPABASE_URL + '/rest/v1/patient_profiles', {
+      method: 'POST',
+      headers: Object.assign({}, HEADERS, {
+        'Authorization': 'Bearer ' + (window.currentAccessToken || SUPABASE_KEY),
+        'Prefer': 'return=minimal',
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify(Object.assign({ user_id: userId }, bodyInfo))
+    });
+    localStorage.removeItem('_pendingBodyInfo');
+  } catch(e) {
+    console.error('身体情報の保存に失敗:', e);
+  }
+}
+
 async function doLogin() {
   const role = document.querySelector('.role-tab.active')?.dataset.role || 'individual';
 
@@ -36,6 +57,7 @@ async function doLogin() {
       currentUser = { role: 'individual', id: patientId, userId, email, allIds: links.map(l => l.patient_id) };
       showLoginError(false);
       showScreen('screen-patient');
+      savePendingBodyInfo(currentUser.userId);
       renderPatientPage(patient);
 
     } catch(e) {
@@ -378,6 +400,8 @@ async function doBodyInfoSubmit() {
       });
     }
 
+    // 身体情報をlocalStorageに一時保存（メール確認後のログイン時に使用）
+    localStorage.setItem('_pendingBodyInfo', JSON.stringify(bodyInfo));
     window._pendingRegData = null;
     showRegisterSection('check-email');
 

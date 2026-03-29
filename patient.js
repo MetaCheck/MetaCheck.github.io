@@ -370,3 +370,147 @@ async function loadMetaboliteTable(patientIds, category) {
     el.innerHTML = '<div style="color:var(--ink4);font-size:12px">'+t('clinic.error')+'</div>';
   }
 }
+
+// ─── 身体情報の取得 ────────────────────────
+async function fetchBodyInfo(userId) {
+  try {
+    var rows = await dbSelect('patient_profiles', 'user_id=eq.' + userId + '&limit=1');
+    return rows && rows.length ? rows[0] : null;
+  } catch(e) { return null; }
+}
+
+// ─── 身体情報編集モーダルを開く ────────────
+async function openBodyInfoModal() {
+  var userId = currentUser?.userId;
+  if (!userId) return;
+  var info = await fetchBodyInfo(userId);
+
+  // フォームに現在値をセット
+  var fields = ['height_cm','weight_kg','sex','birth_date','smoking','drinking','exercise','diet_note','menstrual','supplements_other'];
+  var idMap = {
+    height_cm: 'edit-body-height', weight_kg: 'edit-body-weight',
+    sex: 'edit-body-sex', birth_date: 'edit-body-birth-date',
+    smoking: 'edit-body-smoking', drinking: 'edit-body-drinking',
+    exercise: 'edit-body-exercise', diet_note: 'edit-body-diet',
+    menstrual: 'edit-body-menstrual', supplements_other: 'edit-body-supplements-other'
+  };
+  fields.forEach(function(f) {
+    var el = document.getElementById(idMap[f]);
+    if (el && info && info[f] != null) el.value = info[f];
+  });
+
+  // チェックボックス系
+  var chkFields = { medical_history: 'edit-chk-medical', medications: 'edit-chk-medications', supplements: 'edit-chk-supplements' };
+  Object.keys(chkFields).forEach(function(field) {
+    var container = document.getElementById(chkFields[field]);
+    if (!container) return;
+    var vals = (info && info[field]) ? info[field] : [];
+    container.querySelectorAll('input[type="checkbox"]').forEach(function(chk) {
+      chk.checked = vals.includes(chk.value);
+    });
+  });
+
+  openModal('modal-body-info');
+}
+
+// ─── 身体情報を保存 ────────────────────────
+async function saveBodyInfo() {
+  var userId = currentUser?.userId;
+  if (!userId) return;
+
+  function getChecked(containerId) {
+    return Array.from(document.querySelectorAll('#' + containerId + ' input[type="checkbox"]:checked'))
+      .map(function(el) { return el.value; });
+  }
+
+  var bodyInfo = {
+    height_cm: parseFloat(document.getElementById('edit-body-height')?.value) || null,
+    weight_kg: parseFloat(document.getElementById('edit-body-weight')?.value) || null,
+    sex: document.getElementById('edit-body-sex')?.value || null,
+    birth_date: document.getElementById('edit-body-birth-date')?.value || null,
+    smoking: document.getElementById('edit-body-smoking')?.value || 'none',
+    drinking: document.getElementById('edit-body-drinking')?.value || 'none',
+    exercise: document.getElementById('edit-body-exercise')?.value || 'none',
+    diet_note: document.getElementById('edit-body-diet')?.value || 'none',
+    menstrual: document.getElementById('edit-body-menstrual')?.value || 'na',
+    medical_history: getChecked('edit-chk-medical'),
+    medications: getChecked('edit-chk-medications'),
+    supplements: getChecked('edit-chk-supplements'),
+    supplements_other: document.getElementById('edit-body-supplements-other')?.value.trim() || null,
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    // upsert
+    await fetch(SUPABASE_URL + '/rest/v1/patient_profiles', {
+      method: 'POST',
+      headers: Object.assign({}, getHeaders(), { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+      body: JSON.stringify(Object.assign({ user_id: userId }, bodyInfo))
+    });
+    closeModal('modal-body-info');
+    showToast(t('body.saved') || '身体情報を保存しました', 'success');
+  } catch(e) {
+    showToast('保存に失敗しました', 'error');
+  }
+}
+
+// ─── 解析ID追加モーダルを開く ────────────
+function openAddAnalysisModal() {
+  document.getElementById('input-add-analysis-id').value = '';
+  document.getElementById('add-analysis-error').textContent = '';
+  document.getElementById('add-analysis-error').classList.add('hidden');
+  // 身体情報を現在値でセット（次のステップで確認）
+  openModal('modal-add-analysis');
+}
+
+// ─── 解析IDを追加して紐付け ────────────────
+async function doAddAnalysisId() {
+  var userId = currentUser?.userId;
+  var analysisId = document.getElementById('input-add-analysis-id')?.value.trim().toUpperCase();
+  var errEl = document.getElementById('add-analysis-error');
+
+  if (!analysisId) {
+    errEl.textContent = t('auth.analysisIdRequired') || '解析IDを入力してください';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  try {
+    // 解析IDの存在確認
+    var patient = await fetchPatient(analysisId);
+    if (!patient) {
+      errEl.textContent = t('auth.analysisIdNotFound') || '解析IDが見つかりません';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    // 現在の身体情報を取得してスナップショット保存
+    var info = await fetchBodyInfo(userId);
+
+    // 解析IDと紐付け
+    await linkAnalysisId(userId, analysisId, currentUser.email);
+
+    // analysis_snapshotsに保存
+    if (info) {
+      var snapshot = Object.assign({}, info, { user_id: userId, analysis_id: analysisId });
+      delete snapshot.updated_at;
+      snapshot.created_at = new Date().toISOString();
+      await fetch(SUPABASE_URL + '/rest/v1/analysis_snapshots', {
+        method: 'POST',
+        headers: Object.assign({}, getHeaders(), { 'Prefer': 'return=minimal' }),
+        body: JSON.stringify(snapshot)
+      });
+    }
+
+    closeModal('modal-add-analysis');
+    showToast(t('patient.analysisAdded') || '解析IDを追加しました', 'success');
+
+    // マイページ更新
+    currentUser.allIds = (currentUser.allIds || []).concat([analysisId]);
+    renderPatientPage(currentUser);
+
+  } catch(e) {
+    errEl.textContent = e.message || '追加に失敗しました';
+    errEl.classList.remove('hidden');
+  }
+}

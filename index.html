@@ -437,6 +437,9 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 .chk-label{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:5px 10px;cursor:pointer;color:rgba(255,255,255,0.8);font-size:11px;transition:all .2s}
 .chk-label:hover{background:rgba(82,183,136,0.2);border-color:var(--sage)}
 .chk-label input[type="checkbox"]{accent-color:var(--sage);width:14px;height:14px}
+.chk-label-modal{display:flex;align-items:center;gap:5px;background:var(--foam);border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--ink2);font-size:11px;font-family:'DM Sans',sans-serif}
+.chk-label-modal:hover{border-color:var(--sage)}
+.chk-label-modal input[type="checkbox"]{accent-color:var(--emerald);width:13px;height:13px}
 </style>
 </head>
 <body>
@@ -805,6 +808,8 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button onclick="openModal('modal-change-pw')" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)" data-i18n="common.changePw">🔑 パスワード変更</button>
         <button onclick="openModal('modal-change-email')" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)" data-i18n="common.changeEmail">✉️ メールアドレス変更</button>
+        <button onclick="openBodyInfoModal()" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)" data-i18n="body.editBtn">🏃 身体情報を編集</button>
+        <button onclick="openAddAnalysisModal()" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--emerald);color:#fff;border:1px solid var(--emerald)" data-i18n="patient.addAnalysis">＋ 解析IDを追加</button>
       </div>
     </div>
     <div style="margin-top:20px;padding:12px 0;border-top:1px solid var(--border)">
@@ -914,6 +919,131 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 </div>
 
 <!-- ══════════════ MODALS ══════════════ -->
+
+<!-- 身体情報編集モーダル -->
+<div class="modal-backdrop hidden" id="modal-body-info">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-title" data-i18n="body.editTitle">身体情報の編集</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="login-field"><label data-i18n="body.height">身長 (cm)</label><input type="number" id="edit-body-height" placeholder="170"></div>
+        <div class="login-field"><label data-i18n="body.weight">体重 (kg)</label><input type="number" id="edit-body-weight" placeholder="65"></div>
+      </div>
+      <div class="login-field"><label data-i18n="body.sex">性別</label>
+        <select id="edit-body-sex" style="width:100%;padding:10px;background:var(--paper);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink)">
+          <option value="">選択してください</option>
+          <option value="male" data-i18n="body.male">男性</option>
+          <option value="female" data-i18n="body.female">女性</option>
+          <option value="other" data-i18n="body.other">その他</option>
+        </select>
+      </div>
+      <div class="login-field"><label data-i18n="body.birthDate">生年月日</label><input type="date" id="edit-body-birth-date"></div>
+      <div class="login-field"><label data-i18n="body.smoking">喫煙</label>
+        <select id="edit-body-smoking" style="width:100%;padding:10px;background:var(--paper);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink)">
+          <option value="none" data-i18n="body.smokingNone">なし</option>
+          <option value="past" data-i18n="body.smokingPast">過去に喫煙</option>
+          <option value="current" data-i18n="body.smokingCurrent">現在喫煙中</option>
+        </select>
+      </div>
+      <div class="login-field"><label data-i18n="body.drinking">飲酒</label>
+        <select id="edit-body-drinking" style="width:100%;padding:10px;background:var(--paper);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink)">
+          <option value="none">なし</option>
+          <option value="occasional">時々</option>
+          <option value="regular">定期的</option>
+          <option value="heavy">毎日・多量</option>
+        </select>
+      </div>
+      <div class="login-field"><label data-i18n="body.exercise">運動習慣</label>
+        <select id="edit-body-exercise" style="width:100%;padding:10px;background:var(--paper);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink)">
+          <option value="none">ほぼなし</option>
+          <option value="light">軽度</option>
+          <option value="moderate">中程度</option>
+          <option value="intense">高強度</option>
+        </select>
+      </div>
+      <div class="login-field"><label data-i18n="body.diet">食事傾向</label>
+        <select id="edit-body-diet" style="width:100%;padding:10px;background:var(--paper);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink)">
+          <option value="none">特になし</option>
+          <option value="fasting">断食・プチファスティング</option>
+          <option value="low_carb">糖質制限</option>
+          <option value="vegetarian">菜食・ベジタリアン</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      <div class="login-field"><label data-i18n="body.menstrual">月経（女性のみ）</label>
+        <select id="edit-body-menstrual" style="width:100%;padding:10px;background:var(--paper);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink)">
+          <option value="na">該当なし</option>
+          <option value="regular">規則的</option>
+          <option value="irregular">不規則</option>
+          <option value="menopause">閉経</option>
+        </select>
+      </div>
+      <div class="login-field"><label data-i18n="body.medicalHistory">既往歴（複数選択可）</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="edit-chk-medical">
+          <label class="chk-label-modal"><input type="checkbox" value="diabetes"> 糖尿病</label>
+          <label class="chk-label-modal"><input type="checkbox" value="hypertension"> 高血圧</label>
+          <label class="chk-label-modal"><input type="checkbox" value="dyslipidemia"> 脂質異常症</label>
+          <label class="chk-label-modal"><input type="checkbox" value="liver_disease"> 肝疾患</label>
+          <label class="chk-label-modal"><input type="checkbox" value="kidney_disease"> 腎疾患</label>
+          <label class="chk-label-modal"><input type="checkbox" value="thyroid"> 甲状腺疾患</label>
+          <label class="chk-label-modal"><input type="checkbox" value="cancer"> がん既往</label>
+          <label class="chk-label-modal"><input type="checkbox" value="none"> なし</label>
+        </div>
+      </div>
+      <div class="login-field"><label data-i18n="body.medications">服薬（複数選択可）</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="edit-chk-medications">
+          <label class="chk-label-modal"><input type="checkbox" value="antihypertensive"> 降圧剤</label>
+          <label class="chk-label-modal"><input type="checkbox" value="statin"> スタチン</label>
+          <label class="chk-label-modal"><input type="checkbox" value="diabetes_med"> 糖尿病薬</label>
+          <label class="chk-label-modal"><input type="checkbox" value="thyroid_med"> 甲状腺薬</label>
+          <label class="chk-label-modal"><input type="checkbox" value="anticancer"> 抗がん剤</label>
+          <label class="chk-label-modal"><input type="checkbox" value="none"> なし</label>
+        </div>
+      </div>
+      <div class="login-field"><label data-i18n="body.supplements">サプリメント（複数選択可）</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="edit-chk-supplements">
+          <label class="chk-label-modal"><input type="checkbox" value="vitamin_b"> ビタミンB群</label>
+          <label class="chk-label-modal"><input type="checkbox" value="vitamin_c"> ビタミンC</label>
+          <label class="chk-label-modal"><input type="checkbox" value="vitamin_d"> ビタミンD</label>
+          <label class="chk-label-modal"><input type="checkbox" value="magnesium"> マグネシウム</label>
+          <label class="chk-label-modal"><input type="checkbox" value="zinc"> 亜鉛</label>
+          <label class="chk-label-modal"><input type="checkbox" value="iron"> 鉄</label>
+          <label class="chk-label-modal"><input type="checkbox" value="coq10"> CoQ10</label>
+          <label class="chk-label-modal"><input type="checkbox" value="omega3"> オメガ3</label>
+          <label class="chk-label-modal"><input type="checkbox" value="amino_bcaa"> アミノ酸/BCAA</label>
+          <label class="chk-label-modal"><input type="checkbox" value="protein"> プロテイン</label>
+          <label class="chk-label-modal"><input type="checkbox" value="folate"> 葉酸</label>
+          <label class="chk-label-modal"><input type="checkbox" value="nad_nmn"> NAD/NMN</label>
+          <label class="chk-label-modal"><input type="checkbox" value="none"> なし</label>
+        </div>
+      </div>
+      <div class="login-field"><label data-i18n="body.supplementsOther">その他サプリメント</label>
+        <input type="text" id="edit-body-supplements-other" placeholder="例：マルチビタミン">
+      </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--secondary" onclick="closeModal('modal-body-info')" data-i18n="common.cancel">キャンセル</button>
+      <button class="modal-btn modal-btn--primary" onclick="saveBodyInfo()" data-i18n="body.save">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 解析ID追加モーダル -->
+<div class="modal-backdrop hidden" id="modal-add-analysis">
+  <div class="modal-box">
+    <div class="modal-title" data-i18n="patient.addAnalysisTitle">解析IDを追加</div>
+    <div style="font-size:13px;color:var(--ink3);margin-bottom:16px" data-i18n="patient.addAnalysisSub">クリニックから受け取った解析IDを入力してください。追加時点の身体情報が記録されます。</div>
+    <div class="login-field" style="margin-bottom:16px">
+      <label data-i18n="auth.analysisId">解析ID</label>
+      <input type="text" id="input-add-analysis-id" placeholder="例：260305AD001" style="width:100%;padding:10px;background:var(--paper);border:1px solid var(--border);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--ink);outline:none">
+    </div>
+    <div id="add-analysis-error" class="hidden" style="color:var(--ruby);font-size:12px;margin-bottom:12px"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--secondary" onclick="closeModal('modal-add-analysis')" data-i18n="common.cancel">キャンセル</button>
+      <button class="modal-btn modal-btn--primary" onclick="doAddAnalysisId()" data-i18n="patient.addAnalysisBtn">追加する</button>
+    </div>
+  </div>
+</div>
+
 <!-- 患者追加 -->
 <div class="modal-backdrop hidden" id="modal-add-patient">
   <div class="modal-box">
