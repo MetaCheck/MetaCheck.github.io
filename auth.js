@@ -103,25 +103,9 @@ async function doRegister() {
   }
 
   try {
-    const result = await authSignUp(email, pw);
-    const userId = result.user?.id;
-
-    // 解析IDと紐付け
-    if (userId) {
-      await linkAnalysisId(userId, analysisId, email);
-    }
-
-    // ニックネームを patients テーブルに保存
-    if (nickname) {
-      await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + analysisId, {
-        method: 'PATCH',
-        headers: Object.assign({}, HEADERS, { 'Prefer': 'return=representation' }),
-        body: JSON.stringify({ name: nickname })
-      });
-    }
-
-    // 確認メール送信完了画面
-    showRegisterSection('check-email');
+    // バリデーション通過 → 同意画面へ（実際の登録は同意・身体情報入力後）
+    window._pendingRegData = { email, pw, analysisId, nickname };
+    showRegisterSection('terms-consent');
 
   } catch(e) {
     showRegisterError(e.message || '登録に失敗しました');
@@ -286,13 +270,15 @@ function showRegisterSection(section) {
   const map = {
     'login': 'login-section',
     'register': 'register-section',
+    'terms-consent': 'terms-consent-section',
+    'body-info': 'body-info-section',
     'check-email': 'check-email-section',
     'link-analysis': 'link-analysis-section',
     'forgot': 'forgot-section',
     'clinic-register': 'clinic-register-section',
     'clinic-register-done': 'clinic-register-done-section'
   };
-  ['login-section','register-section','check-email-section','link-analysis-section','forgot-section','clinic-register-section','clinic-register-done-section'].forEach(function(id) {
+  ['login-section','register-section','terms-consent-section','body-info-section','check-email-section','link-analysis-section','forgot-section','clinic-register-section','clinic-register-done-section'].forEach(function(id) {
     const el = document.getElementById(id);
     if (el) { el.style.display = 'none'; el.classList.add('hidden'); }
   });
@@ -326,6 +312,10 @@ function showScreen(screenId) {
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-login')?.addEventListener('click', doLogin);
   document.getElementById('btn-register-submit')?.addEventListener('click', doRegister);
+  document.getElementById('btn-terms-next')?.addEventListener('click', doTermsNext);
+  document.getElementById('btn-body-info-submit')?.addEventListener('click', doBodyInfoSubmit);
+  document.getElementById('btn-back-from-terms')?.addEventListener('click', function() { showRegisterSection('register'); });
+  document.getElementById('btn-back-from-body')?.addEventListener('click', function() { showRegisterSection('terms-consent'); });
   document.getElementById('btn-link-analysis')?.addEventListener('click', doLinkAnalysisId);
 
   document.getElementById('btn-clinic-register-submit')?.addEventListener('click', doClinicRegister);
