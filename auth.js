@@ -128,6 +128,7 @@ async function doRegister() {
     // バリデーション通過 → 同意画面へ（実際の登録は同意・身体情報入力後）
     window._pendingRegData = { email, pw, analysisId, nickname };
     showRegisterSection('terms-consent');
+    updateTermsContent();
 
   } catch(e) {
     showRegisterError(e.message || '登録に失敗しました');

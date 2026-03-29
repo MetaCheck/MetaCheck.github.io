@@ -440,6 +440,20 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 .chk-label-modal{display:flex;align-items:center;gap:5px;background:var(--foam);border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--ink2);font-size:11px;font-family:'DM Sans',sans-serif}
 .chk-label-modal:hover{border-color:var(--sage)}
 .chk-label-modal input[type="checkbox"]{accent-color:var(--emerald);width:13px;height:13px}
+#modal-body-info .login-field label{color:var(--ink3)}
+#modal-body-info input[type="number"],
+#modal-body-info input[type="date"],
+#modal-body-info input[type="text"],
+#modal-body-info select{
+  width:100%;padding:10px 12px;
+  background:var(--paper);
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:14px;
+  color:var(--ink);outline:none;
+}
+#modal-body-info input:focus,
+#modal-body-info select:focus{border-color:var(--sage)}
 </style>
 </head>
 <body>
@@ -582,7 +596,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
     <div id="terms-consent-section" style="display:none">
       <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:6px" data-i18n="auth.termsTitle">利用規約・プライバシーポリシー</div>
       <div style="color:var(--mint);font-size:12px;margin-bottom:16px" data-i18n="auth.termsSubtitle">サービス利用前に以下をご確認ください</div>
-      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px;margin-bottom:16px;max-height:260px;overflow-y:auto">
+      <div id="terms-content-box" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px;margin-bottom:16px;max-height:260px;overflow-y:auto">
         <div style="color:#fff;font-size:12px;font-weight:700;margin-bottom:8px">■ 利用規約</div>
         <div style="color:rgba(255,255,255,0.75);font-size:11px;line-height:1.9">
           <b style="color:rgba(255,255,255,0.9)">第1条　総則</b><br>
