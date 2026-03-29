@@ -434,17 +434,9 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
   background:none;border:none;color:rgba(255,255,255,.6);
   font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0;
 }
-
-.chk-label {
-  display:flex;align-items:center;gap:5px;
-  background:rgba(255,255,255,0.07);
-  border:1px solid rgba(255,255,255,0.12);
-  border-radius:6px;padding:5px 10px;cursor:pointer;
-  color:rgba(255,255,255,0.8);font-size:11px;
-  transition:all .2s;
-}
-.chk-label:hover { background:rgba(82,183,136,0.2);border-color:var(--sage); }
-.chk-label input[type="checkbox"] { accent-color:var(--sage);width:14px;height:14px; }
+.chk-label{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:5px 10px;cursor:pointer;color:rgba(255,255,255,0.8);font-size:11px;transition:all .2s}
+.chk-label:hover{background:rgba(82,183,136,0.2);border-color:var(--sage)}
+.chk-label input[type="checkbox"]{accent-color:var(--sage);width:14px;height:14px}
 </style>
 </head>
 <body>
@@ -587,13 +579,42 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
     <div id="terms-consent-section" style="display:none">
       <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:6px" data-i18n="auth.termsTitle">利用規約・プライバシーポリシー</div>
       <div style="color:var(--mint);font-size:12px;margin-bottom:16px" data-i18n="auth.termsSubtitle">サービス利用前に以下をご確認ください</div>
-      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px;margin-bottom:16px;max-height:200px;overflow-y:auto">
-        <div style="color:#fff;font-size:12px;font-weight:600;margin-bottom:8px" data-i18n="auth.termsHead">■ 利用規約（要約）</div>
-        <div style="color:rgba(255,255,255,0.7);font-size:11px;line-height:1.8" data-i18n="auth.termsSummary">本サービスは代謝物データを解析し健康参考情報を提供するものです。医療診断・治療行為には該当しません。提供される情報はあくまで参考情報であり、最終的な医療判断はクリニックの医師が行います。</div>
-        <div style="color:#fff;font-size:12px;font-weight:600;margin:12px 0 8px" data-i18n="auth.privacyHead">■ 個人情報の取扱い（要約）</div>
-        <div style="color:rgba(255,255,255,0.7);font-size:11px;line-height:1.8" data-i18n="auth.privacySummary">収集する情報：メールアドレス・身体情報（身長・体重・性別・生年月日等）・生活習慣情報・代謝物データ。利用目的：代謝スコアの算出・サービス品質向上・研究開発。第三者提供：法令に基づく場合を除き行いません。</div>
-        <div style="color:rgba(255,255,255,0.7);font-size:11px;line-height:1.8;margin-top:8px">
-          <a href="https://cpc-bank.com/#privacy" target="_blank" style="color:var(--mint);text-decoration:underline" data-i18n="auth.privacyLink">プライバシーポリシー全文はこちら →</a>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px;margin-bottom:16px;max-height:260px;overflow-y:auto">
+        <div style="color:#fff;font-size:12px;font-weight:700;margin-bottom:8px">■ 利用規約</div>
+        <div style="color:rgba(255,255,255,0.75);font-size:11px;line-height:1.9">
+          <b style="color:rgba(255,255,255,0.9)">第1条　総則</b><br>
+          MetaCheck（以下「本サービス」）は、一般社団法人CPC BANK（以下「当法人」）が提供する代謝インテリジェンスプラットフォームです。本規約は、本サービスの利用に関する条件を定めるものです。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">第2条　サービスの目的</b><br>
+          本サービスは、血液・尿検体から得られる代謝物データを解析し、個人の代謝状態をスコアリングして提供する健康情報サービスです。本サービスは医療診断・治療行為を目的とするものではなく、提供される情報はあくまで健康参考情報です。最終的な医療判断はクリニックの医師が行います。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">第3条　禁止事項</b><br>
+          利用者は以下の行為を行ってはなりません。①本サービスのデータを第三者に無断で開示・提供すること、②本サービスを医療診断の代替として使用すること、③不正アクセスやシステムへの攻撃、④虚偽の情報を登録すること、⑤その他当法人が不適切と判断する行為。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">第4条　免責事項</b><br>
+          本サービスが提供する情報は健康参考情報であり、医療診断の代替ではありません。当法人は、本サービスの利用により生じた損害について、故意または重大な過失がない限り責任を負いません。また、システム障害・メンテナンス等による一時的なサービス停止について責任を負いません。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">第5条　個人情報の取扱い</b><br>
+          当法人は、利用者の個人情報を本プライバシーポリシーに基づき適切に管理します。収集した個人情報は、サービス提供・品質向上・法令遵守の目的にのみ使用し、第三者への提供は行いません。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">第6条　規約の変更</b><br>
+          当法人は、必要に応じて本規約を変更することができます。変更後の規約は、本サービス上に掲載した時点で効力を生じます。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">第7条　準拠法・管轄</b><br>
+          本規約は日本法に準拠し、東京地方裁判所を第一審の専属的合意管轄裁判所とします。
+        </div>
+        <div style="color:#fff;font-size:12px;font-weight:700;margin:16px 0 8px">■ プライバシーポリシー</div>
+        <div style="color:rgba(255,255,255,0.75);font-size:11px;line-height:1.9">
+          <b style="color:rgba(255,255,255,0.9)">1. 収集する情報</b><br>
+          当法人は以下の情報を収集します。①氏名・メールアドレス等の基本情報、②身長・体重・性別・生年月日等の身体情報、③喫煙・飲酒・運動習慣・既往歴・服薬・サプリメント等の生活情報、④血液・尿から得られる代謝物データ、⑤本サービスの利用履歴。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">2. 利用目的</b><br>
+          収集した情報は以下の目的で使用します。①代謝スコアの算出・解析結果の提供、②サービスの品質向上・研究開発、③法令に基づく対応、④お問い合わせへの回答。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">3. 第三者提供</b><br>
+          当法人は、法令に基づく場合を除き、利用者の同意なく個人情報を第三者に提供しません。ただし、業務委託先への必要な範囲での提供は除きます。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">4. データの管理</b><br>
+          データはSOC 2 Type 2認証取得済みのクラウド基盤で管理され、転送時はTLS 1.2以上、保存時はAES-256で暗号化されます。アクセスは認証済みユーザーに限定されます。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">5. 保存期間</b><br>
+          個人情報は、サービス利用終了後5年間保存し、その後適切に削除します。法令により保存が義務付けられる情報はこの限りではありません。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">6. 利用者の権利</b><br>
+          利用者は、自身の個人情報について開示・訂正・削除・利用停止を請求する権利を有します。請求はinfo@cpc-bank.comまでご連絡ください。<br><br>
+          <b style="color:rgba(255,255,255,0.9)">7. お問い合わせ窓口</b><br>
+          一般社団法人 CPC BANK<br>
+          所在地：東京都港区高輪2丁目21番1号 THE LINKPILLAR1 NORTH 6・7F<br>
+          Email：info@cpc-bank.com
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
@@ -611,7 +632,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
         </label>
       </div>
       <div id="terms-error" class="login-error-msg hidden"></div>
-      <button class="login-btn" id="btn-terms-next" data-i18n="auth.termsNext">次へ（身体情報の入力）</button>
+      <button class="login-btn" id="btn-terms-next" data-i18n="auth.termsNext">次へ</button>
       <div style="text-align:center;margin-top:12px">
         <button class="login-link" id="btn-back-from-terms" data-i18n="auth.backToLogin">← 戻る</button>
       </div>
@@ -621,20 +642,11 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
     <div id="body-info-section" style="display:none">
       <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:4px" data-i18n="auth.bodyInfoTitle">身体情報の入力</div>
       <div style="color:var(--mint);font-size:11px;margin-bottom:16px" data-i18n="auth.bodyInfoSub">代謝解析の精度向上のために使用します。後から変更可能です。</div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-        <div class="login-field">
-          <label data-i18n="body.height">身長 (cm)</label>
-          <input type="number" id="body-height" placeholder="170" min="100" max="250">
-        </div>
-        <div class="login-field">
-          <label data-i18n="body.weight">体重 (kg)</label>
-          <input type="number" id="body-weight" placeholder="65" min="20" max="300">
-        </div>
+        <div class="login-field"><label data-i18n="body.height">身長 (cm)</label><input type="number" id="body-height" placeholder="170" min="100" max="250"></div>
+        <div class="login-field"><label data-i18n="body.weight">体重 (kg)</label><input type="number" id="body-weight" placeholder="65" min="20" max="300"></div>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.sex">性別</label>
+      <div class="login-field"><label data-i18n="body.sex">性別</label>
         <select id="body-sex">
           <option value="" data-i18n="body.selectPlaceholder">選択してください</option>
           <option value="male" data-i18n="body.male">男性</option>
@@ -642,23 +654,15 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
           <option value="other" data-i18n="body.other">その他・回答しない</option>
         </select>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.birthDate">生年月日</label>
-        <input type="date" id="body-birth-date">
-      </div>
-
-      <div class="login-field">
-        <label data-i18n="body.smoking">喫煙</label>
+      <div class="login-field"><label data-i18n="body.birthDate">生年月日</label><input type="date" id="body-birth-date"></div>
+      <div class="login-field"><label data-i18n="body.smoking">喫煙</label>
         <select id="body-smoking">
           <option value="none" data-i18n="body.smokingNone">なし</option>
           <option value="past" data-i18n="body.smokingPast">過去に喫煙（現在は禁煙）</option>
           <option value="current" data-i18n="body.smokingCurrent">現在喫煙中</option>
         </select>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.drinking">飲酒</label>
+      <div class="login-field"><label data-i18n="body.drinking">飲酒</label>
         <select id="body-drinking">
           <option value="none" data-i18n="body.drinkingNone">なし</option>
           <option value="occasional" data-i18n="body.drinkingOccasional">時々（週1〜2回以下）</option>
@@ -666,19 +670,15 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
           <option value="heavy" data-i18n="body.drinkingHeavy">毎日・多量</option>
         </select>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.exercise">運動習慣</label>
+      <div class="login-field"><label data-i18n="body.exercise">運動習慣</label>
         <select id="body-exercise">
           <option value="none" data-i18n="body.exerciseNone">ほぼなし</option>
-          <option value="light" data-i18n="body.exerciseLight">軽度（週1〜2回のウォーキング等）</option>
+          <option value="light" data-i18n="body.exerciseLight">軽度（週1〜2回）</option>
           <option value="moderate" data-i18n="body.exerciseModerate">中程度（週3〜4回）</option>
-          <option value="intense" data-i18n="body.exerciseIntense">高強度（ほぼ毎日・スポーツ）</option>
+          <option value="intense" data-i18n="body.exerciseIntense">高強度（ほぼ毎日）</option>
         </select>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.diet">食事傾向</label>
+      <div class="login-field"><label data-i18n="body.diet">食事傾向</label>
         <select id="body-diet">
           <option value="none" data-i18n="body.dietNone">特になし</option>
           <option value="fasting" data-i18n="body.dietFasting">断食・プチファスティング</option>
@@ -687,9 +687,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
           <option value="other" data-i18n="body.dietOther">その他</option>
         </select>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.menstrual">月経（女性のみ）</label>
+      <div class="login-field"><label data-i18n="body.menstrual">月経（女性のみ）</label>
         <select id="body-menstrual">
           <option value="na" data-i18n="body.menstrualNa">該当なし</option>
           <option value="regular" data-i18n="body.menstrualRegular">規則的</option>
@@ -697,10 +695,8 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
           <option value="menopause" data-i18n="body.menstrualMenopause">閉経</option>
         </select>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.medicalHistory">既往歴（複数選択可）</label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="chk-medical-history">
+      <div class="login-field"><label data-i18n="body.medicalHistory">既往歴（複数選択可）</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="chk-medical-history">
           <label class="chk-label"><input type="checkbox" value="diabetes"> <span data-i18n="body.diabetes">糖尿病</span></label>
           <label class="chk-label"><input type="checkbox" value="hypertension"> <span data-i18n="body.hypertension">高血圧</span></label>
           <label class="chk-label"><input type="checkbox" value="dyslipidemia"> <span data-i18n="body.dyslipidemia">脂質異常症</span></label>
@@ -711,10 +707,8 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
           <label class="chk-label"><input type="checkbox" value="none"> <span data-i18n="body.noneHistory">なし</span></label>
         </div>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.medications">服薬（複数選択可）</label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="chk-medications">
+      <div class="login-field"><label data-i18n="body.medications">服薬（複数選択可）</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="chk-medications">
           <label class="chk-label"><input type="checkbox" value="antihypertensive"> <span data-i18n="body.antihypertensive">降圧剤</span></label>
           <label class="chk-label"><input type="checkbox" value="statin"> <span data-i18n="body.statin">スタチン</span></label>
           <label class="chk-label"><input type="checkbox" value="diabetes_med"> <span data-i18n="body.diabetesMed">糖尿病薬</span></label>
@@ -723,10 +717,8 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
           <label class="chk-label"><input type="checkbox" value="none"> <span data-i18n="body.noneMed">なし</span></label>
         </div>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.supplements">サプリメント（複数選択可）</label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="chk-supplements">
+      <div class="login-field"><label data-i18n="body.supplements">サプリメント（複数選択可）</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="chk-supplements">
           <label class="chk-label"><input type="checkbox" value="vitamin_b"> <span data-i18n="body.vitaminB">ビタミンB群</span></label>
           <label class="chk-label"><input type="checkbox" value="vitamin_c"> <span data-i18n="body.vitaminC">ビタミンC</span></label>
           <label class="chk-label"><input type="checkbox" value="vitamin_d"> <span data-i18n="body.vitaminD">ビタミンD</span></label>
@@ -742,12 +734,9 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
           <label class="chk-label"><input type="checkbox" value="none"> <span data-i18n="body.noneSupp">なし</span></label>
         </div>
       </div>
-
-      <div class="login-field">
-        <label data-i18n="body.supplementsOther">サプリメント（その他・自由記載）</label>
-        <input type="text" id="body-supplements-other" placeholder="例：マルチビタミン、プロバイオティクス">
+      <div class="login-field"><label data-i18n="body.supplementsOther">サプリメント（その他）</label>
+        <input type="text" id="body-supplements-other" placeholder="例：マルチビタミン">
       </div>
-
       <div id="body-info-error" class="login-error-msg hidden"></div>
       <button class="login-btn" id="btn-body-info-submit" data-i18n="auth.bodyInfoSubmit">登録を完了する</button>
       <div style="text-align:center;margin-top:12px">
