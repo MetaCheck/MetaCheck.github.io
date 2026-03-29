@@ -443,7 +443,7 @@ const I18N = {
     'auth.termsTitle':     'Terms of Service & Privacy Policy',
     'auth.termsSubtitle':  'Please review the following before using the service',
     'auth.termsHead':      '■ Terms of Service (Summary)',
-    'auth.termsSummary':   'This service analyzes metabolite data to provide health reference information. It is not intended for medical diagnosis or treatment. All information is for reference only; final medical decisions are made by the clinic's physicians.',
+    'auth.termsSummary':   'This service analyzes metabolite data to provide health reference information. It is not intended for medical diagnosis or treatment. All information is for reference only; final medical decisions are made by the clinic\'s physicians.',
     'auth.privacyHead':    '■ Privacy Policy (Summary)',
     'auth.privacySummary': 'Information collected: email address, physical information, lifestyle information, and metabolite data. Purpose: metabolic scoring, service improvement, and research. Third-party disclosure: not provided except as required by law.',
     'auth.privacyLink':    'Full Privacy Policy →',
