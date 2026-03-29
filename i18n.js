@@ -1118,6 +1118,7 @@ function changeLanguage(lang) {
     btn.textContent = lang.toUpperCase();
   });
   localStorage.setItem('lang', lang);
+  if (typeof updateTermsContent === 'function') updateTermsContent();
 
   // ダウンロードボタンのテキスト更新
   var dlBtnTexts = { ja:'アプリをダウンロード', en:'Download App', vi:'Tải ứng dụng', cn:'下载应用' };
