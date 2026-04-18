@@ -638,6 +638,18 @@ async function releaseScores(patientId) {
 
 async function insertPatient(data) {
   try {
+    alert('DEBUG 1: insertPatient called with: ' + data.id);
+    
+    if (typeof SUPABASE_URL === 'undefined') {
+      throw new Error('SUPABASE_URL is not defined');
+    }
+    alert('DEBUG 2: SUPABASE_URL = ' + SUPABASE_URL);
+    
+    if (typeof HEADERS === 'undefined') {
+      throw new Error('HEADERS is not defined');
+    }
+    alert('DEBUG 3: HEADERS defined');
+    
     const response = await fetch(SUPABASE_URL + '/rest/v1/patients', {
       method: 'POST',
       headers: Object.assign({}, HEADERS, {
@@ -653,14 +665,19 @@ async function insertPatient(data) {
       })
     });
 
+    alert('DEBUG 4: Response status = ' + response.status);
+
     if (!response.ok) {
       const err = await response.json();
+      alert('DEBUG 5: Response error = ' + JSON.stringify(err));
       throw new Error(err.message || 'Insert failed');
     }
 
+    alert('DEBUG 6: Patient inserted successfully: ' + data.id);
     console.log('✓ Patient inserted:', data.id);
     return { id: data.id };
   } catch (e) {
+    alert('DEBUG ERROR: ' + e.message);
     console.error('insertPatient error:', e);
     throw e;
   }
