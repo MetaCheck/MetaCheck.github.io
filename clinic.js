@@ -689,7 +689,7 @@ async function insertPatient(data) {
 async function fetchPatientsByClinic(clinicId) {
   try {
     const response = await fetch(
-      SUPABASE_URL + '/rest/v1/patients?clinic_id=eq.' + encodeURIComponent(clinicId) + '&status=neq.deleted&order=created_at.desc',
+      SUPABASE_URL + '/rest/v1/patients?clinic_id=eq.' + encodeURIComponent(clinicId) + '&order=created_at.desc',
       {
         method: 'GET',
         headers: HEADERS
@@ -701,8 +701,10 @@ async function fetchPatientsByClinic(clinicId) {
     }
 
     const data = await response.json();
-    console.log('✓ Fetched patients for clinic', clinicId, ':', (data || []).length);
-    return data || [];
+    // クライアント側で deleted を除外
+    const filtered = (data || []).filter(function(p) { return p.status !== 'deleted'; });
+    console.log('✓ Fetched patients for clinic', clinicId, ':', filtered.length);
+    return filtered;
   } catch (e) {
     console.error('fetchPatientsByClinic error:', e);
     throw e;
