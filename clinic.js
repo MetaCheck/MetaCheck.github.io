@@ -630,3 +630,158 @@ async function releaseScores(patientId) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+//  患者追加・取得機能（clinic.jsに追加する部分）
+// ═══════════════════════════════════════════════════════════
+
+// ─── 患者追加（新規解析ID発行） ──────────────────────────
+
+async function insertPatient(data) {
+  try {
+    const response = await fetch(SUPABASE_URL + '/rest/v1/patients', {
+      method: 'POST',
+      headers: Object.assign({}, HEADERS, {
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      }),
+      body: JSON.stringify({
+        id: data.id,
+        clinic_id: data.clinic_id,
+        status: data.status || 'pending',
+        created_at: data.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.message || 'Insert failed');
+    }
+
+    console.log('✓ Patient inserted:', data.id);
+    return { id: data.id };
+  } catch (e) {
+    console.error('insertPatient error:', e);
+    throw e;
+  }
+}
+
+// ─── クリニック別患者取得 ────────────────────────────────
+
+async function fetchPatientsByClinic(clinicId) {
+  try {
+    const response = await fetch(
+      SUPABASE_URL + '/rest/v1/patients?clinic_id=eq.' + encodeURIComponent(clinicId) + '&order=created_at.desc',
+      {
+        method: 'GET',
+        headers: HEADERS
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Fetch failed: ' + response.statusText);
+    }
+
+    const data = await response.json();
+    console.log('✓ Fetched patients for clinic', clinicId, ':', (data || []).length);
+    return data || [];
+  } catch (e) {
+    console.error('fetchPatientsByClinic error:', e);
+    throw e;
+  }
+}
+
+// ─── 全患者取得（ADMIN用） ────────────────────────────────
+
+async function fetchAllPatients() {
+  try {
+    const response = await fetch(
+      SUPABASE_URL + '/rest/v1/patients?order=created_at.desc',
+      {
+        method: 'GET',
+        headers: HEADERS
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Fetch failed: ' + response.statusText);
+    }
+
+    const data = await response.json();
+    console.log('✓ Fetched all patients:', (data || []).length);
+    return data || [];
+  } catch (e) {
+    console.error('fetchAllPatients error:', e);
+    throw e;
+  }
+}
+
+// ─── スコア取得（複数ID） ────────────────────────────────
+
+async function fetchScoresMulti(patientIds) {
+  try {
+    const ids = patientIds.map(id => "'" + id.replace(/'/g, "''") + "'").join(',');
+    const response = await fetch(
+      SUPABASE_URL + '/rest/v1/scores?patient_id=in.(' + encodeURIComponent(ids) + ')',
+      {
+        method: 'GET',
+        headers: HEADERS
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Fetch failed');
+    }
+
+    return await response.json();
+  } catch (e) {
+    console.error('fetchScoresMulti error:', e);
+    return [];
+  }
+}
+
+// ─── スコア取得（単一ID） ────────────────────────────────
+
+async function fetchScoresForPatient(patientId) {
+  try {
+    const response = await fetch(
+      SUPABASE_URL + '/rest/v1/scores?patient_id=eq.' + encodeURIComponent(patientId) + '&order=category.asc',
+      {
+        method: 'GET',
+        headers: HEADERS
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Fetch failed');
+    }
+
+    return await response.json();
+  } catch (e) {
+    console.error('fetchScoresForPatient error:', e);
+    return [];
+  }
+}
+
+// ─── Compound データ取得 ──────────────────────────────────
+
+async function fetchCompoundFactsForPatient(patientId) {
+  try {
+    const response = await fetch(
+      SUPABASE_URL + '/rest/v1/compound_facts?patient_id=eq.' + encodeURIComponent(patientId),
+      {
+        method: 'GET',
+        headers: HEADERS
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Fetch failed');
+    }
+
+    return await response.json();
+  } catch (e) {
+    console.error('fetchCompoundFactsForPatient error:', e);
+    return [];
+  }
+}
