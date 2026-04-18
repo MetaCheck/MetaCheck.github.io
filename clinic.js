@@ -108,11 +108,15 @@ function renderPatientList(patients) {
     return;
   }
   
-  // created_at で新しい順にソート
+  // created_at で新しい順にソート、同じ時刻なら id の降順
   const sorted = (patients || []).sort(function(a, b) {
     var dateA = new Date(a.created_at || 0);
     var dateB = new Date(b.created_at || 0);
-    return dateB - dateA;
+    if (dateA.getTime() !== dateB.getTime()) {
+      return dateB - dateA;
+    }
+    // 同じ時刻ならidの降順（新しいIDが上）
+    return b.id.localeCompare(a.id);
   });
   
   list.innerHTML = sorted.map(function(p) {
