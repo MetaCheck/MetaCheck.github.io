@@ -728,8 +728,10 @@ async function fetchAllPatients() {
     }
 
     const data = await response.json();
-    console.log('✓ Fetched all patients:', (data || []).length);
-    return data || [];
+    // クライアント側で deleted を除外
+    const filtered = (data || []).filter(function(p) { return p.status !== 'deleted'; });
+    console.log('✓ Fetched all patients:', filtered.length);
+    return filtered;
   } catch (e) {
     console.error('fetchAllPatients error:', e);
     throw e;
