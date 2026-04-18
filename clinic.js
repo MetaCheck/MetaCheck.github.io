@@ -141,6 +141,7 @@ async function selectClinicPatient(patientId) {
       '<button onclick="showKitSentModal(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)">' + t('clinic.kitSent') + '</button>' +
       '<button onclick="releaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--emerald);color:#fff;border:none">' + t('clinic.releaseScores') + '</button>' +
       '<button onclick="unreleaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--ink3);border:1px solid var(--border)">' + t('clinic.unrelease') + '</button>' +
+      '<button onclick="confirmDeletePatient(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:#fdecea;color:#B03A2E;border:1px solid #f4c7c3">' + t('clinic.delete') + '</button>' +
     '</div>';
 
   try {
@@ -808,6 +809,34 @@ async function deletePatient(patientId) {
   } catch (e) {
     console.error('deletePatient error:', e);
     throw e;
+  }
+}
+
+// ─── 患者削除確認 ────────────────────────────────────
+
+async function confirmDeletePatient(patientId) {
+  if (!confirm('患者 ' + patientId + ' を削除してもよろしいですか？\n※ データは保存され、復旧可能です')) {
+    return;
+  }
+
+  try {
+    await deletePatient(patientId);
+    
+    // 一覧をリロード
+    allPatients = await fetchPatientsByClinic(currentUser.clinicId);
+    allPatients = (allPatients || []).sort((a, b) => b.id.localeCompare(a.id));
+    renderPatientList(allPatients);
+    
+    // 詳細パネルを非表示
+    const detail = document.getElementById('clinic-detail');
+    if (detail) detail.classList.add('hidden');
+    const emptyState = document.getElementById('clinic-empty-state');
+    if (emptyState) emptyState.classList.remove('hidden');
+    
+    if (typeof showToast === 'function') showToast('患者を削除しました', 'success');
+  } catch (e) {
+    if (typeof showToast === 'function') showToast('削除に失敗しました', 'error');
+    console.error(e);
   }
 }
 
