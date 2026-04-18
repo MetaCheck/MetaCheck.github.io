@@ -127,3 +127,74 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 });
+
+// ─── ログイン処理 ────────────────────────
+
+async function doLogin() {
+  const role = document.querySelector('.role-btn.active')?.id === 'role-patient' ? 'patient' : 'clinic';
+  const password = document.querySelector('.login-field input[type="password"]')?.value;
+  
+  if (!password || password !== 'demo1234') {
+    alert('パスワードが違います');
+    return;
+  }
+
+  let clinicId;
+  if (role === 'clinic') {
+    clinicId = document.getElementById('sel-clinic-id')?.value;
+  } else {
+    clinicId = document.getElementById('sel-patient-id')?.value;
+  }
+
+  if (!clinicId) {
+    alert('選択してください');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL + '/rest/v1/clinics?id=eq.' + encodeURIComponent(clinicId),
+      { method: 'GET', headers: HEADERS }
+    );
+
+    if (!response.ok) throw new Error('Clinic fetch failed');
+    
+    const clinicData = await response.json();
+    if (!clinicData.length) throw new Error('Clinic not found');
+
+    const clinic = clinicData[0];
+
+    currentUser = {
+      id: clinicId,
+      clinicId: clinic.id,
+      name: clinic.name,
+      role: role
+    };
+
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    document.getElementById('login-screen').classList.add('hidden');
+
+    if (role === 'clinic') {
+      document.getElementById('app').classList.add('visible');
+      document.getElementById('app').classList.add('clinic-only');
+      if (typeof renderClinicPage === 'function') {
+        renderClinicPage(clinic.id, clinic.status);
+      }
+    } else {
+      document.getElementById('app').classList.add('visible');
+      document.getElementById('app').classList.add('patient-only');
+      if (typeof renderPatientPage === 'function') {
+        renderPatientPage(clinicId);
+      }
+    }
+  } catch (e) {
+    console.error('Login error:', e);
+    alert('ログインに失敗しました');
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('currentUser');
+  currentUser = null;
+  location.reload();
+}
