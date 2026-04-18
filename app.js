@@ -35,16 +35,33 @@ function generateAnalysisId(clinicCode) {
 }
 
 async function submitAddPatient() {
-  if (!currentUser?.clinicId) return;
+  alert('DEBUG: submitAddPatient called');
+  
+  if (!currentUser) {
+    alert('ERROR: currentUser is undefined');
+    showToast('エラー: ユーザー情報が無い', 'error');
+    return;
+  }
+  
+  if (!currentUser.clinicId) {
+    alert('ERROR: currentUser.clinicId is undefined. currentUser = ' + JSON.stringify(currentUser));
+    showToast('エラー: クリニックIDが無い', 'error');
+    return;
+  }
+  
   const newId = generateAnalysisId(currentUser.clinicId);
+  alert('DEBUG: Generated newId = ' + newId);
 
   try {
+    alert('DEBUG: Calling insertPatient...');
     await insertPatient({
       id: newId,
       clinic_id: currentUser.clinicId,
       status: 'pending',
       created_at: new Date().toISOString()
     });
+    alert('DEBUG: insertPatient succeeded');
+    
     closeModal('modal-add-patient');
     showToast('解析ID ' + newId + ' を発行しました', 'success');
     // リスト更新して新患者を選択
@@ -53,6 +70,7 @@ async function submitAddPatient() {
     renderPatientList(allPatients);
     if (typeof selectClinicPatient === 'function') selectClinicPatient(newId);
   } catch (e) {
+    alert('DEBUG: Error caught: ' + e.message);
     showToast('登録に失敗しました', 'error');
     console.error(e);
   }
