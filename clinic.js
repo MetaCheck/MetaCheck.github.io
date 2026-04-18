@@ -48,7 +48,7 @@ async function renderClinicPage(clinicId, status) {
   document.getElementById('clinic-name-display').textContent = currentUser.name || clinicId;
 
   try {
-    // ADMINは全患者を取得
+    // 毎回 Supabase から最新データを取得
     if (clinicId === 'ADMIN' || status === 'admin') {
       allPatients = await fetchAllPatients();
       renderPatientList(allPatients);
@@ -107,7 +107,15 @@ function renderPatientList(patients) {
     list.innerHTML = '<li style="padding:16px;color:var(--ink4);font-size:13px">患者がいません</li>';
     return;
   }
-  list.innerHTML = patients.map(function(p) {
+  
+  // created_at で新しい順にソート
+  const sorted = (patients || []).sort(function(a, b) {
+    var dateA = new Date(a.created_at || 0);
+    var dateB = new Date(b.created_at || 0);
+    return dateB - dateA;
+  });
+  
+  list.innerHTML = sorted.map(function(p) {
     return '<li class="patient-item ' + (p.id === selectedPatientId ? 'active' : '') + '" data-id="' + p.id + '" onclick="selectClinicPatient(\'' + p.id + '\')">' +
       '<div class="patient-item__dot">' + p.id.slice(-3) + '</div>' +
       '<div class="patient-item__info">' +
