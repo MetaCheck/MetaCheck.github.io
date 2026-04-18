@@ -835,7 +835,7 @@ async function confirmDeletePatient(patientId) {
     
     // 一覧をリロード
     allPatients = await fetchPatientsByClinic(currentUser.clinicId);
-    allPatients = (allPatients || []).sort((a, b) => b.id.localeCompare(a.id));
+    allPatients = (allPatients || []).sort((a, b) => a.id.localeCompare(b.id));
     renderPatientList(allPatients);
     
     // 詳細パネルを非表示
