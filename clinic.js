@@ -815,7 +815,14 @@ async function deletePatient(patientId) {
 // ─── 患者削除確認 ────────────────────────────────────
 
 async function confirmDeletePatient(patientId) {
-  if (!confirm('患者 ' + patientId + ' を削除してもよろしいですか？\n※ データは保存され、復旧可能です')) {
+  var lang = typeof currentLang !== 'undefined' ? currentLang : 'ja';
+  var confirmMsg = {
+    'ja': '患者 ' + patientId + ' を削除してもよろしいですか？\n※ データは保存され、復旧可能です',
+    'en': 'Delete patient ' + patientId + '?\n※ Data will be retained and can be recovered.',
+    'vi': 'Xóa bệnh nhân ' + patientId + ' không?\n※ Dữ liệu sẽ được lưu giữ và có thể khôi phục.'
+  };
+  
+  if (!confirm(confirmMsg[lang] || confirmMsg['ja'])) {
     return;
   }
 
@@ -833,9 +840,9 @@ async function confirmDeletePatient(patientId) {
     const emptyState = document.getElementById('clinic-empty-state');
     if (emptyState) emptyState.classList.remove('hidden');
     
-    if (typeof showToast === 'function') showToast('患者を削除しました', 'success');
+    if (typeof showToast === 'function') showToast(t('clinic.deleteSuccess'), 'success');
   } catch (e) {
-    if (typeof showToast === 'function') showToast('削除に失敗しました', 'error');
+    if (typeof showToast === 'function') showToast(t('clinic.deleteFailed'), 'error');
     console.error(e);
   }
 }
