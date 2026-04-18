@@ -688,7 +688,7 @@ async function insertPatient(data) {
 async function fetchPatientsByClinic(clinicId) {
   try {
     const response = await fetch(
-      SUPABASE_URL + '/rest/v1/patients?clinic_id=eq.' + encodeURIComponent(clinicId) + '&order=created_at.desc',
+      SUPABASE_URL + '/rest/v1/patients?clinic_id=eq.' + encodeURIComponent(clinicId) + '&status=neq.deleted&order=created_at.desc',
       {
         method: 'GET',
         headers: HEADERS
@@ -777,6 +777,37 @@ async function fetchScoresForPatient(patientId) {
   } catch (e) {
     console.error('fetchScoresForPatient error:', e);
     return [];
+  }
+}
+
+// ─── 患者削除（論理削除） ────────────────────────────────
+
+async function deletePatient(patientId) {
+  try {
+    const response = await fetch(
+      SUPABASE_URL + '/rest/v1/patients?id=eq.' + encodeURIComponent(patientId),
+      {
+        method: 'PATCH',
+        headers: Object.assign({}, HEADERS, {
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        }),
+        body: JSON.stringify({
+          status: 'deleted',
+          updated_at: new Date().toISOString()
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Delete failed: ' + response.statusText);
+    }
+
+    console.log('✓ Patient marked as deleted:', patientId);
+    return true;
+  } catch (e) {
+    console.error('deletePatient error:', e);
+    throw e;
   }
 }
 
