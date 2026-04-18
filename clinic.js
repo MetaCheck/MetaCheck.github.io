@@ -701,7 +701,7 @@ async function insertPatient(data) {
 async function fetchPatientsByClinic(clinicId) {
   try {
     const response = await fetch(
-      SUPABASE_URL + '/rest/v1/patients?clinic_id=eq.' + encodeURIComponent(clinicId) + '&order=created_at.desc',
+      SUPABASE_URL + '/rest/v1/patients?clinic_id=eq.' + encodeURIComponent(clinicId) + '&order=id.desc',
       {
         method: 'GET',
         headers: HEADERS
@@ -728,7 +728,7 @@ async function fetchPatientsByClinic(clinicId) {
 async function fetchAllPatients() {
   try {
     const response = await fetch(
-      SUPABASE_URL + '/rest/v1/patients?order=created_at.desc',
+      SUPABASE_URL + '/rest/v1/patients?order=id.desc',
       {
         method: 'GET',
         headers: HEADERS
