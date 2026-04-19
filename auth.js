@@ -177,7 +177,7 @@ async function doClinicRegister() {
   try {
     // Supabase Authに登録（クリニックフラグ付き）
     const redirectTo = window.location.origin + window.location.pathname + '?clinic=1';
-    const result = await authSignUp(email, pw, redirectTo);
+    const result = await authSignUp(email, pw, redirectTo, 'clinic');
     const userId = result.user?.id;
 
     // クリニックIDを自動採番してclinicsテーブルに登録
@@ -374,7 +374,7 @@ async function doBodyInfoSubmit() {
   };
 
   try {
-    var result = await authSignUp(data.email, data.pw);
+    var result = await authSignUp(data.email, data.pw, null, 'individual');
     var userId = result.user?.id;
 
     if (userId) {

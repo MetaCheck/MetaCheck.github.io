@@ -165,9 +165,12 @@ async function summarizeInsight(text, mode) {
 const SUPABASE_AUTH_URL = SUPABASE_URL + '/auth/v1';
 
 // メール＋PW でサインアップ
-async function authSignUp(email, password, redirectTo) {
+async function authSignUp(email, password, redirectTo, role) {
   const body = { email: email, password: password };
-  if (redirectTo) body.options = { emailRedirectTo: redirectTo };
+  const opts = {};
+  if (redirectTo) opts.emailRedirectTo = redirectTo;
+  if (role) opts.data = { role: role };
+  if (Object.keys(opts).length) body.options = opts;
   const res = await fetch(SUPABASE_AUTH_URL + '/signup', {
     method: 'POST',
     headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
