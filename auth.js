@@ -214,6 +214,13 @@ async function doClinicRegister() {
     const clinicId = await idRes.json();
 
     await dbInsert('clinics', { id: clinicId, name: name, email: email, status: 'trial' });
+    if (userId) {
+      await fetch(SUPABASE_URL + '/rest/v1/user_roles', {
+        method: 'POST',
+        headers: Object.assign({}, HEADERS, { 'Authorization': 'Bearer ' + (window.currentAccessToken || SUPABASE_KEY), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ user_id: userId, role: 'clinic' })
+      }).catch(function(e) { console.error('user_roles保存失敗:', e); });
+    }
 
     showRegisterSection('clinic-register-done');
   } catch(e) {
@@ -415,6 +422,11 @@ async function doBodyInfoSubmit() {
 
     if (userId) {
       await linkAnalysisId(userId, data.analysisId, data.email);
+      await fetch(SUPABASE_URL + '/rest/v1/user_roles', {
+        method: 'POST',
+        headers: Object.assign({}, HEADERS, { 'Authorization': 'Bearer ' + (window.currentAccessToken || SUPABASE_KEY), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ user_id: userId, role: 'individual' })
+      }).catch(function(e) { console.error('user_roles保存失敗:', e); });
 
       if (data.nickname) {
         await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + data.analysisId, {
