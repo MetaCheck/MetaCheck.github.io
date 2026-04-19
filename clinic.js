@@ -728,7 +728,7 @@ async function fetchPatientsByClinic(clinicId) {
 async function fetchAllPatients() {
   try {
     const response = await fetch(
-      SUPABASE_URL + '/rest/v1/patients?order=created_at.desc',
+      SUPABASE_URL + '/rest/v1/patients?order=id.desc',
       {
         method: 'GET',
         headers: HEADERS
