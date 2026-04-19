@@ -473,8 +473,8 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
     <!-- ログインセクション -->
     <div id="login-section">
       <div class="login-role">
-        <button class="role-tab active" data-role="individual" data-i18n="login.patient">👤 個人</button>
-        <button class="role-tab" data-role="clinic" data-i18n="login.clinic">🏥 クリニック</button>
+        <button class="role-tab active" data-role="individual" data-i18n="login.patient">個人</button>
+        <button class="role-tab" data-role="clinic" data-i18n="login.clinic">クリニック</button>
       </div>
       <div id="form-individual">
         <div class="login-field">
@@ -512,7 +512,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 
     <!-- クリニック新規登録セクション -->
     <div id="clinic-register-section" style="display:none">
-      <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:20px" data-i18n="auth.clinicRegTitle">🏥 クリニック登録</div>
+      <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:20px" data-i18n="auth.clinicRegTitle">クリニック登録</div>
       <div class="login-field">
         <label data-i18n="auth.clinicName">クリニック名</label>
         <input type="text" id="input-clinic-reg-name" placeholder="例：〇〇クリニック">
@@ -566,23 +566,23 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
       <div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:20px" data-i18n="auth.registerTitle">アカウント作成</div>
       <div class="login-field">
         <label data-i18n="auth.email">メールアドレス</label>
-        <input type="email" id="input-register-email" placeholder="example@email.com">
+        <input type="email" id="input-register-email" autocomplete="off" placeholder="example@email.com">
       </div>
       <div class="login-field">
         <label data-i18n="auth.password">パスワード（8文字以上）</label>
-        <input type="password" id="input-register-pw" placeholder="••••••••">
+        <input type="password" id="input-register-pw" autocomplete="new-password" placeholder="••••••••">
       </div>
       <div class="login-field">
         <label data-i18n="auth.confirmPassword">パスワード（確認）</label>
-        <input type="password" id="input-register-pw2" placeholder="••••••••">
+        <input type="password" id="input-register-pw2" autocomplete="new-password" placeholder="••••••••">
       </div>
       <div class="login-field">
         <label data-i18n="auth.nickname">ニックネーム</label>
-        <input type="text" id="input-register-nickname" placeholder="例：田中">
+        <input type="text" id="input-register-nickname" autocomplete="off" placeholder="例：田中">
       </div>
       <div class="login-field">
         <label data-i18n="auth.analysisId">解析ID（キットに記載）</label>
-        <input type="text" id="input-register-analysis-id" placeholder="例：241210AB001">
+        <input type="text" id="input-register-analysis-id" autocomplete="off" placeholder="例：241210AB001">
       </div>
       <div id="register-error" class="login-error-msg hidden"></div>
       <button class="login-btn" id="btn-register-submit" data-i18n="auth.registerSubmit">アカウント作成</button>
