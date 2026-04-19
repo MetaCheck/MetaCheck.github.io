@@ -289,6 +289,17 @@ function showRegisterError(msg) {
   if (el) { el.textContent = msg; el.classList.remove('hidden'); }
 }
 
+
+// ─── 登録フォームをクリア ────────────────────
+function clearRegisterForm() {
+  ['input-register-email','input-register-pw','input-register-pw2',
+   'input-register-nickname','input-register-analysis-id'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  window._pendingRegData = null;
+}
+
 function showRegisterSection(section) {
   const map = {
     'login': 'login-section',
@@ -447,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-back-to-login')?.addEventListener('click', function() {
     showRegisterSection('login');
   });
-  document.getElementById('btn-back-to-login2')?.addEventListener('click', function() {
+  document.getElementById('btn-back-to-login2')?.addEventListener('click', function() { clearRegisterForm();
     showRegisterSection('login');
   });
 
