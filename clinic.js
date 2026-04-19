@@ -2,6 +2,15 @@
 //  clinic.js — クリニックポータル
 // ═══════════════════════════════════════════
 
+// ─── 解析IDから日付を算出（先頭6桁: YYMMDD）────
+function dateFromPatientId(patientId) {
+  if (!patientId || patientId.length < 6) return '';
+  var yy = patientId.slice(0, 2);
+  var mm = patientId.slice(2, 4);
+  var dd = patientId.slice(4, 6);
+  return '20' + yy + '-' + mm + '-' + dd;
+}
+
 const CAT_JA_CLINIC = {
   'Amino acid / BCAA metabolism': 'アミノ酸・BCAA代謝状態',
   'Cofactors / Vitamin B': '補酵素・ビタミンB機能',
@@ -157,9 +166,17 @@ async function selectClinicPatient(patientId) {
     '</div>';
 
   try {
-    // この解析IDに紐付くメールから全解析IDを取得
-    // クリニック側では常に選択した患者IDのみ表示（user_analysis_idsは参照しない）
+    // メールアドレスから同じ患者の全解析IDを取得
     var allPatientIds = [patientId];
+    try {
+      var links = await dbSelect('user_analysis_ids', 'patient_id=eq.' + encodeURIComponent(patientId) + '&select=email&limit=1');
+      if (links.length && links[0].email) {
+        var allLinks = await getAnalysisIdsByEmail(links[0].email);
+        if (allLinks.length > 1) {
+          allPatientIds = allLinks.map(function(l) { return l.patient_id; });
+        }
+      }
+    } catch(e2) { /* 紐付けなし */ }
 
     window._clinicAllIds = allPatientIds;
 
@@ -167,26 +184,32 @@ async function selectClinicPatient(patientId) {
     var scores;
     if (allPatientIds.length > 1) {
       scores = await fetchScoresMulti(allPatientIds);
-      // 複数IDがある場合は表示
       const idBadges = allPatientIds.map(function(id) {
         return '<span class="badge badge--green" style="font-family:var(--font-mono);font-size:10px">' + id + '</span>';
       }).join(' ');
       document.getElementById('clinic-detail-meta').innerHTML =
         meta.map(function(m) { return '<span class="badge badge--green">' + m + '</span>'; }).join('') +
-        '<div style="margin-top:6px;font-size:11px;color:var(--ink4)">関連解析ID: ' + idBadges + '</div>';
+        '<div style="margin-top:6px;font-size:11px;color:var(--ink4)">関連解析ID: ' + idBadges + '</div>' +
+        '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+          '<button onclick="showKitSentModal(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)">' + t('clinic.kitSent') + '</button>' +
+          '<button onclick="releaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--emerald);color:#fff;border:none">' + t('clinic.releaseScores') + '</button>' +
+          '<button onclick="unreleaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--ink3);border:1px solid var(--border)">' + t('clinic.unrelease') + '</button>' +
+          '<button onclick="confirmDeletePatient(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:#fdecea;color:#B03A2E;border:1px solid #f4c7c3">' + t('clinic.delete') + '</button>' +
+        '</div>';
     } else {
       scores = await fetchScores(patientId);
     }
 
     // 測定日一覧取得
     const datesSet = {};
-    scores.forEach(function(s) { if (s.measured_at) datesSet[s.measured_at] = true; });
+    scores.forEach(function(s) { var d = dateFromPatientId(s.patient_id); if (d) datesSet[d] = true; });
     const dates = Object.keys(datesSet).sort();
     selectedDate = dates[dates.length - 1] || null;
 
     renderDateTabs(dates, patientId);
-    renderScoreOverview(scores.filter(function(s) { return s.measured_at === selectedDate; }));
-    renderCatGrid(scores.filter(function(s) { return s.measured_at === selectedDate; }), patientId);
+    renderScoreOverview(scores.filter(function(s) { return dateFromPatientId(s.patient_id) === selectedDate; }));
+    renderCatGrid(scores.filter(function(s) { return dateFromPatientId(s.patient_id) === selectedDate; }), patientId);
+    if (allPatientIds.length > 1) { renderClinicScoreTrend(allPatientIds, scores); }
   } catch(e) { console.error(e); }
 }
 
@@ -217,7 +240,7 @@ async function switchDate(date, patientId) {
     b.classList.toggle('date-tab--active', b.textContent.trim() === date);
   });
   const scores = await fetchScores(patientId);
-  const filtered = scores.filter(function(s) { return s.measured_at === date; });
+  const filtered = scores.filter(function(s) { return dateFromPatientId(s.patient_id) === date; });
   renderScoreOverview(filtered);
   renderCatGrid(filtered, patientId);
 }
@@ -264,7 +287,7 @@ async function selectClinicCat(cardEl, patientId, category) {
 
   try {
     const scores = await fetchScores(patientId);
-    const s = scores.find(function(x) { return x.category === category && x.measured_at === selectedDate; })
+    const s = scores.find(function(x) { return x.category === category && dateFromPatientId(x.patient_id) === selectedDate; })
       || scores.find(function(x) { return x.category === category; });
     if (!s) return;
 
@@ -884,4 +907,103 @@ async function fetchCompoundFactsForPatient(patientId) {
     console.error('fetchCompoundFactsForPatient error:', e);
     return [];
   }
+}
+
+// ─── クリニック用スコア推移グラフ ──────────────
+function renderClinicScoreTrend(patientIds, allScores) {
+  var container = document.getElementById('clinic-score-trend');
+  if (!container) {
+    var overview = document.querySelector('.score-ov-card');
+    if (!overview) return;
+    container = document.createElement('div');
+    container.id = 'clinic-score-trend';
+    container.style.cssText = 'margin-bottom:16px';
+    overview.parentNode.insertBefore(container, overview);
+  }
+
+  if (!allScores || !allScores.length) { container.innerHTML = ''; return; }
+
+  var dates = [];
+  allScores.forEach(function(s) {
+    var d = dateFromPatientId(s.patient_id);
+    if (d && dates.indexOf(d) === -1) dates.push(d);
+  });
+  dates.sort();
+  if (dates.length < 2) { container.innerHTML = ''; return; }
+
+  var categories = [];
+  allScores.forEach(function(s) {
+    if (s.category && categories.indexOf(s.category) === -1) categories.push(s.category);
+  });
+
+  var scoreMap = {};
+  allScores.forEach(function(s) {
+    var d = dateFromPatientId(s.patient_id);
+    if (!scoreMap[s.category]) scoreMap[s.category] = {};
+    scoreMap[s.category][d] = { wavg: s.wavg, rank: s.rank };
+  });
+
+  var colors = [
+    '#2D6A4F','#52B788','#95D5B2','#1B4332','#40916C',
+    '#74C69D','#B7E4C7','#4A90D9','#E9C46A','#F4A261',
+    '#E76F51','#9B2226','#AE2012','#BB3E03','#CA6702','#8FAAA0'
+  ];
+
+  var W = Math.max(container.offsetWidth || 400, 300);
+  var H = 240;
+  var padL = 10, padR = 10, padT = 20, padB = 60;
+  var chartW = W - padL - padR;
+  var chartH = H - padT - padB;
+  var barGroupW = chartW / dates.length;
+  var barW = Math.max(Math.min(barGroupW / categories.length * 0.7, 16), 4);
+
+  var maxWavg = 1;
+  allScores.forEach(function(s) { if (s.wavg != null && Number(s.wavg) > maxWavg) maxWavg = Number(s.wavg); });
+
+  var bars = '', lines = '';
+
+  categories.forEach(function(cat, ci) {
+    var color = colors[ci % colors.length];
+    var prevX = null, prevY = null;
+
+    dates.forEach(function(d, di) {
+      var sc = scoreMap[cat] && scoreMap[cat][d];
+      if (!sc || sc.wavg == null) return;
+      var wavg = Number(sc.wavg);
+      var groupCenterX = padL + (di + 0.5) * barGroupW;
+      var barX = groupCenterX - (categories.length * barW / 2) + ci * barW;
+      var barH2 = (wavg / maxWavg) * chartH;
+      var barY = padT + chartH - barH2;
+      var tip = catJaName(cat) + ' | ' + d + ' | wavg:' + wavg.toFixed(3) + ' | ' + (sc.rank || '');
+
+      bars += '<rect x="' + barX + '" y="' + barY + '" width="' + (barW - 1) + '" height="' + barH2 + '"' +
+        ' fill="' + color + '" opacity="0.85" rx="1" data-tip="' + tip.replace(/"/g,'&quot;') + '"' +
+        ' style="cursor:pointer" onmouseover="showChartTooltip(event,this.dataset.tip)" onmouseout="hideChartTooltip()"/>';
+
+      var cx = barX + barW / 2;
+      var cy = barY;
+      if (prevX !== null) {
+        lines += '<line x1="' + prevX + '" y1="' + prevY + '" x2="' + cx + '" y2="' + cy + '"' +
+          ' stroke="' + color + '" stroke-width="1.5" opacity="0.7"/>';
+      }
+      prevX = cx; prevY = cy;
+    });
+  });
+
+  var xLabels = '';
+  dates.forEach(function(d, di) {
+    var x = padL + (di + 0.5) * barGroupW;
+    xLabels += '<text x="' + x + '" y="' + (H - 42) + '" text-anchor="middle" font-size="9" fill="#8FAAA0">' + d.slice(2).replace(/-/g,'/') + '</text>';
+    xLabels += '<line x1="' + x + '" y1="' + padT + '" x2="' + x + '" y2="' + (padT + chartH) + '" stroke="#D4E6DD" stroke-width="1"/>';
+  });
+
+  var baseline = '<line x1="' + padL + '" y1="' + (padT + chartH) + '" x2="' + (W - padR) + '" y2="' + (padT + chartH) + '" stroke="#D4E6DD" stroke-width="1"/>';
+
+  container.innerHTML =
+    '<div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:8px">スコア推移</div>' +
+    '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:12px;overflow-x:auto">' +
+      '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="overflow:visible;display:block;min-width:300px">' +
+        baseline + xLabels + bars + lines +
+      '</svg>' +
+    '</div>';
 }

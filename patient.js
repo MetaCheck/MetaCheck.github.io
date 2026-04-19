@@ -3,6 +3,15 @@
 // catName is defined in i18n.js
 
 
+// ─── 解析IDから日付を算出（先頭6桁: YYMMDD）────
+function dateFromPatientId(patientId) {
+  if (!patientId || patientId.length < 6) return '';
+  var yy = patientId.slice(0, 2);
+  var mm = patientId.slice(2, 4);
+  var dd = patientId.slice(4, 6);
+  return '20' + yy + '-' + mm + '-' + dd;
+}
+
 // ─── 言語別insightフィールド取得 ──────────
 function insightField(ins, field) {
   if (!ins) return '';
@@ -55,6 +64,9 @@ async function renderPatientPage(patient) {
     window._patientScores = releasedScores.length ? releasedScores : scores;
     renderPatientScores(window._patientScores);
     renderAlertBanner(window._patientScores);
+    if (allIds.length > 1) {
+      renderScoreTrendChart(allIds);
+    }
   } catch(e) { console.error(e); }
 
 }
@@ -513,4 +525,114 @@ async function doAddAnalysisId() {
     errEl.textContent = e.message || '追加に失敗しました';
     errEl.classList.remove('hidden');
   }
+}
+
+// ─── スコア推移グラフ（複数解析ID） ──────────
+async function renderScoreTrendChart(patientIds) {
+  var el = document.getElementById('patient-trend-overview');
+  if (!el) {
+    var grid = document.getElementById('patient-score-grid');
+    if (!grid) return;
+    el = document.createElement('div');
+    el.id = 'patient-trend-overview';
+    el.style.cssText = 'margin-bottom:20px';
+    grid.parentNode.insertBefore(el, grid);
+  }
+  el.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px">読み込み中...</div>';
+
+  try {
+    var idList = patientIds.map(function(id) { return '"' + id + '"'; }).join(',');
+    var allScores = await dbSelect('scores', 'patient_id=in.(' + idList + ')&select=patient_id,category,wavg,rank,measured_at&order=measured_at.asc');
+    if (!allScores.length) { el.innerHTML = ''; return; }
+
+    var dates = [];
+    // patient_idの先頭6桁から日付を取得
+    var dateMap = {}; // patient_id → date
+    allScores.forEach(function(s) {
+      var d = dateFromPatientId(s.patient_id);
+      dateMap[s.patient_id] = d;
+      if (d && dates.indexOf(d) === -1) dates.push(d);
+    });
+    dates.sort();
+    if (dates.length < 2) { el.innerHTML = ''; return; }
+
+    var categories = [];
+    allScores.forEach(function(s) {
+      if (s.category && categories.indexOf(s.category) === -1) categories.push(s.category);
+    });
+
+    var scoreMap = {};
+    allScores.forEach(function(s) {
+      var d = dateFromPatientId(s.patient_id);
+      if (!scoreMap[s.category]) scoreMap[s.category] = {};
+      scoreMap[s.category][d] = { wavg: s.wavg, rank: s.rank };
+    });
+
+    var colors = [
+      '#2D6A4F','#52B788','#95D5B2','#1B4332','#40916C',
+      '#74C69D','#B7E4C7','#4A90D9','#E9C46A','#F4A261',
+      '#E76F51','#9B2226','#AE2012','#BB3E03','#CA6702','#8FAAA0'
+    ];
+
+    var W = Math.max(el.offsetWidth || 360, 300);
+    var H = 220;
+    var padL = 10, padR = 10, padT = 20, padB = 50;
+    var chartW = W - padL - padR;
+    var chartH = H - padT - padB;
+    var barGroupW = chartW / dates.length;
+    var barW = Math.max(Math.min(barGroupW / categories.length * 0.7, 16), 4);
+
+    var maxWavg = 1;
+    allScores.forEach(function(s) { if (s.wavg != null && Number(s.wavg) > maxWavg) maxWavg = Number(s.wavg); });
+
+    var bars = '';
+    var lines = '';
+
+    categories.forEach(function(cat, ci) {
+      var color = colors[ci % colors.length];
+      var prevX = null, prevY = null;
+
+      dates.forEach(function(d, di) {
+        var sc = scoreMap[cat] && scoreMap[cat][d];
+        if (!sc || sc.wavg == null) return;
+        var wavg = Number(sc.wavg);
+        var groupCenterX = padL + (di + 0.5) * barGroupW;
+        var barX = groupCenterX - (categories.length * barW / 2) + ci * barW;
+        var barH2 = (wavg / maxWavg) * chartH;
+        var barY = padT + chartH - barH2;
+
+        bars += '<rect x="' + barX + '" y="' + barY + '" width="' + (barW - 1) + '" height="' + barH2 + '"' +
+          ' fill="' + color + '" opacity="0.85" rx="1"' +
+          ' data-tip="' + catName(cat) + ' | ' + d + ' | wavg:' + wavg.toFixed(3) + ' | ' + (sc.rank || '') + '"' +
+          ' style="cursor:pointer"' +
+          ' onmouseover="showChartTooltip(event,this.dataset.tip)" onmouseout="hideChartTooltip()"/>';
+
+        var cx = barX + barW / 2;
+        var cy = barY;
+        if (prevX !== null) {
+          lines += '<line x1="' + prevX + '" y1="' + prevY + '" x2="' + cx + '" y2="' + cy + '"' +
+            ' stroke="' + color + '" stroke-width="1.5" opacity="0.7"/>';
+        }
+        prevX = cx; prevY = cy;
+      });
+    });
+
+    var xLabels = '';
+    dates.forEach(function(d, di) {
+      var x = padL + (di + 0.5) * barGroupW;
+      xLabels += '<text x="' + x + '" y="' + (H - 34) + '" text-anchor="middle" font-size="9" fill="#8FAAA0">' + d.slice(2).replace(/-/g, '/') + '</text>';
+      xLabels += '<line x1="' + x + '" y1="' + padT + '" x2="' + x + '" y2="' + (padT + chartH) + '" stroke="#D4E6DD" stroke-width="1"/>';
+    });
+
+    var baseline = '<line x1="' + padL + '" y1="' + (padT + chartH) + '" x2="' + (W - padR) + '" y2="' + (padT + chartH) + '" stroke="#D4E6DD" stroke-width="1"/>';
+
+    el.innerHTML =
+      '<div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:8px">' + (t('patient.trendOverview') || 'スコア推移') + '</div>' +
+      '<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px;overflow-x:auto">' +
+        '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="overflow:visible;display:block;min-width:300px">' +
+          baseline + xLabels + bars + lines +
+        '</svg>' +
+      '</div>';
+
+  } catch(e) { el.innerHTML = ''; }
 }
