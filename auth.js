@@ -27,6 +27,25 @@ async function savePendingBodyInfo(userId) {
   }
 }
 
+async function savePendingNickname(patientId) {
+  var nickname = localStorage.getItem('_pendingNickname');
+  if (!nickname) return;
+  try {
+    await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + patientId, {
+      method: 'PATCH',
+      headers: Object.assign({}, HEADERS, {
+        'Authorization': 'Bearer ' + (window.currentAccessToken || SUPABASE_KEY),
+        'Prefer': 'return=minimal',
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify({ name: nickname })
+    });
+    localStorage.removeItem('_pendingNickname');
+  } catch(e) {
+    console.error('ニックネームの保存に失敗:', e);
+  }
+}
+
 async function doLogin() {
   const role = document.querySelector('.role-tab.active')?.dataset.role || 'individual';
 
@@ -58,6 +77,7 @@ async function doLogin() {
       showLoginError(false);
       showScreen('screen-patient');
       savePendingBodyInfo(currentUser.userId);
+      savePendingNickname(patientId);
       renderPatientPage(patient);
 
     } catch(e) {
@@ -414,6 +434,7 @@ async function doBodyInfoSubmit() {
 
     // 身体情報をlocalStorageに一時保存（メール確認後のログイン時に使用）
     localStorage.setItem('_pendingBodyInfo', JSON.stringify(bodyInfo));
+    if (data && data.nickname) localStorage.setItem('_pendingNickname', data.nickname);
     window._pendingRegData = null;
     showRegisterSection('check-email');
 
