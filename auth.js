@@ -29,9 +29,11 @@ async function savePendingBodyInfo(userId) {
 
 async function savePendingNickname(patientId) {
   var nickname = localStorage.getItem('_pendingNickname');
-  if (!nickname) return;
+  var savedId = localStorage.getItem('_pendingAnalysisId');
+  var targetId = patientId || savedId;
+  if (!nickname || !targetId) return;
   try {
-    await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + patientId, {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + targetId, {
       method: 'PATCH',
       headers: Object.assign({}, HEADERS, {
         'Authorization': 'Bearer ' + (window.currentAccessToken || SUPABASE_KEY),
@@ -40,7 +42,10 @@ async function savePendingNickname(patientId) {
       }),
       body: JSON.stringify({ name: nickname })
     });
-    localStorage.removeItem('_pendingNickname');
+    if (res.ok) {
+      localStorage.removeItem('_pendingNickname');
+      localStorage.removeItem('_pendingAnalysisId');
+    }
   } catch(e) {
     console.error('ニックネームの保存に失敗:', e);
   }
@@ -197,7 +202,7 @@ async function doClinicRegister() {
   try {
     // Supabase Authに登録（クリニックフラグ付き）
     const redirectTo = window.location.origin + window.location.pathname + '?clinic=1';
-    const result = await authSignUp(email, pw, redirectTo, 'clinic');
+    const result = await authSignUp(email, pw, redirectTo, 'clinic', name);
     const userId = result.user?.id;
 
     // クリニックIDを自動採番してclinicsテーブルに登録
@@ -405,7 +410,7 @@ async function doBodyInfoSubmit() {
   };
 
   try {
-    var result = await authSignUp(data.email, data.pw, null, 'individual');
+    var result = await authSignUp(data.email, data.pw, null, 'individual', data.nickname);
     var userId = result.user?.id;
 
     if (userId) {
@@ -435,10 +440,15 @@ async function doBodyInfoSubmit() {
     // 身体情報をlocalStorageに一時保存（メール確認後のログイン時に使用）
     localStorage.setItem('_pendingBodyInfo', JSON.stringify(bodyInfo));
     if (data && data.nickname) localStorage.setItem('_pendingNickname', data.nickname);
+    if (data && data.analysisId) localStorage.setItem('_pendingAnalysisId', data.analysisId);
     window._pendingRegData = null;
     showRegisterSection('check-email');
 
   } catch(e) {
+    // localStorageは必ず保存（エラーでも）
+    if (bodyInfo) localStorage.setItem('_pendingBodyInfo', JSON.stringify(bodyInfo));
+    if (data && data.nickname) localStorage.setItem('_pendingNickname', data.nickname);
+    if (data && data.analysisId) localStorage.setItem('_pendingAnalysisId', data.analysisId);
     if (errEl) { errEl.textContent = e.message || '登録に失敗しました'; errEl.classList.remove('hidden'); }
   }
 }
