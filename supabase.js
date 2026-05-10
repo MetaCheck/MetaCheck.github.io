@@ -79,16 +79,8 @@ async function insertPatient(data) {
 }
 
 async function fetchInsightsByCategory(patientId, category) {
-  const encoded = category.split('').map(function(c) {
-    if (c === ' ') return '%20';
-    if (c === '/') return '%2F';
-    return c;
-  }).join('');
-  const pidEncoded = patientId.split('').map(function(c) {
-    if (c === ' ') return '%20';
-    return c;
-  }).join('');
-  // patient_idとcategoryで直接検索
+  const encoded = encodeURIComponent(category);
+  const pidEncoded = encodeURIComponent(patientId);
   const rows = await dbSelect('metabolite_insights',
     'patient_id=eq.' + pidEncoded + '&category=eq.' + encoded + '&select=*&limit=1');
   return rows[0] || null;
