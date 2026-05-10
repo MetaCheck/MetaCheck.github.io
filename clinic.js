@@ -255,7 +255,7 @@ function renderCatGrid(scores, patientId) {
   const el = document.getElementById('clinic-cat-grid');
   if (!el) return;
 
-  el.innerHTML = scores.map(function(s) {
+  el.innerHTML = scores.filter(function(s) { return s.category != null && s.category !== ''; }).map(function(s) {
     const rank = s.rank || '—';
     return '<div class="cat-grid-card cat-grid-card--' + rank + '" onclick="selectClinicCat(this,\'' + patientId + '\',\'' + s.category.replace(/'/g, "\\'") + '\')">' +
       '<span class="cat-grid-card__name">' + (window.catJaName(s.category)) + '</span>' +
