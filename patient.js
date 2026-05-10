@@ -89,7 +89,7 @@ function renderPatientScores(scores) {
     return;
   }
   grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px';
-  grid.innerHTML = scores.map(function(s, i) {
+  grid.innerHTML = scores.filter(function(s) { return s.category != null && s.category !== ''; }).map(function(s, i) {
     const rank = s.rank || '—';
     return '<div class="pt-score-row" onclick="selectPatientScore(' + i + ',this)" style="flex-direction:column;align-items:flex-start;gap:6px;padding:12px;position:relative">' +
       '<span class="rank-badge rank-' + rank + '" style="position:absolute;top:10px;right:10px;width:26px;height:26px;font-size:12px">' + rank + '</span>' +
