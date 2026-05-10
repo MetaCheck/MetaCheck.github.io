@@ -200,6 +200,9 @@ async function selectClinicPatient(patientId) {
     const dates = Object.keys(datesSet).sort();
     selectedDate = dates[dates.length - 1] || null;
 
+    // NULLカテゴリを除外
+    scores = scores.filter(function(s) { return s.category != null && s.category !== ''; });
+
     renderDateTabs(dates, patientId);
     renderScoreOverview(scores.filter(function(s) { return dateFromPatientId(s.patient_id) === selectedDate; }));
     renderCatGrid(scores.filter(function(s) { return dateFromPatientId(s.patient_id) === selectedDate; }), patientId);
