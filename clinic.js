@@ -200,9 +200,6 @@ async function selectClinicPatient(patientId) {
     const dates = Object.keys(datesSet).sort();
     selectedDate = dates[dates.length - 1] || null;
 
-    // NULLカテゴリを除外
-    scores = scores.filter(function(s) { return s.category != null && s.category !== ''; });
-
     renderDateTabs(dates, patientId);
     renderScoreOverview(scores.filter(function(s) { return dateFromPatientId(s.patient_id) === selectedDate; }));
     renderCatGrid(scores.filter(function(s) { return dateFromPatientId(s.patient_id) === selectedDate; }), patientId);
@@ -258,7 +255,7 @@ function renderCatGrid(scores, patientId) {
   const el = document.getElementById('clinic-cat-grid');
   if (!el) return;
 
-  el.innerHTML = scores.filter(function(s) { return s.category != null && s.category !== ''; }).map(function(s) {
+  el.innerHTML = scores.map(function(s) {
     const rank = s.rank || '—';
     return '<div class="cat-grid-card cat-grid-card--' + rank + '" onclick="selectClinicCat(this,\'' + patientId + '\',\'' + s.category.replace(/'/g, "\\'") + '\')">' +
       '<span class="cat-grid-card__name">' + (window.catJaName(s.category)) + '</span>' +
@@ -291,17 +288,10 @@ async function selectClinicCat(cardEl, patientId, category) {
     const rank = s.rank || '—';
     const catJa = (typeof catName === 'function') ? catName(category) : ((window.CAT_JA && CAT_JA[category]) ? CAT_JA[category] : category);
 
-    // category_resultsからmetabolitesタグ取得
-    const crRows = await (async function() {
-      try {
-        const encoded = category.split('').map(function(c) {
-          if (c === ' ') return '%20'; if (c === '/') return '%2F'; return c;
-        }).join('');
-        return await dbSelect('category_results', 'category=eq.' + encoded + '&select=id,metabolites&limit=1');
-      } catch(e) { return []; }
-    })();
-    const cr = crRows[0];
-    const metTags = cr && cr.metabolites ? cr.metabolites.split('、').map(function(m) {
+    // metabolite_insightsからmovementを取得
+    const insData = await fetchInsightsByCategory(patientId, category);
+    const movement = insData ? insData.movement : null;
+    const metTags = movement ? movement.split('、').map(function(m) {
       const dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
       return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
     }).join('') : '';
