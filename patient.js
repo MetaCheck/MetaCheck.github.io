@@ -116,7 +116,7 @@ function selectPatientScore(index, el) {
   card.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px">'+t('patient.loading')+'</div>';
 
   // fetchInsightsByCategoryからmovementを取得
-  fetchInsightsByCategory(currentUser.id, s.category).then(function(insData) {
+  fetchInsightsByCategory(s.patient_id || currentUser.id, s.category).then(function(insData) {
     var movement = insData ? insData.movement : null;
     var metTags = movement ? movement.split('、').map(function(m) {
       var dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
