@@ -115,10 +115,12 @@ function selectPatientScore(index, el) {
 
   card.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px">'+t('patient.loading')+'</div>';
 
-  // fetchInsightsByCategoryからmovementを取得
-  fetchInsightsByCategory(s.patient_id || currentUser.id, s.category).then(function(insData) {
-    var movement = insData ? insData.movement : null;
-    var metTags = movement ? movement.split('、').map(function(m) {
+  // metabolite_insightsからmovementを取得
+  var _encCat = s.category.split('').map(function(c) { if (c === ' ') return '%20'; if (c === '/') return '%2F'; return c; }).join('');
+  var _encPid = currentUser.id.split('').map(function(c) { if (c === ' ') return '%20'; return c; }).join('');
+  dbSelect('metabolite_insights', 'patient_id=eq.' + _encPid + '&category=eq.' + _encCat + '&select=movement&limit=1').then(function(crRows) {
+    var cr = crRows && crRows[0] ? crRows[0] : null;
+    var metTags = cr && cr.movement ? cr.movement.split('、').map(function(m) {
       var dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
       return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
     }).join('') : '';
