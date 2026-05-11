@@ -24,7 +24,6 @@ function insightField(ins, field) {
 }
 
 async function renderPatientPage(patient) {
-  window._currentPatientId = patient.id;
   const displayName = patient.name || patient.id;
   document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
   document.getElementById('patient-name-display').textContent = displayName + ' ' + t('patient.san');
@@ -116,16 +115,10 @@ function selectPatientScore(index, el) {
 
   card.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px">'+t('patient.loading')+'</div>';
 
-  // metabolite_insightsから患者個人のmovementを取得
-  var encoded = s.category.split('').map(function(c) {
-    if (c === ' ') return '%20';
-    if (c === '/') return '%2F';
-    return c;
-  }).join('');
-  var _pid = window._currentPatientId || '';
-  dbSelect('metabolite_insights', 'patient_id=eq.' + _pid + '&category=eq.' + encoded + '&select=movement&limit=1').then(function(crRows) {
-    var cr = crRows && crRows[0] ? crRows[0] : null;
-    var metTags = cr && cr.movement ? cr.movement.split('、').map(function(m) {
+  // fetchInsightsByCategoryと同じ方法でmovementを取得
+  fetchInsightsByCategory(currentUser.id, s.category).then(function(ins) {
+    var movement = ins ? ins.movement : null;
+    var metTags = movement ? movement.split('、').map(function(m) {
       var dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
       return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
     }).join('') : '';
