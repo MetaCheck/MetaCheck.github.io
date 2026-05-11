@@ -89,7 +89,7 @@ function renderPatientScores(scores) {
     return;
   }
   grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px';
-  grid.innerHTML = scores.filter(function(s) { return s.category != null && s.category !== ''; }).map(function(s, i) {
+  grid.innerHTML = scores.map(function(s, i) {
     const rank = s.rank || '—';
     return '<div class="pt-score-row" onclick="selectPatientScore(' + i + ',this)" style="flex-direction:column;align-items:flex-start;gap:6px;padding:12px;position:relative">' +
       '<span class="rank-badge rank-' + rank + '" style="position:absolute;top:10px;right:10px;width:26px;height:26px;font-size:12px">' + rank + '</span>' +
@@ -115,15 +115,12 @@ function selectPatientScore(index, el) {
 
   card.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px">'+t('patient.loading')+'</div>';
 
-  // category_resultsをカテゴリ名で直接取得
-  var encoded = s.category.split('').map(function(c) {
-    if (c === ' ') return '%20';
-    if (c === '/') return '%2F';
-    return c;
-  }).join('');
-  dbSelect('category_results', 'category=eq.' + encoded + '&select=*&limit=1').then(function(crRows) {
+  // metabolite_insightsから患者個人のmovementを取得
+  var encodedCat = encodeURIComponent(s.category);
+  var encodedPid = encodeURIComponent(currentUser.id);
+  dbSelect('metabolite_insights', 'patient_id=eq.' + encodedPid + '&category=eq.' + encodedCat + '&select=movement&limit=1').then(function(crRows) {
     var cr = crRows && crRows[0] ? crRows[0] : null;
-    var metTags = cr && cr.metabolites ? cr.metabolites.split('、').map(function(m) {
+    var metTags = cr && cr.movement ? cr.movement.split('、').map(function(m) {
       var dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
       return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
     }).join('') : '';
