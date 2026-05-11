@@ -117,7 +117,7 @@ function selectPatientScore(index, el) {
 
   // metabolite_insightsから患者個人のmovementを取得
   var encodedCat = encodeURIComponent(s.category);
-  var encodedPid = encodeURIComponent(patient.id);
+  var encodedPid = encodeURIComponent(s.patient_id || (window._patientAllIds && window._patientAllIds[0]) || (currentUser && currentUser.id) || '');
   dbSelect('metabolite_insights', 'patient_id=eq.' + encodedPid + '&category=eq.' + encodedCat + '&select=movement&limit=1').then(function(crRows) {
     var cr = crRows && crRows[0] ? crRows[0] : null;
     var metTags = cr && cr.movement ? cr.movement.split('、').map(function(m) {
