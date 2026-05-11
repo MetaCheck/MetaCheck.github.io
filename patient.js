@@ -24,6 +24,7 @@ function insightField(ins, field) {
 }
 
 async function renderPatientPage(patient) {
+  window._currentPatient = patient;
   const displayName = patient.name || patient.id;
   document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
   document.getElementById('patient-name-display').textContent = displayName + ' ' + t('patient.san');
@@ -117,7 +118,7 @@ function selectPatientScore(index, el) {
 
   // metabolite_insightsから患者個人のmovementを取得
   var encodedCat = encodeURIComponent(s.category);
-  var encodedPid = encodeURIComponent(s.patient_id || (window._patientAllIds && window._patientAllIds[0]) || (currentUser && currentUser.id) || '');
+  var encodedPid = encodeURIComponent((window._currentPatient && window._currentPatient.id) || '');
   dbSelect('metabolite_insights', 'patient_id=eq.' + encodedPid + '&category=eq.' + encodedCat + '&select=movement&limit=1').then(function(crRows) {
     var cr = crRows && crRows[0] ? crRows[0] : null;
     var metTags = cr && cr.movement ? cr.movement.split('、').map(function(m) {
