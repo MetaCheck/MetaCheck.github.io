@@ -85,7 +85,7 @@ async function doLogin() {
       // personalから来た場合はpersonalに戻る、それ以外はマイページへ
       const redirect = new URLSearchParams(window.location.search).get('redirect');
       if (redirect === 'personal') {
-        window.location.href = '/personal';
+        window.location.href = '/home-user';
       } else {
         showScreen('screen-patient');
         renderPatientPage(patient);
