@@ -361,15 +361,14 @@ async function init() {
     const user = await verifyToken(session.access_token);
     if (user) isLoggedIn = true;
   }
-  // 常にcat-resultを有効にして/に飛ばす（/側で自動ログイン）
-  document.getElementById('cat-result').classList.remove('disabled');
   if (isLoggedIn) {
+    document.getElementById('cat-result').classList.remove('disabled');
     document.getElementById('logged-in-banner').classList.remove('hidden');
   } else {
+    // 未ログイン時はcat-resultをdisabledのまま
     document.getElementById('nav-login').classList.remove('hidden');
     document.getElementById('register-banner').classList.remove('hidden');
     document.getElementById('register-banner-top').classList.remove('hidden');
-    // 未ログインでも押せる（/に飛んでログイン画面へ）
   }
   const savedLang = localStorage.getItem('mc_lang') || 'ja';
   setLang(savedLang);
