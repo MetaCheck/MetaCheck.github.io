@@ -1339,15 +1339,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="clinic.js"></script>
 <script src="app.js"></script>
 <script>
-(function() {
+window.addEventListener('load', function() {
   var params = new URLSearchParams(window.location.search);
   if (params.get('register') === 'true') {
-    var loginEl = document.getElementById('login-section');
-    var registerEl = document.getElementById('register-section');
-    if (loginEl) loginEl.style.display = 'none';
-    if (registerEl) registerEl.style.display = '';
+    var btn = document.getElementById('btn-show-register');
+    if (btn) btn.click();
   }
-})();
+});
 </script>
 </body>
 </html>
