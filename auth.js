@@ -80,10 +80,16 @@ async function doLogin() {
 
       currentUser = { role: 'individual', id: patientId, userId, email, allIds: links.map(l => l.patient_id) };
       showLoginError(false);
-      showScreen('screen-patient');
       savePendingBodyInfo(currentUser.userId);
       savePendingNickname(patientId);
-      renderPatientPage(patient);
+      // personalから来た場合はpersonalに戻る、それ以外はマイページへ
+      const redirect = new URLSearchParams(window.location.search).get('redirect');
+      if (redirect === 'personal') {
+        window.location.href = '/personal';
+      } else {
+        showScreen('screen-patient');
+        renderPatientPage(patient);
+      }
 
     } catch(e) {
       console.error(e);
