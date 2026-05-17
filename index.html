@@ -1323,6 +1323,18 @@ function setLoginLang(lang) {
 <script src="supabase.js"></script>
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
+<script>
+// ?register=trueの時は登録画面を直接表示
+window.addEventListener('load', function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('register') === 'true') {
+    setTimeout(function() {
+      if (typeof setRole === 'function') setRole('individual');
+      if (typeof showRegisterSection === 'function') showRegisterSection('register');
+    }, 300);
+  }
+});
+</script>
 <script src="patient.js"></script>
 <script src="clinic.js"></script>
 <script src="app.js"></script>
