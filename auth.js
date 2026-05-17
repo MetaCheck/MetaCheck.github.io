@@ -488,9 +488,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-show-register')?.addEventListener('click', function() {
     const role = document.querySelector('.role-tab.active')?.dataset.role || 'individual';
     if (role === 'clinic') {
-      showRegisterSection('clinic-register');
+      window.location.href = '/register-biz';
     } else {
-      showRegisterSection('register');
+      window.location.href = '/register';
     }
   });
   document.getElementById('btn-show-forgot')?.addEventListener('click', function() {
