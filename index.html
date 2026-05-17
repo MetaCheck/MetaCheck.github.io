@@ -1329,16 +1329,17 @@ window.addEventListener('load', async function() {
   let token = null;
   let savedRole = null;
 
-  // URLパラメータのroleを最優先（home-user/home-bizからの遷移を確実に区別）
+  // URLパラメータのroleを必須とする（ない場合は自動ログインしない）
   const urlRole = new URLSearchParams(window.location.search).get('role');
+  if (!urlRole) return; // role指定なしの直接アクセスは自動ログインしない
 
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && (key.includes('auth-token') || key.includes('supabase') || key.includes('sb-'))) {
       try {
         const v = JSON.parse(localStorage.getItem(key));
-        if (v && v.access_token) { token = v.access_token; savedRole = urlRole || v.role || null; break; }
-        if (v && v.currentSession && v.currentSession.access_token) { token = v.currentSession.access_token; break; }
+        if (v && v.access_token) { token = v.access_token; savedRole = urlRole; break; }
+        if (v && v.currentSession && v.currentSession.access_token) { token = v.currentSession.access_token; savedRole = urlRole; break; }
       } catch(e) {}
     }
   }
