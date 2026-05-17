@@ -50,7 +50,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
   display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
 #screen-login.active{display:flex}
-.login-lang-switcher{display:flex;gap:4px;justify-content:flex-end;margin-bottom:12px;max-width:420px;width:90vw;}
+.login-lang-switcher{display:flex;gap:4px;justify-content:flex-end;margin-bottom:12px;max-width:420px;width:90vw;position:relative;z-index:1;}
 .login-lang-btn{
   width:36px;height:36px;border-radius:8px;
   border:1.5px solid #e0e0e0;
@@ -67,6 +67,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
   border:1px solid #e8e8e8;
   border-radius:20px;
   box-shadow:0 8px 40px rgba(0,0,0,.08);
+  position:relative;z-index:2;
   max-height:90vh;overflow-y:auto;
   -webkit-overflow-scrolling:touch;
 }
