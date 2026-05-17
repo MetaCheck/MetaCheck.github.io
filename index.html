@@ -47,12 +47,12 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 #screen-login{
   position:fixed;inset:0;z-index:1000;
   background:#f5f5f5;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
 #screen-login.active{display:flex}
-.login-lang-switcher{position:absolute;top:24px;right:24px;display:flex;gap:8px;z-index:100}
+.login-lang-switcher{display:flex;gap:4px;justify-content:flex-end;margin-bottom:12px;max-width:420px;width:90vw;}
 .login-lang-btn{
-  width:44px;height:44px;border-radius:12px;
+  width:36px;height:36px;border-radius:8px;
   border:1.5px solid #e0e0e0;
   background:#fff;cursor:pointer;
   display:flex;align-items:center;justify-content:center;transition:all .3s;
@@ -60,7 +60,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 .login-lang-btn:hover{background:#f0f0f0;transform:translateY(-1px)}
 .login-lang-btn.active{background:#2a6e27;border-color:#2a6e27;box-shadow:0 4px 16px rgba(42,110,39,.3)}
 .login-lang-btn.active .lang-text{color:#fff}
-.lang-text{font-size:13px;font-weight:700;color:#555}
+.lang-text{font-size:11px;font-weight:700;color:#555}
 .login-box{
   width:420px;padding:48px 44px;
   background:#fff;
@@ -464,13 +464,14 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 
 <!-- ══════════════ SCREEN: LOGIN ══════════════ -->
 <div id="screen-login" class="screen active">
+  
   <div class="login-lang-switcher">
     <button class="login-lang-btn active" onclick="setLoginLang('ja')"><span class="lang-text">JA</span></button>
     <button class="login-lang-btn" onclick="setLoginLang('en')"><span class="lang-text">EN</span></button>
     <button class="login-lang-btn" onclick="setLoginLang('vi')"><span class="lang-text">VI</span></button>
     <button class="login-lang-btn" onclick="setLoginLang('cn')"><span class="lang-text">CN</span></button>
   </div>
-  <div class="login-box">
+    <div class="login-box">
     <div class="login-logo">Meta<span>Check</span></div>
     <div class="login-sub" data-i18n="login.subtitle">Metabolic Intelligence Platform</div>
 
