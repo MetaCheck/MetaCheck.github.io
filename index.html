@@ -1338,5 +1338,16 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="patient.js"></script>
 <script src="clinic.js"></script>
 <script src="app.js"></script>
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('register') === 'true') {
+    var loginEl = document.getElementById('login-section');
+    var registerEl = document.getElementById('register-section');
+    if (loginEl) loginEl.style.display = 'none';
+    if (registerEl) registerEl.style.display = '';
+  }
+})();
+</script>
 </body>
 </html>
