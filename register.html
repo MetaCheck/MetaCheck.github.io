@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetaCheck — 新規登録</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #10340f;
+    --accent: #2a6e27;
+    --accent-light: #e8f5e8;
+    --sage: #52B788;
+    --white: #fff;
+    --border: #e8e8e8;
+    --dim: #666;
+    --dimmer: #aaa;
+    --error: #e53935;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f5f5f5; font-family: 'Outfit', 'Noto Sans JP', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 24px 16px 48px; }
+
+  /* NAV */
+  .top-bar { width: 100%; max-width: 480px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .brand { font-size: 17px; font-weight: 700; color: var(--green); text-decoration: none; }
+  .brand span { color: var(--accent); }
+  .lang-switcher { display: flex; gap: 4px; }
+  .lang-btn { font-size: 10px; color: var(--dimmer); background: none; border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.15s; }
+  .lang-btn.active { color: var(--accent); background: var(--accent-light); border-color: var(--accent); }
+
+  /* CARD */
+  .card { width: 100%; max-width: 480px; background: #fff; border-radius: 16px; padding: 32px 28px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); }
+
+  /* STEP INDICATOR */
+  .steps { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
+  .step { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .step-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; background: var(--border); color: var(--dimmer); transition: all 0.3s; }
+  .step-num.active { background: var(--accent); color: #fff; }
+  .step-num.done { background: var(--accent-light); color: var(--accent); }
+  .step-label { font-size: 10px; color: var(--dimmer); white-space: nowrap; }
+  .step-label.active { color: var(--accent); font-weight: 600; }
+  .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 6px; }
+
+  /* SECTION */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .section-title { font-size: 16px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+  .section-sub { font-size: 12px; color: var(--dim); margin-bottom: 24px; font-weight: 300; }
+
+  /* FIELD */
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 11px; color: var(--dim); letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 500; }
+  .field input, .field select { width: 100%; padding: 11px 14px; background: #fafafa; border: 1.5px solid var(--border); border-radius: 8px; color: #1a1a1a; font-family: 'Outfit', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .field input:focus, .field select:focus { border-color: var(--accent); background: #fff; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* CHECKBOX GROUP */
+  .chk-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chk-label { display: flex; align-items: center; gap: 5px; background: #fafafa; border: 1.5px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 12px; color: var(--dim); transition: all 0.15s; }
+  .chk-label:has(input:checked) { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .chk-label input { display: none; }
+
+  /* TERMS */
+  .terms-box { background: #fafafa; border: 1px solid var(--border); border-radius: 10px; padding: 16px; max-height: 220px; overflow-y: auto; margin-bottom: 16px; font-size: 11px; color: var(--dim); line-height: 1.8; }
+  .terms-box h4 { color: var(--green); font-size: 12px; margin: 12px 0 4px; }
+  .terms-box h4:first-child { margin-top: 0; }
+  .agree-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .agree-item { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+  .agree-item input[type=checkbox] { margin-top: 2px; width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
+  .agree-item span { font-size: 12px; color: var(--dim); line-height: 1.6; }
+
+  /* BUTTONS */
+  .btn-primary { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: 100px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+  .btn-primary:hover { background: #1e5420; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-back { background: none; border: none; color: var(--accent); font-size: 12px; cursor: pointer; font-family: 'Outfit', sans-serif; display: block; text-align: center; margin-top: 12px; text-decoration: underline; }
+
+  /* ERROR */
+  .error-msg { color: var(--error); font-size: 12px; margin-bottom: 8px; display: none; }
+  .error-msg.show { display: block; }
+
+  /* SUCCESS */
+  .success-icon { font-size: 48px; text-align: center; margin-bottom: 16px; }
+  .success-title { font-size: 16px; font-weight: 700; color: var(--green); text-align: center; margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: var(--dim); text-align: center; line-height: 1.7; }
+
+  .login-link-row { text-align: center; margin-top: 20px; font-size: 12px; color: var(--dim); }
+  .login-link-row a { color: var(--accent); text-decoration: none; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="/home-user" class="brand">Meta<span>Check</span></a>
+  <div class="lang-switcher">
+    <button class="lang-btn active" onclick="setLang('ja')">JA</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('vi')">VI</button>
+    <button class="lang-btn" onclick="setLang('zh')">中</button>
+  </div>
+</div>
+
+<div class="card">
+
+  <!-- ステップ表示 -->
+  <div class="steps">
+    <div class="step">
+      <div class="step-num active" id="step1-num">1</div>
+      <div class="step-label active" id="step1-label">基本情報</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num" id="step2-num">2</div>
+      <div class="step-label" id="step2-label">利用規約</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num" id="step3-num">3</div>
+      <div class="step-label" id="step3-label">身体情報</div>
+    </div>
+  </div>
+
+  <!-- STEP 1: 基本情報 -->
+  <div class="section active" id="section-basic">
+    <div class="section-title" id="t-basic-title">アカウント作成</div>
+    <div class="section-sub" id="t-basic-sub">MetaCheckへようこそ。まずは基本情報を入力してください。</div>
+
+    <div class="field">
+      <label id="t-email">メールアドレス</label>
+      <input type="email" id="reg-email" placeholder="example@email.com" autocomplete="off">
+    </div>
+    <div class="field">
+      <label id="t-pw">パスワード（8文字以上）</label>
+      <input type="password" id="reg-pw" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label id="t-pw2">パスワード（確認）</label>
+      <input type="password" id="reg-pw2" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label id="t-nickname">お名前</label>
+      <input type="text" id="reg-nickname" placeholder="例：田中 太郎" autocomplete="off">
+    </div>
+    <div class="field">
+      <label id="t-analysis-id">解析ID（キットに記載）</label>
+      <input type="text" id="reg-analysis-id" placeholder="例：241210AB001" autocomplete="off">
+    </div>
+
+    <div class="error-msg" id="basic-error"></div>
+    <button class="btn-primary" id="t-btn-next1" onclick="goStep2()">次へ →</button>
+    <div class="login-link-row">すでにアカウントをお持ちの方は <a href="/">ログイン</a></div>
+  </div>
+
+  <!-- STEP 2: 利用規約 -->
+  <div class="section" id="section-terms">
+    <div class="section-title" id="t-terms-title">利用規約・プライバシーポリシー</div>
+    <div class="section-sub" id="t-terms-sub">サービス利用前に以下をご確認ください</div>
+
+    <div class="terms-box">
+      <h4>■ 利用規約</h4>
+      <b>第1条 総則</b><br>MetaCheckは、一般社団法人CPC BANK（以下「当法人」）が提供する代謝インテリジェンスプラットフォームです。<br><br>
+      <b>第2条 サービスの目的</b><br>本サービスは、多様な検体から得られる代謝物データを解析し、代謝状態をスコアリングして提供する健康情報サービスです。医療診断・治療行為を目的とするものではありません。<br><br>
+      <b>第3条 禁止事項</b><br>①データの無断開示、②医療診断の代替使用、③不正アクセス、④虚偽情報の登録、⑤その他当法人が不適切と判断する行為。<br><br>
+      <b>第4条 免責事項</b><br>提供する情報は健康参考情報です。当法人は故意または重大な過失がない限り損害について責任を負いません。<br><br>
+      <b>第5条 個人情報の取扱い</b><br>収集した個人情報はサービス提供・品質向上・法令遵守の目的にのみ使用し、第三者への提供は行いません。<br><br>
+      <h4>■ プライバシーポリシー</h4>
+      <b>収集する情報：</b>氏名・メールアドレス等の基本情報、身体情報、生活情報、代謝物データ、利用履歴。<br><br>
+      <b>データの管理：</b>SOC 2 Type 2認証取得済みのクラウド基盤で管理。転送時はTLS 1.2以上、保存時はAES-256で暗号化。<br><br>
+      <b>お問い合わせ：</b>一般社団法人 CPC BANK / info@cpc-bank.com
+    </div>
+
+    <div class="agree-list">
+      <label class="agree-item">
+        <input type="checkbox" id="chk-terms">
+        <span id="t-chk-terms">利用規約に同意します</span>
+      </label>
+      <label class="agree-item">
+        <input type="checkbox" id="chk-privacy">
+        <span id="t-chk-privacy">プライバシーポリシーに同意します</span>
+      </label>
+      <label class="agree-item">
+        <input type="checkbox" id="chk-sensitive">
+        <span id="t-chk-sensitive">身体情報・既往歴等の要配慮個人情報の収集・利用に同意します</span>
+      </label>
+    </div>
+
+    <div class="error-msg" id="terms-error"></div>
+    <button class="btn-primary" id="t-btn-next2" onclick="goStep3()">次へ →</button>
+    <button class="btn-back" onclick="goSection('basic')" id="t-btn-back1">← 戻る</button>
+  </div>
+
+  <!-- STEP 3: 身体情報 -->
+  <div class="section" id="section-body">
+    <div class="section-title" id="t-body-title">身体情報の入力</div>
+    <div class="section-sub" id="t-body-sub">解析精度向上のために使用します。後から変更可能です。</div>
+
+    <div class="field-row">
+      <div class="field"><label id="t-height">身長 (cm)</label><input type="number" id="body-height" placeholder="170" min="100" max="250"></div>
+      <div class="field"><label id="t-weight">体重 (kg)</label><input type="number" id="body-weight" placeholder="65" min="20" max="300"></div>
+    </div>
+    <div class="field">
+      <label id="t-sex">性別</label>
+      <select id="body-sex">
+        <option value="">選択してください</option>
+        <option value="male">男性</option>
+        <option value="female">女性</option>
+        <option value="other">その他・回答しない</option>
+      </select>
+    </div>
+    <div class="field"><label id="t-birth">生年月日</label><input type="date" id="body-birth-date"></div>
+    <div class="field">
+      <label id="t-smoking">喫煙</label>
+      <select id="body-smoking">
+        <option value="none">なし</option>
+        <option value="past">過去に喫煙（現在は禁煙）</option>
+        <option value="current">現在喫煙中</option>
+      </select>
+    </div>
+    <div class="field">
+      <label id="t-drinking">飲酒</label>
+      <select id="body-drinking">
+        <option value="none">なし</option>
+        <option value="occasional">時々（週1〜2回以下）</option>
+        <option value="regular">定期的（週3〜4回）</option>
+        <option value="heavy">毎日・多量</option>
+      </select>
+    </div>
+    <div class="field">
+      <label id="t-exercise">運動習慣</label>
+      <select id="body-exercise">
+        <option value="none">ほぼなし</option>
+        <option value="light">軽度（週1〜2回）</option>
+        <option value="moderate">中程度（週3〜4回）</option>
+        <option value="intense">高強度（ほぼ毎日）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label id="t-medical">既往歴（複数選択可）</label>
+      <div class="chk-group" id="chk-medical-history">
+        <label class="chk-label"><input type="checkbox" value="diabetes">糖尿病</label>
+        <label class="chk-label"><input type="checkbox" value="hypertension">高血圧</label>
+        <label class="chk-label"><input type="checkbox" value="dyslipidemia">脂質異常症</label>
+        <label class="chk-label"><input type="checkbox" value="liver_disease">肝疾患</label>
+        <label class="chk-label"><input type="checkbox" value="kidney_disease">腎疾患</label>
+        <label class="chk-label"><input type="checkbox" value="thyroid">甲状腺疾患</label>
+        <label class="chk-label"><input type="checkbox" value="cancer">がん既往</label>
+        <label class="chk-label"><input type="checkbox" value="none">なし</label>
+      </div>
+    </div>
+    <div class="field">
+      <label id="t-meds">服薬（複数選択可）</label>
+      <div class="chk-group" id="chk-medications">
+        <label class="chk-label"><input type="checkbox" value="antihypertensive">降圧剤</label>
+        <label class="chk-label"><input type="checkbox" value="statin">スタチン</label>
+        <label class="chk-label"><input type="checkbox" value="diabetes_med">糖尿病薬</label>
+        <label class="chk-label"><input type="checkbox" value="thyroid_med">甲状腺薬</label>
+        <label class="chk-label"><input type="checkbox" value="anticancer">抗がん剤</label>
+        <label class="chk-label"><input type="checkbox" value="none">なし</label>
+      </div>
+    </div>
+    <div class="field">
+      <label id="t-supps">サプリメント（複数選択可）</label>
+      <div class="chk-group" id="chk-supplements">
+        <label class="chk-label"><input type="checkbox" value="vitamin_b">ビタミンB群</label>
+        <label class="chk-label"><input type="checkbox" value="vitamin_c">ビタミンC</label>
+        <label class="chk-label"><input type="checkbox" value="vitamin_d">ビタミンD</label>
+        <label class="chk-label"><input type="checkbox" value="magnesium">マグネシウム</label>
+        <label class="chk-label"><input type="checkbox" value="zinc">亜鉛</label>
+        <label class="chk-label"><input type="checkbox" value="iron">鉄</label>
+        <label class="chk-label"><input type="checkbox" value="coq10">CoQ10</label>
+        <label class="chk-label"><input type="checkbox" value="omega3">オメガ3</label>
+        <label class="chk-label"><input type="checkbox" value="amino_bcaa">アミノ酸/BCAA</label>
+        <label class="chk-label"><input type="checkbox" value="protein">プロテイン</label>
+        <label class="chk-label"><input type="checkbox" value="folate">葉酸</label>
+        <label class="chk-label"><input type="checkbox" value="nad_nmn">NAD/NMN</label>
+        <label class="chk-label"><input type="checkbox" value="none">なし</label>
+      </div>
+    </div>
+    <div class="field"><label id="t-supps-other">サプリメント（その他）</label><input type="text" id="body-supplements-other" placeholder="例：マルチビタミン"></div>
+
+    <div class="error-msg" id="body-error"></div>
+    <button class="btn-primary" id="t-btn-submit" onclick="submitRegister()">登録を完了する</button>
+    <button class="btn-back" onclick="goSection('terms')" id="t-btn-back2">← 戻る</button>
+  </div>
+
+  <!-- 完了 -->
+  <div class="section" id="section-done">
+    <div class="success-icon">📧</div>
+    <div class="success-title" id="t-done-title">確認メールを送信しました</div>
+    <div class="success-sub" id="t-done-sub">メールのリンクをクリックして<br>アカウントを有効化してください</div>
+    <div class="login-link-row" style="margin-top:24px"><a href="/" id="t-done-link">← ログインへ</a></div>
+  </div>
+
+</div>
+
+<script>
+// ── Supabase設定 ──────────────────────────
+const SUPABASE_URL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
+const SUPABASE_AUTH_URL = SUPABASE_URL + '/auth/v1';
+const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
+
+let pendingData = {};
+
+// ── セクション切替 ────────────────────────
+function goSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  updateSteps(name);
+  window.scrollTo(0, 0);
+}
+
+function updateSteps(name) {
+  const steps = { basic: 1, terms: 2, body: 3, done: 4 };
+  const current = steps[name] || 1;
+  [1, 2, 3].forEach(i => {
+    const num = document.getElementById('step' + i + '-num');
+    const label = document.getElementById('step' + i + '-label');
+    if (i < current) { num.className = 'step-num done'; label.className = 'step-label'; }
+    else if (i === current) { num.className = 'step-num active'; label.className = 'step-label active'; }
+    else { num.className = 'step-num'; label.className = 'step-label'; }
+  });
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideError(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// ── STEP1: 基本情報バリデーション ─────────
+function goStep2() {
+  const email = document.getElementById('reg-email').value.trim();
+  const pw = document.getElementById('reg-pw').value;
+  const pw2 = document.getElementById('reg-pw2').value;
+  const nickname = document.getElementById('reg-nickname').value.trim();
+  const analysisId = document.getElementById('reg-analysis-id').value.trim().toUpperCase();
+
+  if (!email || !pw || !pw2 || !analysisId) { showError('basic-error', '必須項目を入力してください'); return; }
+  if (pw !== pw2) { showError('basic-error', 'パスワードが一致しません'); return; }
+  if (pw.length < 8) { showError('basic-error', 'パスワードは8文字以上で設定してください'); return; }
+
+  hideError('basic-error');
+
+  // 解析IDの存在確認
+  fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + analysisId + '&select=id', { headers: HEADERS })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.length) { showError('basic-error', '解析IDが見つかりません。キットに記載のIDを確認してください'); return; }
+      pendingData = { email, pw, nickname, analysisId };
+      goSection('terms');
+    })
+    .catch(() => showError('basic-error', '通信エラーが発生しました'));
+}
+
+// ── STEP2: 利用規約 ───────────────────────
+function goStep3() {
+  if (!document.getElementById('chk-terms').checked ||
+      !document.getElementById('chk-privacy').checked ||
+      !document.getElementById('chk-sensitive').checked) {
+    showError('terms-error', '全ての項目に同意してください'); return;
+  }
+  hideError('terms-error');
+  goSection('body');
+}
+
+// ── STEP3: 登録完了 ───────────────────────
+async function submitRegister() {
+  hideError('body-error');
+  const btn = document.getElementById('t-btn-submit');
+  btn.disabled = true;
+
+  function getChecked(id) {
+    return Array.from(document.querySelectorAll('#' + id + ' input:checked')).map(el => el.value);
+  }
+
+  const bodyInfo = {
+    height_cm: parseFloat(document.getElementById('body-height').value) || null,
+    weight_kg: parseFloat(document.getElementById('body-weight').value) || null,
+    sex: document.getElementById('body-sex').value || null,
+    birth_date: document.getElementById('body-birth-date').value || null,
+    smoking: document.getElementById('body-smoking').value || 'none',
+    drinking: document.getElementById('body-drinking').value || 'none',
+    exercise: document.getElementById('body-exercise').value || 'none',
+    medical_history: getChecked('chk-medical-history'),
+    medications: getChecked('chk-medications'),
+    supplements: getChecked('chk-supplements'),
+    supplements_other: document.getElementById('body-supplements-other').value.trim() || null,
+  };
+
+  try {
+    // Supabaseにサインアップ
+    const res = await fetch(SUPABASE_AUTH_URL + '/signup', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: pendingData.email, password: pendingData.pw, data: { full_name: pendingData.nickname, role: 'individual' } })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.msg || data.error_description || '登録に失敗しました');
+
+    const userId = data.user?.id;
+
+    if (userId) {
+      // 解析IDを紐付け
+      await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', {
+        method: 'POST',
+        headers: Object.assign({}, HEADERS, { 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ user_id: userId, patient_id: pendingData.analysisId, email: pendingData.email })
+      });
+
+      // 身体情報を保存
+      await fetch(SUPABASE_URL + '/rest/v1/patient_profiles', {
+        method: 'POST',
+        headers: Object.assign({}, HEADERS, { 'Prefer': 'return=minimal' }),
+        body: JSON.stringify(Object.assign({ user_id: userId }, bodyInfo))
+      }).catch(e => console.error('身体情報保存失敗:', e));
+    }
+
+    // localStorageに一時保存
+    localStorage.setItem('_pendingBodyInfo', JSON.stringify(bodyInfo));
+    if (pendingData.nickname) localStorage.setItem('_pendingNickname', pendingData.nickname);
+    if (pendingData.analysisId) localStorage.setItem('_pendingAnalysisId', pendingData.analysisId);
+
+    goSection('done');
+
+  } catch(e) {
+    showError('body-error', e.message || '登録に失敗しました');
+    btn.disabled = false;
+  }
+}
+
+// ── 言語切替 ──────────────────────────────
+const T = {
+  ja: { basicTitle:'アカウント作成', basicSub:'MetaCheckへようこそ。まずは基本情報を入力してください。', email:'メールアドレス', pw:'パスワード（8文字以上）', pw2:'パスワード（確認）', nickname:'お名前', analysisId:'解析ID（キットに記載）', next:'次へ →', step1:'基本情報', step2:'利用規約', step3:'身体情報', termsTitle:'利用規約・プライバシーポリシー', termsSub:'サービス利用前に以下をご確認ください', chkTerms:'利用規約に同意します', chkPrivacy:'プライバシーポリシーに同意します', chkSensitive:'身体情報・既往歴等の要配慮個人情報の収集・利用に同意します', bodyTitle:'身体情報の入力', bodySub:'解析精度向上のために使用します。後から変更可能です。', submit:'登録を完了する', back:'← 戻る', doneTitle:'確認メールを送信しました', doneSub:'メールのリンクをクリックして\nアカウントを有効化してください', doneLink:'← ログインへ' },
+  en: { basicTitle:'Create Account', basicSub:'Welcome to MetaCheck. Please enter your basic information.', email:'Email address', pw:'Password (8+ characters)', pw2:'Confirm password', nickname:'Your name', analysisId:'Analysis ID (on your kit)', next:'Next →', step1:'Basic info', step2:'Terms', step3:'Body info', termsTitle:'Terms & Privacy Policy', termsSub:'Please review before using the service', chkTerms:'I agree to the Terms of Service', chkPrivacy:'I agree to the Privacy Policy', chkSensitive:'I consent to collection of sensitive personal information', bodyTitle:'Body Information', bodySub:'Used to improve analysis accuracy. Can be updated later.', submit:'Complete Registration', back:'← Back', doneTitle:'Confirmation email sent', doneSub:'Click the link in the email\nto activate your account', doneLink:'← Go to Login' },
+  vi: { basicTitle:'Tạo tài khoản', basicSub:'Chào mừng đến MetaCheck. Vui lòng nhập thông tin cơ bản.', email:'Địa chỉ email', pw:'Mật khẩu (8+ ký tự)', pw2:'Xác nhận mật khẩu', nickname:'Tên của bạn', analysisId:'ID phân tích (trên kit)', next:'Tiếp theo →', step1:'Thông tin cơ bản', step2:'Điều khoản', step3:'Thông tin cơ thể', termsTitle:'Điều khoản & Chính sách', termsSub:'Vui lòng đọc trước khi sử dụng', chkTerms:'Tôi đồng ý với Điều khoản', chkPrivacy:'Tôi đồng ý với Chính sách quyền riêng tư', chkSensitive:'Tôi đồng ý thu thập thông tin nhạy cảm', bodyTitle:'Thông tin cơ thể', bodySub:'Dùng để cải thiện độ chính xác phân tích.', submit:'Hoàn tất đăng ký', back:'← Quay lại', doneTitle:'Email xác nhận đã được gửi', doneSub:'Nhấp vào liên kết trong email\nđể kích hoạt tài khoản', doneLink:'← Đến trang đăng nhập' },
+  zh: { basicTitle:'创建账户', basicSub:'欢迎来到MetaCheck，请输入基本信息。', email:'电子邮件地址', pw:'密码（8位以上）', pw2:'确认密码', nickname:'您的姓名', analysisId:'解析ID（套件上标注）', next:'下一步 →', step1:'基本信息', step2:'服务条款', step3:'身体信息', termsTitle:'使用条款和隐私政策', termsSub:'使用前请仔细阅读', chkTerms:'我同意使用条款', chkPrivacy:'我同意隐私政策', chkSensitive:'我同意收集敏感个人信息', bodyTitle:'身体信息', bodySub:'用于提高分析精度，之后可修改。', submit:'完成注册', back:'← 返回', doneTitle:'确认邮件已发送', doneSub:'点击邮件中的链接\n激活您的账户', doneLink:'← 前往登录' }
+};
+
+function setLang(lang) {
+  const t = T[lang];
+  localStorage.setItem('mc_lang', lang);
+  document.getElementById('t-basic-title').textContent = t.basicTitle;
+  document.getElementById('t-basic-sub').textContent = t.basicSub;
+  document.getElementById('t-email').textContent = t.email;
+  document.getElementById('t-pw').textContent = t.pw;
+  document.getElementById('t-pw2').textContent = t.pw2;
+  document.getElementById('t-nickname').textContent = t.nickname;
+  document.getElementById('t-analysis-id').textContent = t.analysisId;
+  document.getElementById('t-btn-next1').textContent = t.next;
+  document.getElementById('step1-label').textContent = t.step1;
+  document.getElementById('step2-label').textContent = t.step2;
+  document.getElementById('step3-label').textContent = t.step3;
+  document.getElementById('t-terms-title').textContent = t.termsTitle;
+  document.getElementById('t-terms-sub').textContent = t.termsSub;
+  document.getElementById('t-chk-terms').textContent = t.chkTerms;
+  document.getElementById('t-chk-privacy').textContent = t.chkPrivacy;
+  document.getElementById('t-chk-sensitive').textContent = t.chkSensitive;
+  document.getElementById('t-btn-next2').textContent = t.next;
+  document.getElementById('t-btn-back1').textContent = t.back;
+  document.getElementById('t-body-title').textContent = t.bodyTitle;
+  document.getElementById('t-body-sub').textContent = t.bodySub;
+  document.getElementById('t-btn-submit').textContent = t.submit;
+  document.getElementById('t-btn-back2').textContent = t.back;
+  document.getElementById('t-done-title').textContent = t.doneTitle;
+  document.getElementById('t-done-sub').innerHTML = t.doneSub.replace('\n', '<br>');
+  document.getElementById('t-done-link').textContent = t.doneLink;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === (lang === 'zh' ? '中' : lang.toUpperCase())));
+}
+
+// 保存済み言語を読み込む
+const savedLang = localStorage.getItem('mc_lang') || 'ja';
+setLang(savedLang);
+</script>
+
+</body>
+</html>
