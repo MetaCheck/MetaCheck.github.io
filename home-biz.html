@@ -198,7 +198,7 @@
     <div class="cat-right"><span class="cat-tag tag-coming" id="t-coming">準備中</span></div>
   </div>
 
-  <a href="/" class="cat-card" id="cat-result">
+  <a href="/?role=clinic" class="cat-card" id="cat-result">
     <div class="cat-left">
       <div class="cat-icon icon-result">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4466cc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h2l2-4 2 8 2-4h2"/></svg>
@@ -356,7 +356,8 @@ function setLang(lang) {
 async function init() {
   const session = await getSession();
   let isLoggedIn = false;
-  if (session && session.access_token) {
+  // roleがclinicのときだけログイン済み扱い（個人トークンは無視）
+  if (session && session.access_token && session.role === 'clinic') {
     const user = await verifyToken(session.access_token);
     if (user) isLoggedIn = true;
   }

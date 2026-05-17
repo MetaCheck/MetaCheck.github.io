@@ -1328,12 +1328,16 @@ function setLoginLang(lang) {
 window.addEventListener('load', async function() {
   let token = null;
   let savedRole = null;
+
+  // URLパラメータのroleを最優先（home-user/home-bizからの遷移を確実に区別）
+  const urlRole = new URLSearchParams(window.location.search).get('role');
+
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && (key.includes('auth-token') || key.includes('supabase') || key.includes('sb-'))) {
       try {
         const v = JSON.parse(localStorage.getItem(key));
-        if (v && v.access_token) { token = v.access_token; savedRole = v.role || null; break; }
+        if (v && v.access_token) { token = v.access_token; savedRole = urlRole || v.role || null; break; }
         if (v && v.currentSession && v.currentSession.access_token) { token = v.currentSession.access_token; break; }
       } catch(e) {}
     }
