@@ -52,6 +52,12 @@ async function savePendingNickname(patientId) {
 }
 
 async function doLogin() {
+  // 既存セッションを必ずクリア（タブ切り替えで別ロールのデータが見えるのを防止）
+  currentUser = null;
+  currentAccessToken = null;
+  sessionStorage.clear();
+  localStorage.removeItem('sb-auth-token');
+
   const role = document.querySelector('.role-tab.active')?.dataset.role || 'individual';
 
   if (role === 'individual') {
