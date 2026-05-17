@@ -1340,8 +1340,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="app.js"></script>
 <script>
 window.addEventListener('load', function() {
-  var params = new URLSearchParams(window.location.search);
-  if (params.get('register') === 'true') {
+  if (window.location.hash === '#register') {
     var btn = document.getElementById('btn-show-register');
     if (btn) btn.click();
   }
