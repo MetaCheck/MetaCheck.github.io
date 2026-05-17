@@ -1327,12 +1327,13 @@ function setLoginLang(lang) {
 <script>
 window.addEventListener('load', async function() {
   let token = null;
+  let savedRole = null;
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && (key.includes('auth-token') || key.includes('supabase') || key.includes('sb-'))) {
       try {
         const v = JSON.parse(localStorage.getItem(key));
-        if (v && v.access_token) { token = v.access_token; break; }
+        if (v && v.access_token) { token = v.access_token; savedRole = v.role || null; break; }
         if (v && v.currentSession && v.currentSession.access_token) { token = v.currentSession.access_token; break; }
       } catch(e) {}
     }
@@ -1345,14 +1346,21 @@ window.addEventListener('load', async function() {
     const H = { 'apikey': SKEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
 
     const res = await fetch(SURL + '/auth/v1/user', { headers: H });
-    if (!res.ok) return;
+    if (!res.ok) { localStorage.removeItem('sb-auth-token'); return; }
     const user = await res.json();
     currentAccessToken = token;
 
-    const clinicRes = await fetch(SURL + '/rest/v1/clinics?email=eq.' + encodeURIComponent(user.email) + '&select=*', { headers: H });
-    const clinics = await clinicRes.json();
+    // 保存されたroleを優先。なければclinicsテーブルで判定
+    const isClinic = savedRole === 'clinic' || (!savedRole && await (async () => {
+      const r = await fetch(SURL + '/rest/v1/clinics?email=eq.' + encodeURIComponent(user.email) + '&select=id&limit=1', { headers: H });
+      const d = await r.json();
+      return d && d.length > 0;
+    })());
 
-    if (clinics && clinics.length) {
+    if (isClinic) {
+      const clinicRes = await fetch(SURL + '/rest/v1/clinics?email=eq.' + encodeURIComponent(user.email) + '&select=*', { headers: H });
+      const clinics = await clinicRes.json();
+      if (!clinics || !clinics.length) return;
       const clinic = clinics[0];
       currentUser = { role: 'clinic', id: clinic.id, name: clinic.name, clinicId: clinic.id, status: clinic.status };
       showScreen('screen-clinic');

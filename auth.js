@@ -82,8 +82,9 @@ async function doLogin() {
       showLoginError(false);
       savePendingBodyInfo(currentUser.userId);
       savePendingNickname(patientId);
-      // セッション情報を保存してhome-userへ
-      localStorage.setItem('sb-auth-token', JSON.stringify({ access_token: session.access_token }));
+      // 古いセッションをクリアしてから保存（法人→個人の切り替え対応）
+      sessionStorage.clear();
+      localStorage.setItem('sb-auth-token', JSON.stringify({ access_token: session.access_token, role: 'individual' }));
       sessionStorage.setItem('mc_patient_id', patientId);
       window.location.href = '/home-user';
 
@@ -109,8 +110,9 @@ async function doLogin() {
 
       currentUser = { role: 'clinic', id: clinic.id, name: clinic.name, clinicId: clinic.id, status: clinic.status };
       showLoginError(false);
-      // セッション情報を保存してhome-bizへ
-      localStorage.setItem('sb-auth-token', JSON.stringify({ access_token: session.access_token }));
+      // 古いセッションをクリアしてから保存（個人→法人の切り替え対応）
+      sessionStorage.clear();
+      localStorage.setItem('sb-auth-token', JSON.stringify({ access_token: session.access_token, role: 'clinic' }));
       sessionStorage.setItem('mc_clinic_id', clinic.id);
       window.location.href = '/home-biz';
     } catch(e) {
