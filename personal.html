@@ -140,9 +140,9 @@
 
 <div class="register-banner hidden" id="register-banner-top">
   <div class="register-banner-text">
-    <strong>自分の代謝を、記録に残す。</strong>
+    <strong id="t-banner-title-top">自分の代謝を、記録に残す。</strong>
   </div>
-  <a href="/" class="register-banner-btn">登録する</a>
+  <a href="/" class="register-banner-btn" id="t-banner-btn-top">登録する</a>
 </div>
 
 <div class="section-label" id="t-cat-label">カテゴリ</div>
@@ -280,6 +280,8 @@ function setLang(lang) {
   document.getElementById('t-banner-title').textContent = t.bannerTitle;
   document.getElementById('t-banner-desc').textContent = t.bannerDesc;
   document.getElementById('t-banner-btn').textContent = t.bannerBtn;
+  document.getElementById('t-banner-title-top').textContent = t.bannerTitle;
+  document.getElementById('t-banner-btn-top').textContent = t.bannerBtn;
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === (lang === 'zh' ? '中' : lang.toUpperCase())));
 }
 
