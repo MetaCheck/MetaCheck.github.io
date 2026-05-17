@@ -80,16 +80,10 @@ async function doLogin() {
 
       currentUser = { role: 'individual', id: patientId, userId, email, allIds: links.map(l => l.patient_id) };
       showLoginError(false);
+      showScreen('screen-patient');
       savePendingBodyInfo(currentUser.userId);
       savePendingNickname(patientId);
-      // personalから来た場合はpersonalに戻る、それ以外はマイページへ
-      const redirect = new URLSearchParams(window.location.search).get('redirect');
-      if (redirect === 'personal') {
-        window.location.href = '/home-user';
-      } else {
-        showScreen('screen-patient');
-        renderPatientPage(patient);
-      }
+      renderPatientPage(patient);
 
     } catch(e) {
       console.error(e);
@@ -474,16 +468,6 @@ async function doBodyInfoSubmit() {
 // ─── イベント登録 ────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-login')?.addEventListener('click', doLogin);
-
-  // ?register=trueの時は登録画面を直接表示
-  var params = new URLSearchParams(window.location.search);
-  if (params.get('register') === 'true') {
-    // login-sectionを隠してregister-sectionを表示
-    var loginEl = document.getElementById('login-section');
-    var registerEl = document.getElementById('register-section');
-    if (loginEl) { loginEl.style.display = 'none'; loginEl.classList.add('hidden'); }
-    if (registerEl) { registerEl.style.display = ''; registerEl.classList.remove('hidden'); }
-  }
   document.getElementById('btn-register-submit')?.addEventListener('click', doRegister);
   document.getElementById('btn-terms-next')?.addEventListener('click', doTermsNext);
   document.getElementById('btn-body-info-submit')?.addEventListener('click', doBodyInfoSubmit);
