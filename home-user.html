@@ -198,7 +198,7 @@
     <div class="cat-right"><span class="cat-tag tag-coming" id="t-coming">準備中</span></div>
   </div>
 
-  <a href="/" class="cat-card disabled" id="cat-result">
+  <a href="/" class="cat-card" id="cat-result">
     <div class="cat-left">
       <div class="cat-icon icon-result">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4466cc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h2l2-4 2 8 2-4h2"/></svg>
@@ -368,7 +368,7 @@ async function init() {
     document.getElementById('nav-login').classList.remove('hidden');
     document.getElementById('register-banner').classList.remove('hidden');
     document.getElementById('register-banner-top').classList.remove('hidden');
-    document.getElementById('cat-result').classList.add('disabled');
+    // 未ログインでも押せる（/に飛んでログイン画面へ）
   }
   const savedLang = localStorage.getItem('mc_lang') || 'ja';
   setLang(savedLang);
