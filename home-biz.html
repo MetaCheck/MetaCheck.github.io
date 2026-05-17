@@ -360,9 +360,10 @@ async function init() {
     const user = await verifyToken(session.access_token);
     if (user) isLoggedIn = true;
   }
+  // 常にcat-resultを有効にして/に飛ばす（/側で自動ログイン）
+  document.getElementById('cat-result').classList.remove('disabled');
   if (isLoggedIn) {
     document.getElementById('logged-in-banner').classList.remove('hidden');
-    document.getElementById('cat-result').classList.remove('disabled');
   } else {
     document.getElementById('nav-login').classList.remove('hidden');
     document.getElementById('register-banner').classList.remove('hidden');
