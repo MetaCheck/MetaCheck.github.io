@@ -80,10 +80,11 @@ async function doLogin() {
 
       currentUser = { role: 'individual', id: patientId, userId, email, allIds: links.map(l => l.patient_id) };
       showLoginError(false);
-      showScreen('screen-patient');
       savePendingBodyInfo(currentUser.userId);
       savePendingNickname(patientId);
-      renderPatientPage(patient);
+      // セッション情報を保存してhome-userへ
+      sessionStorage.setItem('mc_patient_id', patientId);
+      window.location.href = '/home-user';
 
     } catch(e) {
       console.error(e);
@@ -107,8 +108,9 @@ async function doLogin() {
 
       currentUser = { role: 'clinic', id: clinic.id, name: clinic.name, clinicId: clinic.id, status: clinic.status };
       showLoginError(false);
-      showScreen('screen-clinic');
-      renderClinicPage(clinic.id, clinic.status);
+      // セッション情報を保存してhome-bizへ
+      sessionStorage.setItem('mc_clinic_id', clinic.id);
+      window.location.href = '/home-biz';
     } catch(e) {
       console.error(e);
       showLoginError(true);

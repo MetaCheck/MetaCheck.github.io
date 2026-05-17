@@ -49,16 +49,16 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
   background:#f5f5f5;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
-#screen-login.active{display:flex}
-.login-lang-switcher{display:flex;gap:4px;justify-content:flex-end;margin-bottom:12px;max-width:420px;width:90vw;position:relative;z-index:1;}
+#screen-login.active{display:flex;flex-direction:column;}
+.login-lang-switcher{display:flex;gap:6px;justify-content:flex-end;margin-bottom:12px;max-width:420px;width:90vw;}
 .login-lang-btn{
   width:36px;height:36px;border-radius:8px;
   border:1.5px solid #e0e0e0;
   background:#fff;cursor:pointer;
   display:flex;align-items:center;justify-content:center;transition:all .3s;
 }
-.login-lang-btn:hover{background:#f0f0f0;transform:translateY(-1px)}
-.login-lang-btn.active{background:#2a6e27;border-color:#2a6e27;box-shadow:0 4px 16px rgba(42,110,39,.3)}
+.login-lang-btn:hover{background:#f0f0f0;}
+.login-lang-btn.active{background:#2a6e27;border-color:#2a6e27;}
 .login-lang-btn.active .lang-text{color:#fff}
 .lang-text{font-size:11px;font-weight:700;color:#555}
 .login-box{
@@ -67,9 +67,10 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
   border:1px solid #e8e8e8;
   border-radius:20px;
   box-shadow:0 8px 40px rgba(0,0,0,.08);
-  position:relative;z-index:2;
   max-height:90vh;overflow-y:auto;
   -webkit-overflow-scrolling:touch;
+  position:relative;z-index:2;
+  max-width:90vw;
 }
 .login-logo{font-family:'Outfit','DM Sans',sans-serif;font-size:34px;font-weight:700;color:#10340f;letter-spacing:-.5px;margin-bottom:4px}
 .login-logo span{color:#2a6e27}
@@ -91,7 +92,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
   border-radius:8px;color:#1a1a1a;font-family:'DM Sans',sans-serif;font-size:14px;
   outline:none;transition:border-color .2s;
 }
-.login-field input:focus{border-color:#2a6e27}
+.login-field input:focus{border-color:#2a6e27;background:#fff;}
 .login-btn{
   width:100%;padding:13px;margin-top:6px;
   background:#2a6e27;border:none;border-radius:100px;
@@ -465,14 +466,13 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 
 <!-- ══════════════ SCREEN: LOGIN ══════════════ -->
 <div id="screen-login" class="screen active">
-  
   <div class="login-lang-switcher">
     <button class="login-lang-btn active" onclick="setLoginLang('ja')"><span class="lang-text">JA</span></button>
     <button class="login-lang-btn" onclick="setLoginLang('en')"><span class="lang-text">EN</span></button>
     <button class="login-lang-btn" onclick="setLoginLang('vi')"><span class="lang-text">VI</span></button>
     <button class="login-lang-btn" onclick="setLoginLang('cn')"><span class="lang-text">CN</span></button>
   </div>
-    <div class="login-box">
+  <div class="login-box">
     <div class="login-logo">Meta<span>Check</span></div>
     <div class="login-sub" data-i18n="login.subtitle">Metabolic Intelligence Platform</div>
 
@@ -1325,27 +1325,55 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script>
-// ?register=trueの時は登録画面を直接表示
-document.addEventListener('DOMContentLoaded', function() {
-  var params = new URLSearchParams(window.location.search);
-  if (params.get('register') === 'true') {
-    setTimeout(function() {
-      if (typeof setRole === 'function') setRole('individual');
-      if (typeof showRegisterSection === 'function') showRegisterSection('register');
-    }, 500);
+window.addEventListener('load', async function() {
+  let token = null;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.includes('auth-token') || key.includes('supabase') || key.includes('sb-'))) {
+      try {
+        const v = JSON.parse(localStorage.getItem(key));
+        if (v && v.access_token) { token = v.access_token; break; }
+        if (v && v.currentSession && v.currentSession.access_token) { token = v.currentSession.access_token; break; }
+      } catch(e) {}
+    }
   }
+  if (!token) return;
+
+  try {
+    const SURL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
+    const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
+    const H = { 'apikey': SKEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+    const res = await fetch(SURL + '/auth/v1/user', { headers: H });
+    if (!res.ok) return;
+    const user = await res.json();
+    currentAccessToken = token;
+
+    const clinicRes = await fetch(SURL + '/rest/v1/clinics?email=eq.' + encodeURIComponent(user.email) + '&select=*', { headers: H });
+    const clinics = await clinicRes.json();
+
+    if (clinics && clinics.length) {
+      const clinic = clinics[0];
+      currentUser = { role: 'clinic', id: clinic.id, name: clinic.name, clinicId: clinic.id, status: clinic.status };
+      showScreen('screen-clinic');
+      if (typeof renderClinicPage === 'function') renderClinicPage(clinic.id, clinic.status);
+    } else {
+      const linksRes = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H });
+      const links = await linksRes.json();
+      if (!links || !links.length) return;
+      const patientId = links[0].patient_id;
+      const patientRes = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H });
+      const patients = await patientRes.json();
+      if (!patients || !patients.length) return;
+      currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
+      showScreen('screen-patient');
+      if (typeof renderPatientPage === 'function') renderPatientPage(patients[0]);
+    }
+  } catch(e) { console.error('自動ログインエラー:', e); }
 });
 </script>
 <script src="patient.js"></script>
 <script src="clinic.js"></script>
 <script src="app.js"></script>
-<script>
-window.addEventListener('load', function() {
-  if (window.location.hash === '#register') {
-    var btn = document.getElementById('btn-show-register');
-    if (btn) btn.click();
-  }
-});
-</script>
 </body>
 </html>
