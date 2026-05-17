@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MetaCheck — ユーザー用ホーム画面</title>
+<title>MetaCheck — 法人用ホーム画面</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -152,7 +152,7 @@
 <body>
 
 <nav>
-  <a href="/home-user" class="nav-brand">Meta<span>Check</span></a>
+  <a href="/home-biz" class="nav-brand">Meta<span>Check</span></a>
   <div class="nav-right">
     <div class="lang-switcher">
       <button class="lang-btn active" onclick="setLang('ja')">JA</button>
@@ -179,7 +179,7 @@
   <div class="register-banner-text">
     <strong id="t-banner-title-top"></strong>
   </div>
-  <a href="/register" class="register-banner-btn" id="t-banner-btn-top"></a>
+  <a href="/register-biz" class="register-banner-btn" id="t-banner-btn-top"></a>
 </div>
 
 <div class="section-label" id="t-cat-label">カテゴリ</div>
@@ -259,7 +259,7 @@
     <strong id="t-banner-title"></strong>
     
   </div>
-  <a href="/register" class="register-banner-btn" id="t-banner-btn"></a>
+  <a href="/register-biz" class="register-banner-btn" id="t-banner-btn"></a>
 </div>
 
 <footer>
@@ -307,10 +307,10 @@ async function verifyToken(token) {
 }
 
 const T = {
-  ja: { pageTitle:'ユーザー用ホーム画面', login:'ログイン', loggedIn:'<strong>ログイン中</strong> — 全カテゴリが利用可能です', title:'代謝を知れば、<br><em>自分が変わる。</em>', sub:'Metabolic Intelligence Platform', catLabel:'カテゴリ', c1title:'代謝について学ぶ', c1desc:'代謝の傾向・生活習慣・最新知見', c2title:'自分の代謝を見る', c2desc:'解析結果・スコア・経時変化', c3title:'解析を依頼する', c3desc:'キット申し込み・検体採取', c4title:'商品を探す', c4desc:'食品・サプリ・化粧品', c5title:'専門家に相談する', c5desc:'提携クリニック・医師・栄養士', member:'会員限定', coming:'準備中', bannerTitle:'自分の代謝を、記録に残す。', bannerDesc:'', bannerBtn:'登録する' },
-  en: { pageTitle:'User Home Screen', login:'Login', loggedIn:'<strong>Logged in</strong> — All categories available', title:'Know your metabolism.<br><em>Change your life.</em>', sub:'Metabolic Intelligence Platform', catLabel:'Categories', c1title:'Learn about metabolism', c1desc:'Trends, lifestyle & latest insights', c2title:'View my metabolism', c2desc:'Results, scores & trends over time', c3title:'Request analysis', c3desc:'Kit order & sample collection', c4title:'Browse products', c4desc:'Food, supplements & cosmetics', c5title:'Consult an expert', c5desc:'Partner clinics, doctors & nutritionists', member:'Members only', coming:'Coming soon', bannerTitle:'Your metabolism, on record.', bannerDesc:'', bannerBtn:'Sign up' },
-  vi: { pageTitle:'Màn hình trang chủ người dùng', login:'Đăng nhập', loggedIn:'<strong>Đã đăng nhập</strong>', title:'Hiểu chuyển hóa,<br><em>thay đổi bản thân.</em>', sub:'Nền tảng Thông minh Chuyển hóa', catLabel:'Danh mục', c1title:'Tìm hiểu chuyển hóa', c1desc:'Xu hướng, lối sống & kiến thức mới', c2title:'Xem chuyển hóa của tôi', c2desc:'Kết quả, điểm số & thay đổi', c3title:'Yêu cầu phân tích', c3desc:'Đặt kit & thu thập mẫu', c4title:'Tìm sản phẩm', c4desc:'Thực phẩm, bổ sung & mỹ phẩm', c5title:'Tư vấn chuyên gia', c5desc:'Phòng khám, bác sĩ & chuyên gia', member:'Thành viên', coming:'Sắp ra mắt', bannerTitle:'Lưu lại hồ sơ chuyển hóa.', bannerDesc:'', bannerBtn:'Đăng ký' },
-  zh: { pageTitle:'用户主页面', login:'登录', loggedIn:'<strong>已登录</strong>', title:'了解代谢，<br><em>改变自己。</em>', sub:'代谢智能平台', catLabel:'类别', c1title:'了解代谢', c1desc:'代谢趋势・生活习惯・最新知识', c2title:'查看我的代谢', c2desc:'分析结果・评分・时间变化', c3title:'申请分析', c3desc:'套件申请・样本采集', c4title:'浏览商品', c4desc:'食品・保健品・化妆品', c5title:'咨询专家', c5desc:'合作诊所・医生・营养师', member:'会员专属', coming:'即将推出', bannerTitle:'记录你的代谢数据。', bannerDesc:'', bannerBtn:'注册' }
+  ja: { pageTitle:'法人用ホーム画面', login:'ログイン', loggedIn:'<strong>ログイン中</strong> — 全カテゴリが利用可能です', title:'代謝データが、<br><em>判断を変える。</em>', sub:'Metabolic Intelligence Platform', catLabel:'カテゴリ', c1title:'解析キットを購入する', c1desc:'回数券・キット・検体採取', c2title:'代謝データを見る', c2desc:'患者・検体データ管理・レポート', c3title:'ライブラリ', c3desc:'疾患×代謝・論文・最新知見', c4title:'試薬・製品を探す', c4desc:'研究用試薬・製品情報', c5title:'専門家ネットワーク', c5desc:'提携機関・研究者・医師', member:'会員限定', coming:'準備中', bannerTitle:'代謝データを、ビジネスに活かす。', bannerDesc:'', bannerBtn:'登録する' },
+  en: { pageTitle:'Business Home Screen', login:'Login', loggedIn:'<strong>Logged in</strong> — All categories available', title:'Metabolic data.<br><em>Redefining the standard.</em>', sub:'Metabolic Intelligence Platform', catLabel:'Categories', c1title:'Purchase analysis kits', c1desc:'Kit orders & sample collection', c2title:'View metabolic data', c2desc:'Patient & sample data management', c3title:'Library', c3desc:'Disease × metabolism, papers & insights', c4title:'Browse reagents & products', c4desc:'Research reagents & product info', c5title:'Expert network', c5desc:'Partner institutions, researchers & doctors', member:'Members only', coming:'Coming soon', bannerTitle:'Metabolic data. Redefining the standard.', bannerDesc:'', bannerBtn:'Sign up' },
+  vi: { pageTitle:'Màn hình trang chủ doanh nghiệp', login:'Đăng nhập', loggedIn:'<strong>Đã đăng nhập</strong>', title:'Dữ liệu chuyển hóa.<br><em>Thay đổi tiêu chuẩn.</em>', sub:'Nền tảng Thông minh Chuyển hóa', catLabel:'Danh mục', c1title:'Mua kit phân tích', c1desc:'Đặt kit & thu thập mẫu', c2title:'Xem chuyển hóa của tôi', c2desc:'Kết quả, điểm số & thay đổi', c3title:'Thư viện', c3desc:'Bệnh × chuyển hóa, tài liệu & kiến thức', c4title:'Tìm sản phẩm', c4desc:'Thực phẩm, bổ sung & mỹ phẩm', c5title:'Tư vấn chuyên gia', c5desc:'Phòng khám, bác sĩ & chuyên gia', member:'Thành viên', coming:'Sắp ra mắt', bannerTitle:'Dữ liệu chuyển hóa cho doanh nghiệp.', bannerDesc:'', bannerBtn:'Đăng ký' },
+  zh: { pageTitle:'企业主页面', login:'登录', loggedIn:'<strong>已登录</strong>', title:'代谢数据，<br><em>重新定义标准。</em>', sub:'代谢智能平台', catLabel:'类别', c1title:'购买分析套件', c1desc:'套件订购・样本采集', c2title:'查看代谢数据', c2desc:'患者数据管理・报告', c3title:'资料库', c3desc:'疾病×代谢・论文・最新知识', c4title:'浏览试剂・产品', c4desc:'研究试剂・产品信息', c5title:'专家网络', c5desc:'合作机构・研究者・医生', member:'会员专属', coming:'即将推出', bannerTitle:'代谢数据驱动商业决策。', bannerDesc:'', bannerBtn:'注册' }
 };
 
 function setLang(lang) {
