@@ -473,16 +473,17 @@ async function doBodyInfoSubmit() {
 
 // ─── イベント登録 ────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  // ?register=trueの時は登録画面を直接表示
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('register') === 'true') {
-    setTimeout(function() {
-      setRole('individual');
-      showRegisterSection('register');
-    }, 100);
-  }
-
   document.getElementById('btn-login')?.addEventListener('click', doLogin);
+
+  // ?register=trueの時は登録画面を直接表示
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('register') === 'true') {
+    // login-sectionを隠してregister-sectionを表示
+    var loginEl = document.getElementById('login-section');
+    var registerEl = document.getElementById('register-section');
+    if (loginEl) { loginEl.style.display = 'none'; loginEl.classList.add('hidden'); }
+    if (registerEl) { registerEl.style.display = ''; registerEl.classList.remove('hidden'); }
+  }
   document.getElementById('btn-register-submit')?.addEventListener('click', doRegister);
   document.getElementById('btn-terms-next')?.addEventListener('click', doTermsNext);
   document.getElementById('btn-body-info-submit')?.addEventListener('click', doBodyInfoSubmit);
