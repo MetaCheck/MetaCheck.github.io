@@ -1307,11 +1307,22 @@ window.addEventListener('load', async function() {
 
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && (key.includes('auth-token') || key.includes('supabase') || key.includes('sb-'))) {
+    if (key && (key.includes('auth') || key.includes('supabase') || key.includes('sb-') || key.includes('token'))) {
       try {
         const v = JSON.parse(localStorage.getItem(key));
         if (v && v.access_token) { token = v.access_token; savedRole = urlRole; break; }
         if (v && v.currentSession && v.currentSession.access_token) { token = v.currentSession.access_token; savedRole = urlRole; break; }
+      } catch(e) {}
+    }
+  }
+  // sessionStorageも確認
+  if (!token) {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (!key) continue;
+      try {
+        const v = JSON.parse(sessionStorage.getItem(key));
+        if (v && v.access_token) { token = v.access_token; savedRole = urlRole; break; }
       } catch(e) {}
     }
   }
