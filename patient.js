@@ -45,22 +45,8 @@ async function renderPatientPage(patient) {
     }
     window._patientAllIds = allIds;
 
-    // 最新スコアが未公開の場合は待機画面を表示
     const releasedScores = scores.filter(function(s) { return s.is_released === true; });
-    if (!releasedScores.length && scores.length > 0) {
-      const grid = document.getElementById('patient-score-grid');
-      if (grid) {
-        grid.style.cssText = '';
-        grid.innerHTML =
-          '<div style="background:var(--foam);border:1px solid var(--sage);border-radius:12px;padding:28px;text-align:center;margin-bottom:16px">' +
-            '<div style="font-size:36px;margin-bottom:12px">🔬</div>' +
-            '<div style="font-size:15px;font-weight:600;color:var(--forest);margin-bottom:8px">'+t('patient.pendingTitle')+'</div>' +
-            '<div style="font-size:13px;color:var(--ink3);line-height:1.7">'+t('patient.pendingSub')+'</div>' +
-          '</div>';
-      }
-      return;
-    }
-
+    // is_releasedがどれもfalse/nullの場合は全スコアを表示（未設定環境対応）
     window._patientScores = releasedScores.length ? releasedScores : scores;
     renderPatientScores(window._patientScores);
     renderAlertBanner(window._patientScores);
