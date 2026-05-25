@@ -1366,6 +1366,17 @@ window.addEventListener('load', async function() {
       currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
       showScreen('screen-patient');
       if (typeof renderPatientPage === 'function') renderPatientPage(patients[0]);
+
+      // URLパラメータのmodalを処理
+      const modalParam = new URLSearchParams(window.location.search).get('modal');
+      if (modalParam) {
+        setTimeout(function() {
+          if (modalParam === 'change-pw') openModal('modal-change-pw');
+          else if (modalParam === 'change-email') openModal('modal-change-email');
+          else if (modalParam === 'body-info' && typeof openBodyInfoModal === 'function') openBodyInfoModal();
+          else if (modalParam === 'add-analysis' && typeof openAddAnalysisModal === 'function') openAddAnalysisModal();
+        }, 500);
+      }
     }
   } catch(e) { console.error('自動ログインエラー:', e); }
 });
