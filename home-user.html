@@ -80,6 +80,33 @@
   .footer-brand span { color: var(--accent); }
   .footer-op { font-size: 10px; color: var(--dimmer); }
 
+  /* ようこそバナー */
+  .welcome-banner { margin: 16px 20px 0; background: var(--green); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
+  .welcome-banner .welcome-text { font-size: 13px; color: rgba(255,255,255,0.8); }
+  .welcome-banner .welcome-name { font-size: 15px; font-weight: 700; color: #fff; }
+
+  /* モーダル */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; padding: 0; }
+  .modal-overlay.hidden { display: none; }
+  .modal-sheet { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 540px; padding: 28px 24px 40px; }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--dim); margin-bottom: 20px; }
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label { display: block; font-size: 11px; color: var(--dim); margin-bottom: 5px; font-weight: 500; }
+  .modal-field input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .modal-field input:focus { border-color: var(--accent); }
+  .modal-error { color: #e53935; font-size: 12px; margin-bottom: 10px; display: none; }
+  .modal-error.show { display: block; }
+  .modal-success { color: var(--accent); font-size: 12px; margin-bottom: 10px; display: none; }
+  .modal-success.show { display: block; }
+  .modal-btn-primary { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: 100px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; }
+  .modal-btn-primary:hover { background: #1e5420; }
+  .modal-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .modal-btn-cancel { width: 100%; padding: 10px; background: none; border: none; color: var(--dim); font-family: 'Outfit', sans-serif; font-size: 13px; cursor: pointer; }
+
+  @media (min-width: 540px) { .modal-overlay { align-items: center; } .modal-sheet { border-radius: 20px; } }
+
   .hidden { display: none !important; }
 
   /* アカウント設定 */
@@ -230,6 +257,14 @@
   <div class="text" id="t-logged-in">ログイン中</div>
 </div>
 
+<!-- ようこそバナー -->
+<div class="welcome-banner hidden" id="welcome-banner">
+  <div>
+    <div class="welcome-text">ようこそ</div>
+    <div class="welcome-name" id="welcome-name">—</div>
+  </div>
+</div>
+
 <!-- 解析ID未登録バナー -->
 <div class="kit-banner hidden" id="kit-banner">
   <div class="kit-banner-icon">🔬</div>
@@ -247,16 +282,16 @@
 </div>
 
 <div class="hero">
-  <div class="page-title" id="t-page-title"></div>
+  <div class="page-title" id="t-page-title">ユーザー用ホーム画面</div>
   <h1 class="hero-title" id="t-title">代謝を知れば、<br><em>自分が変わる。</em></h1>
   <p class="hero-sub" id="t-sub">Metabolic Intelligence Platform</p>
 </div>
 
 <div class="register-banner hidden" id="register-banner-top">
   <div class="register-banner-text">
-    <strong id="t-banner-title-top"></strong>
+    <strong id="t-banner-title-top">ユーザー会員登録を行う。</strong>
   </div>
-  <a href="/register" class="register-banner-btn" id="t-banner-btn-top"></a>
+  <a href="/register" class="register-banner-btn" id="t-banner-btn-top">登録する</a>
 </div>
 
 <div class="section-label" id="t-cat-label">カテゴリ</div>
@@ -331,17 +366,9 @@
   </div>
 </div>
 
-<div class="register-banner hidden" id="register-banner">
-  <div class="register-banner-text">
-    <strong id="t-banner-title"></strong>
-    
-  </div>
-  <a href="/register" class="register-banner-btn" id="t-banner-btn"></a>
-</div>
-
 <div class="section-label">アカウント設定</div>
 <div class="settings-grid">
-  <button class="settings-btn" onclick="location.href='/?role=individual&modal=change-pw'">
+  <button class="settings-btn" onclick="openHomeModal('modal-change-pw')">
     <div class="cat-left">
       <div class="cat-icon" style="background:#f0e8ff">
         <svg viewBox="0 0 24 24" fill="none" stroke="#7744cc" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
@@ -352,7 +379,7 @@
     </div>
     <span class="cat-arrow">›</span>
   </button>
-  <button class="settings-btn" onclick="location.href='/?role=individual&modal=change-email'">
+  <button class="settings-btn" onclick="openHomeModal('modal-change-email')">
     <div class="cat-left">
       <div class="cat-icon" style="background:#e8eeff">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4466cc" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -363,7 +390,7 @@
     </div>
     <span class="cat-arrow">›</span>
   </button>
-  <button class="settings-btn" onclick="location.href='/?role=individual&modal=body-info'">
+  <button class="settings-btn" onclick="openHomeModal('modal-body-info')">
     <div class="cat-left">
       <div class="cat-icon" style="background:#fff8e8">
         <svg viewBox="0 0 24 24" fill="none" stroke="#cc8800" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -374,7 +401,7 @@
     </div>
     <span class="cat-arrow">›</span>
   </button>
-  <button class="settings-btn settings-btn--primary" onclick="location.href='/?role=individual&modal=add-analysis'">
+  <button class="settings-btn settings-btn--primary" onclick="openHomeModal('modal-add-analysis')">
     <div class="cat-left">
       <div class="cat-icon" style="background:rgba(255,255,255,0.15)">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -385,6 +412,70 @@
     </div>
     <span class="cat-arrow" style="color:rgba(255,255,255,0.6)">›</span>
   </button>
+</div>
+
+<!-- ══ パスワード変更モーダル ══ -->
+<div class="modal-overlay hidden" id="modal-change-pw" onclick="closeHomeModal('modal-change-pw')">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔑 パスワード変更</div>
+    <div class="modal-sub">新しいパスワードを設定します</div>
+    <div class="modal-field"><label>新しいパスワード（8文字以上）</label><input type="password" id="new-pw" placeholder="••••••••"></div>
+    <div class="modal-field"><label>確認</label><input type="password" id="new-pw2" placeholder="••••••••"></div>
+    <div class="modal-error" id="pw-error"></div>
+    <div class="modal-success" id="pw-success">パスワードを変更しました</div>
+    <button class="modal-btn-primary" onclick="doChangePw()">変更する</button>
+    <button class="modal-btn-cancel" onclick="closeHomeModal('modal-change-pw')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ メールアドレス変更モーダル ══ -->
+<div class="modal-overlay hidden" id="modal-change-email" onclick="closeHomeModal('modal-change-email')">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✉️ メールアドレス変更</div>
+    <div class="modal-sub">新しいメールアドレスに確認メールを送信します</div>
+    <div class="modal-field"><label>新しいメールアドレス</label><input type="email" id="new-email" placeholder="example@email.com"></div>
+    <div class="modal-error" id="email-error"></div>
+    <div class="modal-success" id="email-success">確認メールを送信しました</div>
+    <button class="modal-btn-primary" onclick="doChangeEmail()">変更する</button>
+    <button class="modal-btn-cancel" onclick="closeHomeModal('modal-change-email')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ 身体情報編集モーダル ══ -->
+<div class="modal-overlay hidden" id="modal-body-info" onclick="closeHomeModal('modal-body-info')">
+  <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👤 身体情報を編集</div>
+    <div class="modal-sub">解析精度向上のために使用します</div>
+    <div class="modal-field"><label>身長 (cm)</label><input type="number" id="h-height" placeholder="170"></div>
+    <div class="modal-field"><label>体重 (kg)</label><input type="number" id="h-weight" placeholder="65"></div>
+    <div class="modal-field"><label>性別</label>
+      <select id="h-sex" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none">
+        <option value="">選択</option><option value="male">男性</option><option value="female">女性</option><option value="other">その他</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>生年月日</label><input type="date" id="h-birth"></div>
+    <div class="modal-error" id="body-error"></div>
+    <div class="modal-success" id="body-success">保存しました</div>
+    <button class="modal-btn-primary" onclick="doSaveBodyInfo()">保存する</button>
+    <button class="modal-btn-cancel" onclick="closeHomeModal('modal-body-info')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ 解析ID追加モーダル ══ -->
+<div class="modal-overlay hidden" id="modal-add-analysis" onclick="closeHomeModal('modal-add-analysis')">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">＋ 解析IDを追加</div>
+    <div class="modal-sub">キットに記載されているIDを入力してください</div>
+    <div class="modal-field"><label>解析ID</label><input type="text" id="new-analysis-id" placeholder="例：241210AB001"></div>
+    <div class="modal-error" id="analysis-error"></div>
+    <div class="modal-success" id="analysis-success">解析IDを追加しました</div>
+    <button class="modal-btn-primary" onclick="doAddAnalysisId()">追加する</button>
+    <button class="modal-btn-cancel" onclick="closeHomeModal('modal-add-analysis')">キャンセル</button>
+  </div>
 </div>
 
 <footer>
@@ -491,6 +582,100 @@ function doLogout() {
   window.location.href = '/';
 }
 
+// ── モーダル開閉 ──
+function openHomeModal(id) { document.getElementById(id).classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+function closeHomeModal(id) { document.getElementById(id).classList.add('hidden'); document.body.style.overflow = ''; }
+
+// ── パスワード変更 ──
+async function doChangePw() {
+  const pw = document.getElementById('new-pw').value;
+  const pw2 = document.getElementById('new-pw2').value;
+  const errEl = document.getElementById('pw-error');
+  const okEl = document.getElementById('pw-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!pw || pw.length < 8) { errEl.textContent = '8文字以上で入力してください'; errEl.classList.add('show'); return; }
+  if (pw !== pw2) { errEl.textContent = 'パスワードが一致しません'; errEl.classList.add('show'); return; }
+  const session = await getSession();
+  if (!session) return;
+  const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
+    method: 'PUT',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pw })
+  });
+  if (res.ok) { okEl.classList.add('show'); document.getElementById('new-pw').value = ''; document.getElementById('new-pw2').value = ''; }
+  else { errEl.textContent = '変更に失敗しました'; errEl.classList.add('show'); }
+}
+
+// ── メールアドレス変更 ──
+async function doChangeEmail() {
+  const email = document.getElementById('new-email').value.trim();
+  const errEl = document.getElementById('email-error');
+  const okEl = document.getElementById('email-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!email || !email.includes('@')) { errEl.textContent = '正しいメールアドレスを入力してください'; errEl.classList.add('show'); return; }
+  const session = await getSession();
+  if (!session) return;
+  const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
+    method: 'PUT',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  });
+  if (res.ok) { okEl.classList.add('show'); document.getElementById('new-email').value = ''; }
+  else { errEl.textContent = '変更に失敗しました'; errEl.classList.add('show'); }
+}
+
+// ── 身体情報保存 ──
+async function doSaveBodyInfo() {
+  const errEl = document.getElementById('body-error');
+  const okEl = document.getElementById('body-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  const session = await getSession();
+  if (!session) return;
+  const user = await verifyToken(session.access_token);
+  if (!user) return;
+  const bodyInfo = {
+    user_id: user.id,
+    height_cm: parseFloat(document.getElementById('h-height').value) || null,
+    weight_kg: parseFloat(document.getElementById('h-weight').value) || null,
+    sex: document.getElementById('h-sex').value || null,
+    birth_date: document.getElementById('h-birth').value || null,
+    updated_at: new Date().toISOString()
+  };
+  const res = await fetch(SUPABASE_URL + '/rest/v1/patient_profiles', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(bodyInfo)
+  });
+  if (res.ok) { okEl.classList.add('show'); }
+  else { errEl.textContent = '保存に失敗しました'; errEl.classList.add('show'); }
+}
+
+// ── 解析ID追加 ──
+async function doAddAnalysisId() {
+  const analysisId = document.getElementById('new-analysis-id').value.trim().toUpperCase();
+  const errEl = document.getElementById('analysis-error');
+  const okEl = document.getElementById('analysis-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!analysisId) { errEl.textContent = '解析IDを入力してください'; errEl.classList.add('show'); return; }
+  const session = await getSession();
+  if (!session) return;
+  const user = await verifyToken(session.access_token);
+  if (!user) return;
+  // 存在確認
+  const check = await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + analysisId + '&select=id',
+    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
+  ).then(r => r.json()).catch(() => []);
+  if (!check || !check.length) { errEl.textContent = '解析IDが見つかりません'; errEl.classList.add('show'); return; }
+  // 紐付け
+  const res = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ user_id: user.id, patient_id: analysisId })
+  });
+  if (res.ok) { okEl.classList.add('show'); document.getElementById('new-analysis-id').value = ''; document.getElementById('kit-banner').classList.add('hidden'); document.getElementById('cat-result').classList.remove('disabled'); document.getElementById('logged-in-banner').classList.remove('hidden'); }
+  else { errEl.textContent = '追加に失敗しました（既に登録済みの可能性があります）'; errEl.classList.add('show'); }
+}
+
 async function init() {
   const session = await getSession();
   let isLoggedIn = false;
@@ -498,7 +683,14 @@ async function init() {
 
   if (session && session.access_token && session.role === 'individual') {
     const user = await verifyToken(session.access_token);
-    if (user) { isLoggedIn = true; userId = user.id; }
+    if (user) {
+      isLoggedIn = true;
+      userId = user.id;
+      // ようこそ表示
+      const name = user.user_metadata?.full_name || user.email || '';
+      document.getElementById('welcome-name').textContent = name + ' さん';
+      document.getElementById('welcome-banner').classList.remove('hidden');
+    }
   }
 
   if (isLoggedIn) {
@@ -522,7 +714,6 @@ async function init() {
     }
   } else {
     document.getElementById('nav-login').classList.remove('hidden');
-    document.getElementById('register-banner').classList.remove('hidden');
     document.getElementById('register-banner-top').classList.remove('hidden');
   }
 
