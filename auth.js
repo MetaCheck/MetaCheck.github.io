@@ -70,9 +70,13 @@ async function doLogin() {
       currentAccessToken = session.access_token;
       const userId = session.user.id;
 
-      // user_idで解析IDを取得
-      const links = await getAnalysisIds(userId);
-      if (!links.length) {
+      // user_idで解析IDを直接取得（ユーザートークン使用）
+      const linksRes = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id,linked_at&order=linked_at.asc', {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }
+      });
+      const links = await linksRes.json();
+
+      if (!links || !links.length) {
         // 解析IDが未紐付け → ホーム画面へ
         localStorage.setItem('sb-auth-token', JSON.stringify({ 
           access_token: session.access_token, 
