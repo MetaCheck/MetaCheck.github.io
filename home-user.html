@@ -638,16 +638,30 @@ function doLogout() {
   window.location.href = '/';
 }
 
-function goToScorePage() {
+async function goToScorePage() {
   const el = document.getElementById('cat-result');
   if (el && el.classList.contains('disabled')) return;
-  // デバッグ: トークン確認
-  const token = localStorage.getItem('sb-auth-token');
-  if (!token) {
-    alert('トークンなし: ログインし直してください');
-    return;
-  }
-  alert('トークンあり: ' + token.slice(0, 50));
+
+  // リフレッシュして最新トークンを取得
+  try {
+    const stored = JSON.parse(localStorage.getItem('sb-auth-token') || '{}');
+    if (stored.refresh_token) {
+      const res = await fetch('https://fmpetihjnsuogbvnfauc.supabase.co/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: stored.refresh_token })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('sb-auth-token', JSON.stringify({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          role: 'individual'
+        }));
+      }
+    }
+  } catch(e) {}
+
   window.location.href = '/?role=individual';
 }
 

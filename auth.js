@@ -88,9 +88,12 @@ async function doLogin() {
       showLoginError(false);
       savePendingBodyInfo(currentUser.userId);
       savePendingNickname(patientId);
-      // 古いセッションをクリアしてから保存（法人→個人の切り替え対応）
       sessionStorage.clear();
-      localStorage.setItem('sb-auth-token', JSON.stringify({ access_token: session.access_token, role: 'individual' }));
+      localStorage.setItem('sb-auth-token', JSON.stringify({ 
+        access_token: session.access_token, 
+        refresh_token: session.refresh_token || null,
+        role: 'individual' 
+      }));
       sessionStorage.setItem('mc_patient_id', patientId);
       window.location.href = '/home-user';
 
@@ -539,7 +542,11 @@ document.addEventListener('DOMContentLoaded', function() {
             renderClinicPage(clinic.id, clinic.status);
           } else {
             // 個人登録確認 → 解析IDの有無に関わらずホーム画面へ
-            localStorage.setItem('sb-auth-token', JSON.stringify({ access_token: data.access_token, role: 'individual' }));
+            localStorage.setItem('sb-auth-token', JSON.stringify({ 
+              access_token: data.access_token, 
+              refresh_token: data.refresh_token || null,
+              role: 'individual' 
+            }));
             window.location.href = '/home-user';
           }
         });
