@@ -34,6 +34,8 @@
   .lang-btn { font-size: 10px; color: var(--dimmer); background: none; border: none; padding: 4px 7px; border-radius: 6px; cursor: pointer; font-family: 'Outfit', sans-serif; }
   .lang-btn.active { color: var(--accent); background: var(--accent-light); }
   .nav-login { font-size: 13px; color: var(--dim); text-decoration: none; padding: 7px 14px; border: 1px solid var(--border); border-radius: 100px; }
+  .nav-logout { font-size: 13px; color: var(--dim); background: none; border: 1px solid var(--border); border-radius: 100px; padding: 7px 14px; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.2s; }
+  .nav-logout:hover { border-color: var(--accent); color: var(--accent); }
 
   .hero { padding: 40px 20px 32px; border-bottom: 1px solid var(--border); }
   .hero-badge { display: inline-block; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(42,110,39,0.25); border-radius: 100px; padding: 3px 10px; margin-bottom: 16px; background: var(--accent-light); }
@@ -219,6 +221,7 @@
       <button class="lang-btn" onclick="setLang('zh')">中</button>
     </div>
     <a href="/?role=individual" class="nav-login" id="nav-login">ログイン</a>
+    <button class="nav-logout hidden" id="nav-logout" onclick="doLogout()">ログアウト</button>
   </div>
 </nav>
 
@@ -482,6 +485,12 @@ function setLang(lang) {
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === (lang === 'zh' ? '中' : lang.toUpperCase())));
 }
 
+function doLogout() {
+  localStorage.removeItem('sb-auth-token');
+  sessionStorage.clear();
+  window.location.href = '/';
+}
+
 async function init() {
   const session = await getSession();
   let isLoggedIn = false;
@@ -493,6 +502,7 @@ async function init() {
   }
 
   if (isLoggedIn) {
+    document.getElementById('nav-logout').classList.remove('hidden');
     // 解析IDが紐付き済みか確認
     const links = await fetch(
       SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
