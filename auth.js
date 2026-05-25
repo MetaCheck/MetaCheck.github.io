@@ -70,11 +70,17 @@ async function doLogin() {
       currentAccessToken = session.access_token;
       const userId = session.user.id;
 
-      // 紐付き解析IDを取得
+      // user_idで解析IDを取得
       const links = await getAnalysisIds(userId);
       if (!links.length) {
-        // 解析IDが未紐付け → ホーム画面へ（ホーム画面で追加できる）
-        localStorage.setItem('sb-auth-token', JSON.stringify({ access_token: session.access_token, role: 'individual' }));
+        // 解析IDが未紐付け → ホーム画面へ
+        localStorage.setItem('sb-auth-token', JSON.stringify({ 
+          access_token: session.access_token, 
+          refresh_token: session.refresh_token || null,
+          role: 'individual',
+          user_id: userId,
+          email: email
+        }));
         window.location.href = '/home-user';
         return;
       }
@@ -92,7 +98,11 @@ async function doLogin() {
       localStorage.setItem('sb-auth-token', JSON.stringify({ 
         access_token: session.access_token, 
         refresh_token: session.refresh_token || null,
-        role: 'individual' 
+        role: 'individual',
+        patient_id: patientId,
+        all_ids: links.map(l => l.patient_id),
+        user_id: userId,
+        email: email
       }));
       window.location.href = '/home-user';
 
