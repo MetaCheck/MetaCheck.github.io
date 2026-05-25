@@ -267,7 +267,6 @@
 
 <!-- 解析ID未登録バナー -->
 <div class="kit-banner hidden" id="kit-banner">
-  <div class="kit-banner-icon">🔬</div>
   <div class="kit-banner-body">
     <div class="kit-banner-title" id="t-kit-banner-title">解析IDを登録してください</div>
     <div class="kit-banner-desc" id="t-kit-banner-desc">キットに記載されているIDを追加すると、代謝スコアが表示されます</div>
@@ -445,18 +444,74 @@
 
 <!-- ══ 身体情報編集モーダル ══ -->
 <div class="modal-overlay hidden" id="modal-body-info" onclick="closeHomeModal('modal-body-info')">
-  <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto">
+  <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:88vh;overflow-y:auto">
     <div class="modal-handle"></div>
     <div class="modal-title">👤 身体情報を編集</div>
-    <div class="modal-sub">解析精度向上のために使用します</div>
-    <div class="modal-field"><label>身長 (cm)</label><input type="number" id="h-height" placeholder="170"></div>
-    <div class="modal-field"><label>体重 (kg)</label><input type="number" id="h-weight" placeholder="65"></div>
+    <div class="modal-sub">解析精度向上のために使用します。後から変更可能です。</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="modal-field"><label>身長 (cm)</label><input type="number" id="h-height" placeholder="170" min="100" max="250"></div>
+      <div class="modal-field"><label>体重 (kg)</label><input type="number" id="h-weight" placeholder="65" min="20" max="300"></div>
+    </div>
     <div class="modal-field"><label>性別</label>
-      <select id="h-sex" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none">
-        <option value="">選択</option><option value="male">男性</option><option value="female">女性</option><option value="other">その他</option>
+      <select id="h-sex" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none;background:#fafafa">
+        <option value="">選択してください</option><option value="male">男性</option><option value="female">女性</option><option value="other">その他・回答しない</option>
       </select>
     </div>
     <div class="modal-field"><label>生年月日</label><input type="date" id="h-birth"></div>
+    <div class="modal-field"><label>喫煙</label>
+      <select id="h-smoking" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none;background:#fafafa">
+        <option value="none">なし</option><option value="past">過去に喫煙（現在は禁煙）</option><option value="current">現在喫煙中</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>飲酒</label>
+      <select id="h-drinking" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none;background:#fafafa">
+        <option value="none">なし</option><option value="occasional">時々（週1〜2回以下）</option><option value="regular">定期的（週3〜4回）</option><option value="heavy">毎日・多量</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>運動習慣</label>
+      <select id="h-exercise" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none;background:#fafafa">
+        <option value="none">ほぼなし</option><option value="light">軽度（週1〜2回）</option><option value="moderate">中程度（週3〜4回）</option><option value="intense">高強度（ほぼ毎日）</option>
+      </select>
+    </div>
+
+    <div class="modal-field"><label>既往歴（複数選択可）</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="h-chk-medical">
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="diabetes" style="accent-color:var(--accent)">糖尿病</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="hypertension" style="accent-color:var(--accent)">高血圧</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="dyslipidemia" style="accent-color:var(--accent)">脂質異常症</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="liver_disease" style="accent-color:var(--accent)">肝疾患</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="kidney_disease" style="accent-color:var(--accent)">腎疾患</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="thyroid" style="accent-color:var(--accent)">甲状腺疾患</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="cancer" style="accent-color:var(--accent)">がん既往</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="none" style="accent-color:var(--accent)">なし</label>
+      </div>
+    </div>
+
+    <div class="modal-field"><label>服薬（複数選択可）</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="h-chk-medications">
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="antihypertensive" style="accent-color:var(--accent)">降圧剤</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="statin" style="accent-color:var(--accent)">スタチン</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="diabetes_med" style="accent-color:var(--accent)">糖尿病薬</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="thyroid_med" style="accent-color:var(--accent)">甲状腺薬</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="none" style="accent-color:var(--accent)">なし</label>
+      </div>
+    </div>
+
+    <div class="modal-field"><label>サプリメント（複数選択可）</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="h-chk-supplements">
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="vitamin_b" style="accent-color:var(--accent)">ビタミンB群</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="vitamin_c" style="accent-color:var(--accent)">ビタミンC</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="vitamin_d" style="accent-color:var(--accent)">ビタミンD</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="magnesium" style="accent-color:var(--accent)">マグネシウム</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="zinc" style="accent-color:var(--accent)">亜鉛</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="omega3" style="accent-color:var(--accent)">オメガ3</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="nad_nmn" style="accent-color:var(--accent)">NAD/NMN</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="none" style="accent-color:var(--accent)">なし</label>
+      </div>
+    </div>
+    <div class="modal-field"><label>サプリメント（その他）</label><input type="text" id="h-supplements-other" placeholder="例：マルチビタミン"></div>
+
     <div class="modal-error" id="body-error"></div>
     <div class="modal-success" id="body-success">保存しました</div>
     <button class="modal-btn-primary" onclick="doSaveBodyInfo()">保存する</button>
@@ -633,12 +688,24 @@ async function doSaveBodyInfo() {
   if (!session) return;
   const user = await verifyToken(session.access_token);
   if (!user) return;
+
+  function getChecked(id) {
+    return Array.from(document.querySelectorAll('#' + id + ' input:checked')).map(el => el.value);
+  }
+
   const bodyInfo = {
     user_id: user.id,
     height_cm: parseFloat(document.getElementById('h-height').value) || null,
     weight_kg: parseFloat(document.getElementById('h-weight').value) || null,
     sex: document.getElementById('h-sex').value || null,
     birth_date: document.getElementById('h-birth').value || null,
+    smoking: document.getElementById('h-smoking').value || 'none',
+    drinking: document.getElementById('h-drinking').value || 'none',
+    exercise: document.getElementById('h-exercise').value || 'none',
+    medical_history: getChecked('h-chk-medical'),
+    medications: getChecked('h-chk-medications'),
+    supplements: getChecked('h-chk-supplements'),
+    supplements_other: document.getElementById('h-supplements-other').value.trim() || null,
     updated_at: new Date().toISOString()
   };
   const res = await fetch(SUPABASE_URL + '/rest/v1/patient_profiles', {
@@ -686,10 +753,9 @@ async function init() {
     if (user) {
       isLoggedIn = true;
       userId = user.id;
-      // ようこそ表示
+      // ようこそ表示（名前だけ先にセット、表示は解析ID確認後）
       const name = user.user_metadata?.full_name || user.email || '';
       document.getElementById('welcome-name').textContent = name + ' さん';
-      document.getElementById('welcome-banner').classList.remove('hidden');
     }
   }
 
@@ -703,11 +769,13 @@ async function init() {
     ).then(r => r.json()).catch(() => []);
 
     if (links && links.length > 0) {
-      // 解析ID登録済み → 通常のログイン済み表示
+      // 解析ID登録済み → ようこそ＋カテゴリ有効
       document.getElementById('cat-result').classList.remove('disabled');
       document.getElementById('logged-in-banner').classList.remove('hidden');
+      document.getElementById('welcome-banner').classList.remove('hidden');
     } else {
-      // 解析ID未登録 → 追加バナーを表示
+      // 解析ID未登録 → 解析IDバナーのみ（ようこそは非表示）
+      document.getElementById('welcome-banner').classList.add('hidden');
       document.getElementById('kit-banner').classList.remove('hidden');
       window._kitUserId = userId;
       window._kitToken = session.access_token;
