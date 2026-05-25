@@ -503,6 +503,7 @@ async function init() {
 
   if (isLoggedIn) {
     document.getElementById('nav-logout').classList.remove('hidden');
+    document.getElementById('nav-login').classList.add('hidden');
     // 解析IDが紐付き済みか確認
     const links = await fetch(
       SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
