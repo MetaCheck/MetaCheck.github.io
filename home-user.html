@@ -310,7 +310,7 @@
     <div class="cat-right"><span class="cat-tag tag-coming" id="t-coming">準備中</span></div>
   </div>
 
-  <a href="/?role=individual" class="cat-card" id="cat-result">
+  <div class="cat-card disabled" id="cat-result" onclick="goToScorePage()" style="cursor:pointer">
     <div class="cat-left">
       <div class="cat-icon icon-result">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4466cc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h2l2-4 2 8 2-4h2"/></svg>
@@ -324,7 +324,7 @@
       <span class="cat-tag tag-member" id="t-member">会員限定</span>
       <span class="cat-arrow">›</span>
     </div>
-  </a>
+  </div>
 
   <div class="cat-card disabled">
     <div class="cat-left">
@@ -636,6 +636,19 @@ function doLogout() {
   localStorage.removeItem('sb-auth-token');
   sessionStorage.clear();
   window.location.href = '/';
+}
+
+function goToScorePage() {
+  const el = document.getElementById('cat-result');
+  if (el && el.classList.contains('disabled')) return;
+  // デバッグ: トークン確認
+  const token = localStorage.getItem('sb-auth-token');
+  if (!token) {
+    alert('トークンなし: ログインし直してください');
+    return;
+  }
+  alert('トークンあり: ' + token.slice(0, 50));
+  window.location.href = '/?role=individual';
 }
 
 // ── モーダル開閉 ──
