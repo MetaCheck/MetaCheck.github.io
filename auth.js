@@ -94,7 +94,6 @@ async function doLogin() {
         refresh_token: session.refresh_token || null,
         role: 'individual' 
       }));
-      sessionStorage.setItem('mc_patient_id', patientId);
       window.location.href = '/home-user';
 
     } catch(e) {

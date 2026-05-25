@@ -1296,8 +1296,11 @@ function setLoginLang(lang) {
 <script src="supabase.js"></script>
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
+<script src="patient.js"></script>
+<script src="clinic.js"></script>
+<script src="app.js"></script>
 <script>
-window.addEventListener('load', async function() {
+window.addEventListener('DOMContentLoaded', async function() {
   let token = null;
   let savedRole = null;
 
@@ -1422,8 +1425,5 @@ window.addEventListener('load', async function() {
   } catch(e) { console.error('自動ログインエラー:', e); }
 });
 </script>
-<script src="patient.js"></script>
-<script src="clinic.js"></script>
-<script src="app.js"></script>
 </body>
 </html>
