@@ -796,6 +796,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
     <div class="topbar-label">マイページ</div>
     <div class="topbar-sep"></div>
     <div class="topbar-spacer"></div>
+    <a href="/home-user" style="padding:5px 12px;border:1px solid rgba(255,255,255,.2);background:transparent;border-radius:6px;color:rgba(255,255,255,.7);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:flex;align-items:center;gap:4px" data-i18n="common.goHome">🏠 ホーム</a>
     <div class="topbar-user">
       <div class="avatar" id="patient-avatar">P</div>
       <span id="patient-name-display">—</span>
@@ -822,15 +823,6 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
     <div class="pt-score-list" id="patient-score-grid"></div>
     <div id="patient-category-detail" hidden>
       <div class="patient-detail-panel" id="patient-detail-card"></div>
-    </div>
-    <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
-      <div class="section-title" data-i18n="common.accountSettings">アカウント設定</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="openModal('modal-change-pw')" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)" data-i18n="common.changePw">🔑 パスワード変更</button>
-        <button onclick="openModal('modal-change-email')" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)" data-i18n="common.changeEmail">✉️ メールアドレス変更</button>
-        <button onclick="openBodyInfoModal()" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)" data-i18n="body.editBtn">🏃 身体情報を編集</button>
-        <button onclick="openAddAnalysisModal()" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--emerald);color:#fff;border:1px solid var(--emerald)" data-i18n="patient.addAnalysis">＋ 解析IDを追加</button>
-      </div>
     </div>
     <div style="margin-top:20px;padding:12px 0;border-top:1px solid var(--border)">
       <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:6px" data-i18n="supervisor.label">監修</div>
@@ -913,13 +905,6 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
             <div class="memo-title" data-i18n="clinic.memo">📝 メモ</div>
             <textarea class="memo-textarea" id="clinic-memo" data-i18n-placeholder="clinic.memoPlaceholder" placeholder="クリニックメモ..."></textarea>
             <div class="memo-saved hidden" id="memo-saved" data-i18n="clinic.memoSaved">保存しました</div>
-          </div>
-          <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
-            <div class="section-title" data-i18n="common.accountSettings">アカウント設定</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button onclick="openModal('modal-change-pw')" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)" data-i18n="common.changePw">🔑 パスワード変更</button>
-              <button onclick="openModal('modal-change-email')" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)" data-i18n="common.changeEmail">✉️ メールアドレス変更</button>
-            </div>
           </div>
           <div style="margin-top:20px;padding:12px 0;border-top:1px solid var(--border)">
             <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:6px" data-i18n="supervisor.label">監修</div>

@@ -142,10 +142,6 @@
       <label id="t-nickname">お名前</label>
       <input type="text" id="reg-nickname" placeholder="例：田中 太郎" autocomplete="off">
     </div>
-    <div class="field">
-      <label id="t-analysis-id">解析ID（キットに記載）</label>
-      <input type="text" id="reg-analysis-id" placeholder="例：241210AB001" autocomplete="off">
-    </div>
 
     <div class="error-msg" id="basic-error"></div>
     <button class="btn-primary" id="t-btn-next1" onclick="goStep2()">次へ →</button>
@@ -338,23 +334,14 @@ function goStep2() {
   const pw = document.getElementById('reg-pw').value;
   const pw2 = document.getElementById('reg-pw2').value;
   const nickname = document.getElementById('reg-nickname').value.trim();
-  const analysisId = document.getElementById('reg-analysis-id').value.trim().toUpperCase();
 
-  if (!email || !pw || !pw2 || !analysisId) { showError('basic-error', '必須項目を入力してください'); return; }
+  if (!email || !pw || !pw2) { showError('basic-error', '必須項目を入力してください'); return; }
   if (pw !== pw2) { showError('basic-error', 'パスワードが一致しません'); return; }
   if (pw.length < 8) { showError('basic-error', 'パスワードは8文字以上で設定してください'); return; }
 
   hideError('basic-error');
-
-  // 解析IDの存在確認
-  fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + analysisId + '&select=id', { headers: HEADERS })
-    .then(r => r.json())
-    .then(data => {
-      if (!data.length) { showError('basic-error', '解析IDが見つかりません。キットに記載のIDを確認してください'); return; }
-      pendingData = { email, pw, nickname, analysisId };
-      goSection('terms');
-    })
-    .catch(() => showError('basic-error', '通信エラーが発生しました'));
+  pendingData = { email, pw, nickname };
+  goSection('terms');
 }
 
 // ── STEP2: 利用規約 ───────────────────────
@@ -405,13 +392,6 @@ async function submitRegister() {
     const userId = data.user?.id;
 
     if (userId) {
-      // 解析IDを紐付け
-      await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', {
-        method: 'POST',
-        headers: Object.assign({}, HEADERS, { 'Prefer': 'return=minimal' }),
-        body: JSON.stringify({ user_id: userId, patient_id: pendingData.analysisId, email: pendingData.email })
-      });
-
       // 身体情報を保存
       await fetch(SUPABASE_URL + '/rest/v1/patient_profiles', {
         method: 'POST',
@@ -423,7 +403,6 @@ async function submitRegister() {
     // localStorageに一時保存
     localStorage.setItem('_pendingBodyInfo', JSON.stringify(bodyInfo));
     if (pendingData.nickname) localStorage.setItem('_pendingNickname', pendingData.nickname);
-    if (pendingData.analysisId) localStorage.setItem('_pendingAnalysisId', pendingData.analysisId);
 
     goSection('done');
 
@@ -435,10 +414,10 @@ async function submitRegister() {
 
 // ── 言語切替 ──────────────────────────────
 const T = {
-  ja: { basicTitle:'アカウント作成', basicSub:'MetaCheckへようこそ。まずは基本情報を入力してください。', email:'メールアドレス', pw:'パスワード（8文字以上）', pw2:'パスワード（確認）', nickname:'お名前', analysisId:'解析ID（キットに記載）', next:'次へ →', step1:'基本情報', step2:'利用規約', step3:'身体情報', termsTitle:'利用規約・プライバシーポリシー', termsSub:'サービス利用前に以下をご確認ください', chkTerms:'利用規約に同意します', chkPrivacy:'プライバシーポリシーに同意します', chkSensitive:'身体情報・既往歴等の要配慮個人情報の収集・利用に同意します', bodyTitle:'身体情報の入力', bodySub:'解析精度向上のために使用します。後から変更可能です。', submit:'登録を完了する', back:'← 戻る', doneTitle:'確認メールを送信しました', doneSub:'メールのリンクをクリックして\nアカウントを有効化してください', doneLink:'← ログインへ' },
-  en: { basicTitle:'Create Account', basicSub:'Welcome to MetaCheck. Please enter your basic information.', email:'Email address', pw:'Password (8+ characters)', pw2:'Confirm password', nickname:'Your name', analysisId:'Analysis ID (on your kit)', next:'Next →', step1:'Basic info', step2:'Terms', step3:'Body info', termsTitle:'Terms & Privacy Policy', termsSub:'Please review before using the service', chkTerms:'I agree to the Terms of Service', chkPrivacy:'I agree to the Privacy Policy', chkSensitive:'I consent to collection of sensitive personal information', bodyTitle:'Body Information', bodySub:'Used to improve analysis accuracy. Can be updated later.', submit:'Complete Registration', back:'← Back', doneTitle:'Confirmation email sent', doneSub:'Click the link in the email\nto activate your account', doneLink:'← Go to Login' },
-  vi: { basicTitle:'Tạo tài khoản', basicSub:'Chào mừng đến MetaCheck. Vui lòng nhập thông tin cơ bản.', email:'Địa chỉ email', pw:'Mật khẩu (8+ ký tự)', pw2:'Xác nhận mật khẩu', nickname:'Tên của bạn', analysisId:'ID phân tích (trên kit)', next:'Tiếp theo →', step1:'Thông tin cơ bản', step2:'Điều khoản', step3:'Thông tin cơ thể', termsTitle:'Điều khoản & Chính sách', termsSub:'Vui lòng đọc trước khi sử dụng', chkTerms:'Tôi đồng ý với Điều khoản', chkPrivacy:'Tôi đồng ý với Chính sách quyền riêng tư', chkSensitive:'Tôi đồng ý thu thập thông tin nhạy cảm', bodyTitle:'Thông tin cơ thể', bodySub:'Dùng để cải thiện độ chính xác phân tích.', submit:'Hoàn tất đăng ký', back:'← Quay lại', doneTitle:'Email xác nhận đã được gửi', doneSub:'Nhấp vào liên kết trong email\nđể kích hoạt tài khoản', doneLink:'← Đến trang đăng nhập' },
-  zh: { basicTitle:'创建账户', basicSub:'欢迎来到MetaCheck，请输入基本信息。', email:'电子邮件地址', pw:'密码（8位以上）', pw2:'确认密码', nickname:'您的姓名', analysisId:'解析ID（套件上标注）', next:'下一步 →', step1:'基本信息', step2:'服务条款', step3:'身体信息', termsTitle:'使用条款和隐私政策', termsSub:'使用前请仔细阅读', chkTerms:'我同意使用条款', chkPrivacy:'我同意隐私政策', chkSensitive:'我同意收集敏感个人信息', bodyTitle:'身体信息', bodySub:'用于提高分析精度，之后可修改。', submit:'完成注册', back:'← 返回', doneTitle:'确认邮件已发送', doneSub:'点击邮件中的链接\n激活您的账户', doneLink:'← 前往登录' }
+  ja: { basicTitle:'アカウント作成', basicSub:'MetaCheckへようこそ。まずは基本情報を入力してください。', email:'メールアドレス', pw:'パスワード（8文字以上）', pw2:'パスワード（確認）', nickname:'お名前', next:'次へ →', step1:'基本情報', step2:'利用規約', step3:'身体情報', termsTitle:'利用規約・プライバシーポリシー', termsSub:'サービス利用前に以下をご確認ください', chkTerms:'利用規約に同意します', chkPrivacy:'プライバシーポリシーに同意します', chkSensitive:'身体情報・既往歴等の要配慮個人情報の収集・利用に同意します', bodyTitle:'身体情報の入力', bodySub:'解析精度向上のために使用します。後から変更可能です。', submit:'登録を完了する', back:'← 戻る', doneTitle:'確認メールを送信しました', doneSub:'メールのリンクをクリックして\nアカウントを有効化してください', doneLink:'← ログインへ' },
+  en: { basicTitle:'Create Account', basicSub:'Welcome to MetaCheck. Please enter your basic information.', email:'Email address', pw:'Password (8+ characters)', pw2:'Confirm password', nickname:'Your name', next:'Next →', step1:'Basic info', step2:'Terms', step3:'Body info', termsTitle:'Terms & Privacy Policy', termsSub:'Please review before using the service', chkTerms:'I agree to the Terms of Service', chkPrivacy:'I agree to the Privacy Policy', chkSensitive:'I consent to collection of sensitive personal information', bodyTitle:'Body Information', bodySub:'Used to improve analysis accuracy. Can be updated later.', submit:'Complete Registration', back:'← Back', doneTitle:'Confirmation email sent', doneSub:'Click the link in the email\nto activate your account', doneLink:'← Go to Login' },
+  vi: { basicTitle:'Tạo tài khoản', basicSub:'Chào mừng đến MetaCheck. Vui lòng nhập thông tin cơ bản.', email:'Địa chỉ email', pw:'Mật khẩu (8+ ký tự)', pw2:'Xác nhận mật khẩu', nickname:'Tên của bạn', next:'Tiếp theo →', step1:'Thông tin cơ bản', step2:'Điều khoản', step3:'Thông tin cơ thể', termsTitle:'Điều khoản & Chính sách', termsSub:'Vui lòng đọc trước khi sử dụng', chkTerms:'Tôi đồng ý với Điều khoản', chkPrivacy:'Tôi đồng ý với Chính sách quyền riêng tư', chkSensitive:'Tôi đồng ý thu thập thông tin nhạy cảm', bodyTitle:'Thông tin cơ thể', bodySub:'Dùng để cải thiện độ chính xác phân tích.', submit:'Hoàn tất đăng ký', back:'← Quay lại', doneTitle:'Email xác nhận đã được gửi', doneSub:'Nhấp vào liên kết trong email\nđể kích hoạt tài khoản', doneLink:'← Đến trang đăng nhập' },
+  zh: { basicTitle:'创建账户', basicSub:'欢迎来到MetaCheck，请输入基本信息。', email:'电子邮件地址', pw:'密码（8位以上）', pw2:'确认密码', nickname:'您的姓名', next:'下一步 →', step1:'基本信息', step2:'服务条款', step3:'身体信息', termsTitle:'使用条款和隐私政策', termsSub:'使用前请仔细阅读', chkTerms:'我同意使用条款', chkPrivacy:'我同意隐私政策', chkSensitive:'我同意收集敏感个人信息', bodyTitle:'身体信息', bodySub:'用于提高分析精度，之后可修改。', submit:'完成注册', back:'← 返回', doneTitle:'确认邮件已发送', doneSub:'点击邮件中的链接\n激活您的账户', doneLink:'← 前往登录' }
 };
 
 function setLang(lang) {
@@ -450,7 +429,6 @@ function setLang(lang) {
   document.getElementById('t-pw').textContent = t.pw;
   document.getElementById('t-pw2').textContent = t.pw2;
   document.getElementById('t-nickname').textContent = t.nickname;
-  document.getElementById('t-analysis-id').textContent = t.analysisId;
   document.getElementById('t-btn-next1').textContent = t.next;
   document.getElementById('step1-label').textContent = t.step1;
   document.getElementById('step2-label').textContent = t.step2;

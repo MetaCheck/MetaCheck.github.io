@@ -79,6 +79,64 @@
   .footer-op { font-size: 10px; color: var(--dimmer); }
 
   .hidden { display: none !important; }
+
+  /* アカウント設定 */
+  .settings-grid {
+    padding: 0 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .settings-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px;
+    background: var(--card-bg); border: 1.5px solid var(--border);
+    border-radius: 14px; cursor: pointer;
+    font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+    color: var(--text); transition: all 0.2s; text-align: left;
+    width: 100%;
+  }
+  .settings-btn:hover { border-color: var(--accent); background: #fff; box-shadow: 0 2px 12px rgba(42,110,39,0.08); }
+  .settings-btn--primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .settings-btn--primary:hover { background: #1e4e1d; border-color: #1e4e1d; }
+  .settings-btn--primary .cat-title { color: #fff; }
+
+  @media (min-width: 768px) {
+    .settings-grid { max-width: 1100px; margin: 0 auto; padding: 0 40px 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  }
+  .kit-banner {
+    margin: 16px 20px 0;
+    background: var(--green);
+    border-radius: 14px;
+    padding: 20px;
+    color: #fff;
+  }
+  .kit-banner-icon { font-size: 28px; margin-bottom: 10px; }
+  .kit-banner-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .kit-banner-desc { font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 14px; line-height: 1.5; }
+  .kit-input-row { display: flex; gap: 8px; }
+  .kit-input {
+    flex: 1; padding: 10px 14px;
+    border-radius: 8px; border: none;
+    font-family: 'Outfit', sans-serif; font-size: 14px;
+    background: rgba(255,255,255,0.15); color: #fff;
+    outline: none; letter-spacing: 0.05em;
+  }
+  .kit-input::placeholder { color: rgba(255,255,255,0.4); }
+  .kit-input:focus { background: rgba(255,255,255,0.22); }
+  .kit-submit-btn {
+    padding: 10px 18px; border: none; border-radius: 8px;
+    background: #7dd87a; color: var(--green);
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .kit-submit-btn:hover { background: #a0e89e; }
+  .kit-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .kit-error {
+    margin-top: 8px; font-size: 12px;
+    color: #ffcccc; background: rgba(255,0,0,0.15);
+    border-radius: 6px; padding: 6px 10px;
+  }
   @keyframes slideInLeft {
     0% { transform: translateX(-120%); opacity: 0; }
     60% { transform: translateX(6px); opacity: 1; }
@@ -167,6 +225,22 @@
 <div class="logged-in-banner hidden" id="logged-in-banner">
   <div class="dot"></div>
   <div class="text" id="t-logged-in">ログイン中</div>
+</div>
+
+<!-- 解析ID未登録バナー -->
+<div class="kit-banner hidden" id="kit-banner">
+  <div class="kit-banner-icon">🔬</div>
+  <div class="kit-banner-body">
+    <div class="kit-banner-title" id="t-kit-banner-title">解析IDを登録してください</div>
+    <div class="kit-banner-desc" id="t-kit-banner-desc">キットに記載されているIDを追加すると、代謝スコアが表示されます</div>
+    <div class="kit-input-row">
+      <input type="text" id="kit-id-input" class="kit-input" placeholder="例：241210AB001" autocomplete="off">
+      <button class="kit-submit-btn" id="kit-submit-btn" onclick="submitKitId()">
+        <span id="t-kit-btn">追加</span>
+      </button>
+    </div>
+    <div class="kit-error hidden" id="kit-error"></div>
+  </div>
 </div>
 
 <div class="hero">
@@ -262,6 +336,54 @@
   <a href="/register" class="register-banner-btn" id="t-banner-btn"></a>
 </div>
 
+<div class="section-label">アカウント設定</div>
+<div class="settings-grid">
+  <button class="settings-btn" onclick="openModal('modal-change-pw')">
+    <div class="cat-left">
+      <div class="cat-icon" style="background:#f0e8ff">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7744cc" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-s1">パスワード変更</div>
+      </div>
+    </div>
+    <span class="cat-arrow">›</span>
+  </button>
+  <button class="settings-btn" onclick="openModal('modal-change-email')">
+    <div class="cat-left">
+      <div class="cat-icon" style="background:#e8eeff">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4466cc" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-s2">メールアドレス変更</div>
+      </div>
+    </div>
+    <span class="cat-arrow">›</span>
+  </button>
+  <button class="settings-btn" onclick="openBodyInfoModal()">
+    <div class="cat-left">
+      <div class="cat-icon" style="background:#fff8e8">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#cc8800" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-s3">身体情報を編集</div>
+      </div>
+    </div>
+    <span class="cat-arrow">›</span>
+  </button>
+  <button class="settings-btn settings-btn--primary" onclick="openAddAnalysisModal()">
+    <div class="cat-left">
+      <div class="cat-icon" style="background:rgba(255,255,255,0.15)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-s4">解析IDを追加</div>
+      </div>
+    </div>
+    <span class="cat-arrow" style="color:rgba(255,255,255,0.6)">›</span>
+  </button>
+</div>
+
 <footer>
   <div class="footer-brand">Meta<span>Check</span></div>
   <div class="footer-op">© MetaCheck — 運営：一般社団法人 CPC BANK</div>
@@ -307,10 +429,10 @@ async function verifyToken(token) {
 }
 
 const T = {
-  ja: { pageTitle:'ユーザー用ホーム画面', login:'ログイン', loggedIn:'<strong>ログイン中</strong> — 全カテゴリが利用可能です', title:'代謝を知れば、<br><em>自分が変わる。</em>', sub:'Metabolic Intelligence Platform', catLabel:'カテゴリ', c1title:'代謝について学ぶ', c1desc:'代謝の傾向・生活習慣・最新知見', c2title:'自分の代謝を見る', c2desc:'解析結果・スコア・経時変化', c3title:'解析を依頼する', c3desc:'提携クリニックで解析', c4title:'商品を探す', c4desc:'食品・サプリ・化粧品', c5title:'専門家に相談する', c5desc:'医師、研究者、栄養士', member:'会員限定', coming:'準備中', bannerTitle:'ユーザー会員登録を行う。', bannerDesc:'', bannerBtn:'登録する' },
-  en: { pageTitle:'User Home Screen', login:'Login', loggedIn:'<strong>Logged in</strong> — All categories available', title:'Know your metabolism.<br><em>Change your life.</em>', sub:'Metabolic Intelligence Platform', catLabel:'Categories', c1title:'Learn about metabolism', c1desc:'Trends, lifestyle & latest insights', c2title:'View my metabolism', c2desc:'Results, scores & trends over time', c3title:'Request analysis', c3desc:'Partner clinic analysis', c4title:'Browse products', c4desc:'Food, supplements & cosmetics', c5title:'Consult an expert', c5desc:'Doctors, researchers & nutritionists', member:'Members only', coming:'Coming soon', bannerTitle:'Register as a user member.', bannerDesc:'', bannerBtn:'Sign up' },
-  vi: { pageTitle:'Màn hình trang chủ người dùng', login:'Đăng nhập', loggedIn:'<strong>Đã đăng nhập</strong>', title:'Hiểu chuyển hóa,<br><em>thay đổi bản thân.</em>', sub:'Nền tảng Thông minh Chuyển hóa', catLabel:'Danh mục', c1title:'Tìm hiểu chuyển hóa', c1desc:'Xu hướng, lối sống & kiến thức mới', c2title:'Xem chuyển hóa của tôi', c2desc:'Kết quả, điểm số & thay đổi', c3title:'Yêu cầu phân tích', c3desc:'Phân tích tại phòng khám liên kết', c4title:'Tìm sản phẩm', c4desc:'Thực phẩm, bổ sung & mỹ phẩm', c5title:'Tư vấn chuyên gia', c5desc:'Bác sĩ, nhà nghiên cứu & chuyên gia dinh dưỡng', member:'Thành viên', coming:'Sắp ra mắt', bannerTitle:'Đăng ký thành viên người dùng.', bannerDesc:'', bannerBtn:'Đăng ký' },
-  zh: { pageTitle:'用户主页面', login:'登录', loggedIn:'<strong>已登录</strong>', title:'了解代谢，<br><em>改变自己。</em>', sub:'代谢智能平台', catLabel:'类别', c1title:'了解代谢', c1desc:'代谢趋势・生活习惯・最新知识', c2title:'查看我的代谢', c2desc:'分析结果・评分・时间变化', c3title:'申请分析', c3desc:'在合作诊所进行分析', c4title:'浏览商品', c4desc:'食品・保健品・化妆品', c5title:'咨询专家', c5desc:'医生、研究者、营养师', member:'会员专属', coming:'即将推出', bannerTitle:'进行用户会员注册。', bannerDesc:'', bannerBtn:'注册' }
+  ja: { pageTitle:'ユーザー用ホーム画面', login:'ログイン', loggedIn:'<strong>ログイン中</strong> — 全カテゴリが利用可能です', title:'代謝を知れば、<br><em>自分が変わる。</em>', sub:'Metabolic Intelligence Platform', catLabel:'カテゴリ', c1title:'代謝について学ぶ', c1desc:'代謝の傾向・生活習慣・最新知見', c2title:'自分の代謝を見る', c2desc:'解析結果・スコア・経時変化', c3title:'解析を依頼する', c3desc:'提携クリニックで解析', c4title:'商品を探す', c4desc:'食品・サプリ・化粧品', c5title:'専門家に相談する', c5desc:'医師、研究者、栄養士', member:'会員限定', coming:'準備中', bannerTitle:'ユーザー会員登録を行う。', bannerDesc:'', bannerBtn:'登録する', kitBannerTitle:'解析IDを登録してください', kitBannerDesc:'キットに記載されているIDを追加すると、代謝スコアが表示されます', kitBtn:'追加', s1:'パスワード変更', s2:'メールアドレス変更', s3:'身体情報を編集', s4:'解析IDを追加' },
+  en: { pageTitle:'User Home Screen', login:'Login', loggedIn:'<strong>Logged in</strong> — All categories available', title:'Know your metabolism.<br><em>Change your life.</em>', sub:'Metabolic Intelligence Platform', catLabel:'Categories', c1title:'Learn about metabolism', c1desc:'Trends, lifestyle & latest insights', c2title:'View my metabolism', c2desc:'Results, scores & trends over time', c3title:'Request analysis', c3desc:'Partner clinic analysis', c4title:'Browse products', c4desc:'Food, supplements & cosmetics', c5title:'Consult an expert', c5desc:'Doctors, researchers & nutritionists', member:'Members only', coming:'Coming soon', bannerTitle:'Register as a user member.', bannerDesc:'', bannerBtn:'Sign up', kitBannerTitle:'Add your Analysis ID', kitBannerDesc:'Enter the ID from your kit to view your metabolic scores', kitBtn:'Add', s1:'Change Password', s2:'Change Email', s3:'Edit Body Info', s4:'Add Analysis ID' },
+  vi: { pageTitle:'Màn hình trang chủ người dùng', login:'Đăng nhập', loggedIn:'<strong>Đã đăng nhập</strong>', title:'Hiểu chuyển hóa,<br><em>thay đổi bản thân.</em>', sub:'Nền tảng Thông minh Chuyển hóa', catLabel:'Danh mục', c1title:'Tìm hiểu chuyển hóa', c1desc:'Xu hướng, lối sống & kiến thức mới', c2title:'Xem chuyển hóa của tôi', c2desc:'Kết quả, điểm số & thay đổi', c3title:'Yêu cầu phân tích', c3desc:'Phân tích tại phòng khám liên kết', c4title:'Tìm sản phẩm', c4desc:'Thực phẩm, bổ sung & mỹ phẩm', c5title:'Tư vấn chuyên gia', c5desc:'Bác sĩ, nhà nghiên cứu & chuyên gia dinh dưỡng', member:'Thành viên', coming:'Sắp ra mắt', bannerTitle:'Đăng ký thành viên người dùng.', bannerDesc:'', bannerBtn:'Đăng ký', kitBannerTitle:'Thêm ID phân tích', kitBannerDesc:'Nhập ID trên kit để xem điểm chuyển hóa của bạn', kitBtn:'Thêm', s1:'Đổi mật khẩu', s2:'Đổi email', s3:'Sửa thông tin cơ thể', s4:'Thêm ID phân tích' },
+  zh: { pageTitle:'用户主页面', login:'登录', loggedIn:'<strong>已登录</strong>', title:'了解代谢，<br><em>改变自己。</em>', sub:'代谢智能平台', catLabel:'类别', c1title:'了解代谢', c1desc:'代谢趋势・生活习惯・最新知识', c2title:'查看我的代谢', c2desc:'分析结果・评分・时间变化', c3title:'申请分析', c3desc:'在合作诊所进行分析', c4title:'浏览商品', c4desc:'食品・保健品・化妆品', c5title:'咨询专家', c5desc:'医生、研究者、营养师', member:'会员专属', coming:'即将推出', bannerTitle:'进行用户会员注册。', bannerDesc:'', bannerBtn:'注册', kitBannerTitle:'请添加解析ID', kitBannerDesc:'输入kit上记载的ID即可查看代谢评分', kitBtn:'添加', s1:'修改密码', s2:'修改邮箱', s3:'编辑身体信息', s4:'添加解析ID' }
 };
 
 function setLang(lang) {
@@ -350,28 +472,99 @@ function setLang(lang) {
   setText('t-banner-btn', t.bannerBtn);
   setText('t-banner-title-top', t.bannerTitle);
   setText('t-banner-btn-top', t.bannerBtn);
+  setText('t-kit-banner-title', t.kitBannerTitle);
+  setText('t-kit-banner-desc', t.kitBannerDesc);
+  setText('t-kit-btn', t.kitBtn);
+  setText('t-s1', t.s1);
+  setText('t-s2', t.s2);
+  setText('t-s3', t.s3);
+  setText('t-s4', t.s4);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === (lang === 'zh' ? '中' : lang.toUpperCase())));
 }
 
 async function init() {
   const session = await getSession();
   let isLoggedIn = false;
-  // roleがindividualのときだけログイン済み扱い（法人トークンは無視）
+  let userId = null;
+
   if (session && session.access_token && session.role === 'individual') {
     const user = await verifyToken(session.access_token);
-    if (user) isLoggedIn = true;
+    if (user) { isLoggedIn = true; userId = user.id; }
   }
+
   if (isLoggedIn) {
-    document.getElementById('cat-result').classList.remove('disabled');
-    document.getElementById('logged-in-banner').classList.remove('hidden');
+    // 解析IDが紐付き済みか確認
+    const links = await fetch(
+      SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
+    ).then(r => r.json()).catch(() => []);
+
+    if (links && links.length > 0) {
+      // 解析ID登録済み → 通常のログイン済み表示
+      document.getElementById('cat-result').classList.remove('disabled');
+      document.getElementById('logged-in-banner').classList.remove('hidden');
+    } else {
+      // 解析ID未登録 → 追加バナーを表示
+      document.getElementById('kit-banner').classList.remove('hidden');
+      window._kitUserId = userId;
+      window._kitToken = session.access_token;
+    }
   } else {
-    // 未ログイン時はcat-resultをdisabledのまま
     document.getElementById('nav-login').classList.remove('hidden');
     document.getElementById('register-banner').classList.remove('hidden');
     document.getElementById('register-banner-top').classList.remove('hidden');
   }
+
   const savedLang = localStorage.getItem('mc_lang') || 'ja';
   setLang(savedLang);
+}
+
+async function submitKitId() {
+  const input = document.getElementById('kit-id-input');
+  const btn = document.getElementById('kit-submit-btn');
+  const errEl = document.getElementById('kit-error');
+  const analysisId = input.value.trim().toUpperCase();
+
+  if (!analysisId) return;
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+
+  try {
+    // 解析IDの存在確認
+    const check = await fetch(
+      SUPABASE_URL + '/rest/v1/patients?id=eq.' + analysisId + '&select=id',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + (window._kitToken || SUPABASE_KEY) } }
+    ).then(r => r.json());
+
+    if (!check || !check.length) {
+      errEl.textContent = '解析IDが見つかりません。キットに記載のIDを確認してください';
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      return;
+    }
+
+    // user_analysis_ids に紐付け
+    const res = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (window._kitToken || SUPABASE_KEY),
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ user_id: window._kitUserId, patient_id: analysisId })
+    });
+
+    if (!res.ok) throw new Error('紐付けに失敗しました');
+
+    // 成功 → スコアページへ
+    window.location.href = '/?role=individual';
+
+  } catch(e) {
+    errEl.textContent = e.message || 'エラーが発生しました';
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+  }
 }
 
 init();

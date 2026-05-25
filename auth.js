@@ -133,10 +133,9 @@ async function doRegister() {
   const email = document.getElementById('input-register-email')?.value.trim();
   const pw = document.getElementById('input-register-pw')?.value;
   const pw2 = document.getElementById('input-register-pw2')?.value;
-  const analysisId = document.getElementById('input-register-analysis-id')?.value.trim().toUpperCase();
   const nickname = document.getElementById('input-register-nickname')?.value.trim();
 
-  if (!email || !pw || !pw2 || !analysisId) {
+  if (!email || !pw || !pw2) {
     showRegisterError('全ての項目を入力してください');
     return;
   }
@@ -149,24 +148,10 @@ async function doRegister() {
     return;
   }
 
-  // 解析IDが存在するか確認
   try {
-    const patient = await fetchPatient(analysisId);
-    if (!patient) {
-      showRegisterError('解析IDが見つかりません。キットに記載のIDを確認してください');
-      return;
-    }
-  } catch(e) {
-    showRegisterError('解析IDの確認に失敗しました');
-    return;
-  }
-
-  try {
-    // バリデーション通過 → 同意画面へ（実際の登録は同意・身体情報入力後）
-    window._pendingRegData = { email, pw, analysisId, nickname };
+    window._pendingRegData = { email, pw, nickname };
     showRegisterSection('terms-consent');
     if (typeof updateTermsContent === "function") updateTermsContent();
-
   } catch(e) {
     showRegisterError(e.message || '登録に失敗しました');
   }
@@ -434,46 +419,28 @@ async function doBodyInfoSubmit() {
     var userId = result.user?.id;
 
     if (userId) {
-      await linkAnalysisId(userId, data.analysisId, data.email);
       await fetch(SUPABASE_URL + '/rest/v1/user_roles', {
         method: 'POST',
         headers: Object.assign({}, HEADERS, { 'Authorization': 'Bearer ' + (window.currentAccessToken || SUPABASE_KEY), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' }),
         body: JSON.stringify({ user_id: userId, role: 'individual' })
       }).catch(function(e) { console.error('user_roles保存失敗:', e); });
 
-      if (data.nickname) {
-        await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + data.analysisId, {
-          method: 'PATCH',
-          headers: Object.assign({}, HEADERS, { 'Prefer': 'return=representation' }),
-          body: JSON.stringify({ name: data.nickname })
-        });
-      }
-
       await fetch(SUPABASE_URL + '/rest/v1/patient_profiles', {
         method: 'POST',
         headers: Object.assign({}, getHeaders(), { 'Prefer': 'return=minimal' }),
         body: JSON.stringify(Object.assign({ user_id: userId }, bodyInfo))
-      });
-
-      await fetch(SUPABASE_URL + '/rest/v1/analysis_snapshots', {
-        method: 'POST',
-        headers: Object.assign({}, getHeaders(), { 'Prefer': 'return=minimal' }),
-        body: JSON.stringify(Object.assign({ user_id: userId, analysis_id: data.analysisId }, bodyInfo))
       });
     }
 
     // 身体情報をlocalStorageに一時保存（メール確認後のログイン時に使用）
     localStorage.setItem('_pendingBodyInfo', JSON.stringify(bodyInfo));
     if (data && data.nickname) localStorage.setItem('_pendingNickname', data.nickname);
-    if (data && data.analysisId) localStorage.setItem('_pendingAnalysisId', data.analysisId);
     window._pendingRegData = null;
     showRegisterSection('check-email');
 
   } catch(e) {
-    // localStorageは必ず保存（エラーでも）
     if (bodyInfo) localStorage.setItem('_pendingBodyInfo', JSON.stringify(bodyInfo));
     if (data && data.nickname) localStorage.setItem('_pendingNickname', data.nickname);
-    if (data && data.analysisId) localStorage.setItem('_pendingAnalysisId', data.analysisId);
     if (errEl) { errEl.textContent = e.message || '登録に失敗しました'; errEl.classList.remove('hidden'); }
   }
 }
