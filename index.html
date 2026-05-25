@@ -1342,11 +1342,18 @@ window.addEventListener('load', async function() {
     } else {
       const linksRes = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H });
       const links = await linksRes.json();
-      if (!links || !links.length) return;
+      if (!links || !links.length) {
+        // 解析ID未登録 → ホーム画面へ
+        window.location.href = '/home-user';
+        return;
+      }
       const patientId = links[0].patient_id;
       const patientRes = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H });
       const patients = await patientRes.json();
-      if (!patients || !patients.length) return;
+      if (!patients || !patients.length) {
+        window.location.href = '/home-user';
+        return;
+      }
       currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
       showScreen('screen-patient');
 
