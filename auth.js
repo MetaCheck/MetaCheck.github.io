@@ -73,9 +73,9 @@ async function doLogin() {
       // 紐付き解析IDを取得
       const links = await getAnalysisIds(userId);
       if (!links.length) {
-        // 解析IDが未紐付けの場合は紐付け画面へ
-        showRegisterSection('link-analysis');
-        window._pendingUserId = userId;
+        // 解析IDが未紐付け → ホーム画面へ（ホーム画面で追加できる）
+        localStorage.setItem('sb-auth-token', JSON.stringify({ access_token: session.access_token, role: 'individual' }));
+        window.location.href = '/home-user';
         return;
       }
 
@@ -538,21 +538,9 @@ document.addEventListener('DOMContentLoaded', function() {
             showScreen('screen-clinic');
             renderClinicPage(clinic.id, clinic.status);
           } else {
-            // 個人登録確認
-            getAnalysisIds(userId).then(function(links) {
-              if (!links.length) {
-                showRegisterSection('link-analysis');
-                window._pendingUserId = userId;
-                return;
-              }
-              const patientId = links[0].patient_id;
-              fetchPatient(patientId).then(function(patient) {
-                if (!patient) return;
-                currentUser = { role: 'individual', id: patientId, userId: userId, allIds: links.map(function(l) { return l.patient_id; }) };
-                showScreen('screen-patient');
-                renderPatientPage(patient);
-              });
-            });
+            // 個人登録確認 → 解析IDの有無に関わらずホーム画面へ
+            localStorage.setItem('sb-auth-token', JSON.stringify({ access_token: data.access_token, role: 'individual' }));
+            window.location.href = '/home-user';
           }
         });
       }
