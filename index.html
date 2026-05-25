@@ -1305,33 +1305,24 @@ window.addEventListener('load', async function() {
   const urlRole = new URLSearchParams(window.location.search).get('role');
   if (!urlRole) return; // role指定なしの直接アクセスは自動ログインしない
 
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && (key.includes('auth') || key.includes('supabase') || key.includes('sb-') || key.includes('token'))) {
-      try {
-        const raw = localStorage.getItem(key);
-        // まず直接パース
-        const v = JSON.parse(raw);
-        if (v && v.access_token) { token = v.access_token; savedRole = v.role || urlRole; break; }
-        if (v && v.currentSession && v.currentSession.access_token) { token = v.currentSession.access_token; savedRole = urlRole; break; }
-        // ネストされたJSON（文字列の中にJSONがある場合）
-        if (typeof v === 'string') {
-          const v2 = JSON.parse(v);
-          if (v2 && v2.access_token) { token = v2.access_token; savedRole = v2.role || urlRole; break; }
-        }
-      } catch(e) {}
+  // sb-auth-tokenを直接取得
+  try {
+    const raw = localStorage.getItem('sb-auth-token');
+    if (raw) {
+      const v = JSON.parse(raw);
+      if (v && v.access_token) { token = v.access_token; savedRole = v.role || urlRole; }
     }
-  }
-  // savedRoleをURLパラメータで上書き
-  if (urlRole) savedRole = urlRole;
-  // sessionStorageも確認
+  } catch(e) {}
+
+  // 見つからなければ全キーを探す
   if (!token) {
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
       if (!key) continue;
       try {
-        const v = JSON.parse(sessionStorage.getItem(key));
-        if (v && v.access_token) { token = v.access_token; savedRole = urlRole; break; }
+        const raw = localStorage.getItem(key);
+        const v = JSON.parse(raw);
+        if (v && v.access_token) { token = v.access_token; savedRole = v.role || urlRole; break; }
       } catch(e) {}
     }
   }
