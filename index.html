@@ -1331,10 +1331,35 @@ window.addEventListener('load', async function() {
   try {
     const SURL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
     const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
-    const H = { 'apikey': SKEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+    let H = { 'apikey': SKEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
 
-    const res = await fetch(SURL + '/auth/v1/user', { headers: H });
-    if (!res.ok) { localStorage.removeItem('sb-auth-token'); return; }
+    let res = await fetch(SURL + '/auth/v1/user', { headers: H });
+
+    // トークン期限切れの場合はリフレッシュ
+    if (!res.ok) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('sb-auth-token') || '{}');
+        if (stored.refresh_token) {
+          const refreshRes = await fetch(SURL + '/auth/v1/token?grant_type=refresh_token', {
+            method: 'POST',
+            headers: { 'apikey': SKEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: stored.refresh_token })
+          });
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            token = refreshData.access_token;
+            localStorage.setItem('sb-auth-token', JSON.stringify({
+              access_token: refreshData.access_token,
+              refresh_token: refreshData.refresh_token,
+              role: stored.role || urlRole
+            }));
+            H = { 'apikey': SKEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+            res = await fetch(SURL + '/auth/v1/user', { headers: H });
+          }
+        }
+      } catch(e) {}
+      if (!res.ok) { localStorage.removeItem('sb-auth-token'); return; }
+    }
     const user = await res.json();
     currentAccessToken = token;
 
