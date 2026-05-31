@@ -91,9 +91,6 @@ async function doLogin() {
 
       // 最初の解析IDで患者データを取得
       const patientId = links[0].patient_id;
-      const patient = await fetchPatient(patientId);
-      if (!patient) { showLoginError(true); return; }
-
       currentUser = { role: 'individual', id: patientId, userId, email, allIds: links.map(l => l.patient_id) };
       showLoginError(false);
       savePendingBodyInfo(currentUser.userId);
