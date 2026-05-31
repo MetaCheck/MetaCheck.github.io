@@ -1,16 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<script>
-// patient.jsが必要とするグローバル変数
-var currentUser = null;
-var currentAccessToken = null;
-var currentLang = localStorage.getItem('mc_lang') || 'ja';
-
-// patient.jsが必要とするDB関数（supabase.jsを読み込まないため直接定義）
-
-// 関数はSUPABASE_URL/KEY定義後に読み込まれるため空
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MetaCheck — ユーザー用ホーム画面</title>
@@ -256,68 +246,15 @@ var currentLang = localStorage.getItem('mc_lang') || 'ja';
 .mc-pt-id{font-family:monospace;font-size:11px;color:#95D5B2;margin-bottom:4px}
 .mc-pt-name{font-size:20px;font-weight:500}
 .mc-score-list{display:flex;flex-direction:column;gap:6px}
-.mc-score-row{background:#fff;border:1px solid #D4E6DD;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.mc-score-row{background:#fff;border:1px solid #D4E6DD;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s}
+.mc-score-row:hover{border-color:#52B788}.mc-score-row.active{border-color:#2D6A4F;box-shadow:0 0 0 2px #D8F3DC}
+.mc-rank-A{background:#D8F3DC;color:#2D6A4F}.mc-rank-B{background:#E8F5E9;color:#3A7D44}.mc-rank-C{background:#FFF9C4;color:#B8860B}.mc-rank-D{background:#FFE5CC;color:#D4600A}.mc-rank-E{background:#FDECEA;color:#B03A2E}
 .mc-score-name{font-size:12px;color:#2C4A40;flex:1}
 .mc-rank{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:13px;font-weight:700}
 .mc-rank-A{background:#D8F3DC;color:#2D6A4F}.mc-rank-B{background:#E8F5E9;color:#3A7D44}.mc-rank-C{background:#FFF9C4;color:#B8860B}.mc-rank-D{background:#FFE5CC;color:#D4600A}.mc-rank-E{background:#FDECEA;color:#B03A2E}
 </style>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script src="i18n.js"></script>
-<script src="patient.js"></script>
-<style>
-:root{--forest:#1A3C34;--emerald:#2D6A4F;--sage:#52B788;--mint:#95D5B2;--foam:#D8F3DC;--paper:#F7FAF8;--white:#FFFFFF;--ink:#0F1F1A;--ink2:#2C4A40;--ink3:#5A7A6E;--ink4:#8FAAA0;--border:#D4E6DD;--amber:#D4811F;--amber-l:#FEF3E2;--ruby:#B03A2E;--r:10px;--font-mono:'JetBrains Mono',monospace}
-#mc-score-screen{display:none;position:fixed;inset:0;z-index:9999;background:var(--paper);flex-direction:column;overflow-y:auto}
-#mc-score-screen.visible{display:flex}
-.mc-topbar{background:var(--forest);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:1}
-.mc-topbar button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
-.mc-body{padding:16px}
-.pt-header{background:var(--forest);border-radius:var(--r);padding:18px 22px;margin-bottom:16px;color:#fff}
-.pt-id{font-family:var(--font-mono);font-size:11px;color:var(--mint);letter-spacing:1px;margin-bottom:4px}
-.pt-name{font-size:20px;font-weight:500;margin-bottom:6px}
-.pt-meta{display:flex;gap:12px;font-size:12px;color:rgba(255,255,255,.5)}
-.pt-score-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
-.pt-score-row{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:6px;position:relative;transition:all .15s}
-.pt-score-row:hover{border-color:var(--sage)}.pt-score-row.active{border-color:var(--emerald);box-shadow:0 0 0 2px var(--foam)}
-.pt-score-name{font-size:11px;color:var(--ink2);padding-right:32px;line-height:1.4}
-.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:13px;font-weight:700;flex-shrink:0;position:absolute;top:10px;right:10px}
-.rank-A{background:#D8F3DC;color:#2D6A4F}.rank-B{background:#E8F5E9;color:#3A7D44}.rank-C{background:#FFF9C4;color:#B8860B}.rank-D{background:#FFE5CC;color:#D4600A}.rank-E{background:#FDECEA;color:#B03A2E}
-.patient-detail-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px}
-.detail-card__title{font-size:15px;font-weight:600;color:var(--forest);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.pt-tab{padding:8px 14px;font-size:13px;cursor:pointer;color:var(--ink4);border:none;background:none;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;transition:all .15s}
-.pt-tab--active{color:var(--emerald);border-bottom-color:var(--emerald)}
-.metabolite-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-family:var(--font-mono)}
-.metabolite-tag.down{background:#FDECEA;color:#B03A2E}.metabolite-tag.up{background:#E8F5E9;color:#2E7D32}.metabolite-tag.neutral{background:var(--border);color:var(--ink3)}
-.insight-box{padding:14px 16px;border-radius:10px;font-size:13px;line-height:1.8}
-.insight-box--amber{background:var(--amber-l);color:var(--ink2);border:1px solid #f0c580}
-.insight-label{font-size:11px;font-weight:600;color:var(--amber);margin-bottom:6px}
-.section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:12px;padding-left:4px}
-.alert-banner{padding:8px 14px;background:var(--amber-l);color:var(--amber);border-radius:8px;font-size:12px;margin-bottom:12px}
-.table-scroll-wrap{overflow-x:auto}
-</style>
 </head>
 <body>
-<div id="mc-score-screen">
-  <div class="mc-topbar">
-    <button onclick="document.getElementById('mc-score-screen').classList.remove('visible')">← ホーム</button>
-    <div style="flex:1;color:#fff;font-weight:600;font-family:'Outfit',sans-serif">MetaCheck</div>
-    <button onclick="doLogout()">ログアウト</button>
-  </div>
-  <div class="mc-body">
-    <div class="pt-header">
-      <div class="pt-id" id="patient-display-id">—</div>
-      <div class="pt-name" id="patient-display-name">—</div>
-      <div class="pt-meta" id="patient-display-meta"></div>
-      <div style="display:none" id="patient-avatar"></div>
-      <div style="display:none" id="patient-name-display"></div>
-    </div>
-    <div id="patient-alert-banner" class="alert-banner" style="display:none"></div>
-    <div class="section-title">カテゴリ別スコア</div>
-    <div class="pt-score-list" id="patient-score-grid"></div>
-    <div id="patient-category-detail" hidden>
-      <div class="patient-detail-panel" id="patient-detail-card"></div>
-    </div>
-  </div>
-</div>
 <div id="mc-score-screen">
   <div class="mc-topbar">
     <button onclick="document.getElementById('mc-score-screen').classList.remove('visible')">← ホーム</button>
@@ -330,6 +267,15 @@ var currentLang = localStorage.getItem('mc_lang') || 'ja';
       <div class="mc-pt-name" id="mc-pt-name">—</div>
     </div>
     <div class="mc-score-list" id="mc-score-list"><div style="padding:20px;color:#8FAAA0;text-align:center">読み込み中...</div></div>
+    <div id="mc-detail" style="display:none;background:#fff;border:1px solid #D4E6DD;border-radius:10px;padding:16px;margin-top:8px">
+      <div id="mc-detail-title" style="font-size:14px;font-weight:600;color:#1A3C34;margin-bottom:12px;display:flex;align-items:center;gap:8px"></div>
+      <div style="display:flex;border-bottom:1px solid #D4E6DD;margin-bottom:12px">
+        <button id="mc-tab-met-btn" onclick="mcShowTab('met')" style="padding:8px 14px;font-size:13px;cursor:pointer;color:#2D6A4F;border:none;background:none;border-bottom:2px solid #2D6A4F;font-family:'Outfit',sans-serif">代謝物</button>
+        <button id="mc-tab-adv-btn" onclick="mcShowTab('adv')" style="padding:8px 14px;font-size:13px;cursor:pointer;color:#8FAAA0;border:none;background:none;border-bottom:2px solid transparent;font-family:'Outfit',sans-serif">アドバイス</button>
+      </div>
+      <div id="mc-tab-met-content"></div>
+      <div id="mc-tab-adv-content" style="display:none"></div>
+    </div>
   </div>
 </div>
 
@@ -637,36 +583,6 @@ var currentLang = localStorage.getItem('mc_lang') || 'ja';
 const SUPABASE_URL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
 
-function getHeaders() {
-  if (window.currentAccessToken) {
-    return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + window.currentAccessToken, 'Content-Type': 'application/json' };
-  }
-  return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
-}
-async function dbSelect(table, params) {
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + (params||''), { headers: getHeaders() });
-  if (!res.ok) throw new Error('DB error: ' + table);
-  return res.json();
-}
-async function fetchScores(patientId) { return dbSelect('scores', 'patient_id=eq.' + patientId + '&select=*&order=wavg_absfc.desc'); }
-async function fetchScoresMulti(patientIds) {
-  if (!patientIds || !patientIds.length) return [];
-  return dbSelect('scores', 'patient_id=in.(' + patientIds.map(id => '"'+id+'"').join(',') + ')&select=*&order=measured_at.asc,wavg_absfc.desc');
-}
-async function fetchPatient(patientId) { const r = await dbSelect('patients', 'id=eq.'+patientId+'&select=*'); return r[0]||null; }
-async function fetchInsightsByCategory(patientId, category) { const r = await dbSelect('metabolite_insights', 'patient_id=eq.'+patientId+'&category=eq.'+encodeURIComponent(category)+'&limit=1'); return r[0]||null; }
-async function linkAnalysisId(userId, analysisId, email) {
-  const res = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', { method:'POST', headers: Object.assign({}, getHeaders(), {'Prefer':'return=minimal'}), body: JSON.stringify({user_id:userId, patient_id:analysisId, email:email||null}) });
-  if (!res.ok) throw new Error('紐付けに失敗しました');
-}
-async function summarizeInsight(text) { return text; }
-async function translateText(text) { return text; }
-function showChartTooltip(){}
-function hideChartTooltip(){}
-function showToast(msg){console.log(msg);}
-function openModal(id){}
-function closeModal(id){}
-
 async function getSession() {
   // あらゆるキー名パターンを試す
   for (let i = 0; i < localStorage.length; i++) {
@@ -713,7 +629,6 @@ function setLang(lang) {
   const t = T[lang];
   // localStorage に保存
   localStorage.setItem('mc_lang', lang);
-  currentLang = lang;
 
   function setText(id, val) {
     const el = document.getElementById(id);
@@ -770,38 +685,113 @@ async function goToScorePage() {
   if (el && el.classList.contains('disabled')) return;
 
   document.getElementById('mc-score-screen').classList.add('visible');
+  document.getElementById('mc-score-list').innerHTML = '<div style="padding:20px;color:#8FAAA0;text-align:center">読み込み中...</div>';
 
   const session = await getSession();
   if (!session || !session.access_token) return;
 
+  const SURL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
+  const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
+  const H = { 'apikey': SKEY, 'Authorization': 'Bearer ' + session.access_token };
+
   try {
-    const H = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' };
     const user = await verifyToken(session.access_token);
     if (!user) return;
 
-    const links = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H }).then(r => r.json()).catch(() => []);
+    const links = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id', { headers: H }).then(r => r.json()).catch(() => []);
     if (!Array.isArray(links) || !links.length) return;
 
     const patientId = links[0].patient_id;
-    const allIds = links.map(l => l.patient_id);
-
-    const patients = await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H }).then(r => r.json()).catch(() => []);
+    const patients = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=id,name', { headers: H }).then(r => r.json()).catch(() => []);
     const patient = (Array.isArray(patients) && patients.length) ? patients[0] : { id: patientId };
+    document.getElementById('mc-pt-id').textContent = '解析ID: ' + patientId;
+    document.getElementById('mc-pt-name').textContent = patient.name || patientId;
 
-    currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: allIds };
-    currentAccessToken = session.access_token;
-    window.currentAccessToken = session.access_token;
-    currentLang = localStorage.getItem('mc_lang') || 'ja';
-
-    if (typeof renderPatientPage === 'function') {
-      await renderPatientPage(patient);
+    const scores = await fetch(SURL + '/rest/v1/scores?patient_id=eq.' + patientId + '&is_released=eq.true&select=category,rank,wavg_absfc&order=wavg_absfc.desc', { headers: H }).then(r => r.json()).catch(() => []);
+    const list = document.getElementById('mc-score-list');
+    if (!Array.isArray(scores) || !scores.length) {
+      list.innerHTML = '<div style="padding:20px;color:#8FAAA0;text-align:center">スコアデータがありません</div>';
+      return;
     }
+    window._mcScores = scores;
+    window._mcPatientId = patientId;
+    window._mcToken = session.access_token;
+    list.innerHTML = scores.map((s,i) => '<div class="mc-score-row" onclick="mcSelectDetail(' + i + ',this)"><span class="mc-score-name">' + (MC_CATS[s.category]||s.category) + '</span><span class="mc-rank mc-rank-' + s.rank + '">' + s.rank + '</span></div>').join('');
   } catch(e) {
     console.error(e);
   }
 }
 
+// ── スコア詳細表示 ──
+async function mcSelectDetail(i, el) {
+  document.querySelectorAll('.mc-score-row').forEach(r => r.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const s = window._mcScores && window._mcScores[i];
+  if (!s) return;
 
+  const det = document.getElementById('mc-detail');
+  det.style.display = 'block';
+
+  const rank = s.rank || '—';
+  const rankColors = {A:'#D8F3DC',B:'#E8F5E9',C:'#FFF9C4',D:'#FFE5CC',E:'#FDECEA'};
+  const rankTextColors = {A:'#2D6A4F',B:'#3A7D44',C:'#B8860B',D:'#D4600A',E:'#B03A2E'};
+  document.getElementById('mc-detail-title').innerHTML =
+    '<span style="background:' + (rankColors[rank]||'#eee') + ';color:' + (rankTextColors[rank]||'#333') + ';width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">' + rank + '</span>' +
+    (MC_CATS[s.category] || s.category);
+
+  document.getElementById('mc-tab-met-content').innerHTML = '<div style="color:#8FAAA0;font-size:12px">読み込み中...</div>';
+  document.getElementById('mc-tab-adv-content').innerHTML = '<div style="color:#8FAAA0;font-size:12px">読み込み中...</div>';
+  mcShowTab('met');
+
+  const SURL = SUPABASE_URL;
+  const H = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + window._mcToken };
+
+  // 代謝物
+  try {
+    const compounds = await fetch(SURL + '/rest/v1/compound_categories?category=eq.' + encodeURIComponent(s.category) + '&select=compound&order=weight.desc', {headers:H}).then(r=>r.json()).catch(()=>[]);
+    if (Array.isArray(compounds) && compounds.length) {
+      const compList = compounds.map(c=>'"'+c.compound+'"').join(',');
+      const facts = await fetch(SURL + '/rest/v1/fact?patient_id=eq.' + window._mcPatientId + '&compound=in.(' + compList + ')&select=compound,log2fc&order=log2fc.desc', {headers:H}).then(r=>r.json()).catch(()=>[]);
+      const metEl = document.getElementById('mc-tab-met-content');
+      if (Array.isArray(facts) && facts.length) {
+        metEl.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+          facts.filter(f=>f.log2fc!=null).slice(0,12).map(f => {
+            const isUp = Number(f.log2fc) >= 0;
+            return '<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-family:monospace;background:' + (isUp?'#FDECEA':'#E8F5E9') + ';color:' + (isUp?'#B03A2E':'#2E7D32') + '">' + (isUp?'↑':'↓') + ' ' + f.compound + '</span>';
+          }).join('') +
+        '</div>';
+      } else {
+        metEl.innerHTML = '<div style="color:#8FAAA0;font-size:12px">データなし</div>';
+      }
+    }
+  } catch(e) {}
+
+  // アドバイス
+  try {
+    const insights = await fetch(SURL + '/rest/v1/metabolite_insights?patient_id=eq.' + window._mcPatientId + '&category=eq.' + encodeURIComponent(s.category) + '&limit=1', {headers:H}).then(r=>r.json()).catch(()=>[]);
+    const advEl = document.getElementById('mc-tab-adv-content');
+    if (Array.isArray(insights) && insights.length && insights[0].patient_comment) {
+      advEl.innerHTML = '<div style="background:#FEF3E2;border:1px solid #f0c580;border-radius:10px;padding:14px;font-size:13px;line-height:1.8;color:#2C4A40">' + insights[0].patient_comment + '</div>';
+    } else {
+      advEl.innerHTML = '<div style="color:#8FAAA0;font-size:12px">データなし</div>';
+    }
+  } catch(e) {}
+}
+
+function mcShowTab(tab) {
+  document.getElementById('mc-tab-met-content').style.display = tab === 'met' ? '' : 'none';
+  document.getElementById('mc-tab-adv-content').style.display = tab === 'adv' ? '' : 'none';
+  document.getElementById('mc-tab-met-btn').style.color = tab === 'met' ? '#2D6A4F' : '#8FAAA0';
+  document.getElementById('mc-tab-met-btn').style.borderBottomColor = tab === 'met' ? '#2D6A4F' : 'transparent';
+  document.getElementById('mc-tab-adv-btn').style.color = tab === 'adv' ? '#2D6A4F' : '#8FAAA0';
+  document.getElementById('mc-tab-adv-btn').style.borderBottomColor = tab === 'adv' ? '#2D6A4F' : 'transparent';
+}
+
+// ── モーダル開閉 ──
+function openHomeModal(id) { document.getElementById(id).classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+function closeHomeModal(id) { document.getElementById(id).classList.add('hidden'); document.body.style.overflow = ''; }
+
+// ── パスワード変更 ──
 async function doChangePw() {
   const pw = document.getElementById('new-pw').value;
   const pw2 = document.getElementById('new-pw2').value;
