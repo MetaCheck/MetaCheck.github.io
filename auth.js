@@ -75,7 +75,6 @@ async function doLogin() {
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }
       });
       const links = await linksRes.json();
-      alert('userId:' + userId + '\nlinks:' + JSON.stringify(links));
 
       if (!links || !links.length) {
         // 解析IDが未紐付け → ホーム画面へ
