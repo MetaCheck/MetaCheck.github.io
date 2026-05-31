@@ -1389,14 +1389,9 @@ window.addEventListener('DOMContentLoaded', async function() {
       const patientId = links[0].patient_id;
       currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
       showScreen('screen-patient');
-
       const modalParam = new URLSearchParams(window.location.search).get('modal');
-
       if (typeof renderPatientPage === 'function') {
-        const patientRes = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H });
-        const patients = await patientRes.json();
-        const patientObj = (patients && patients.length) ? patients[0] : { id: patientId };
-        await renderPatientPage(patientObj);
+        await renderPatientPage({ id: patientId });
       }
 
       if (modalParam) {
