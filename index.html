@@ -1392,6 +1392,7 @@ window.addEventListener('DOMContentLoaded', async function() {
       const patients = await patientRes.json();
       const patientObj = (patients && patients.length) ? patients[0] : { id: patientId };
       currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
+      window.currentUser = currentUser;
       showScreen('screen-patient');
 
       const modalParam = new URLSearchParams(window.location.search).get('modal');

@@ -36,7 +36,7 @@ async function renderPatientPage(patient) {
   if (det) det.setAttribute('hidden', '');
 
   try {
-    const allIds = currentUser.allIds || [patient.id];
+    const allIds = (window.currentUser && window.currentUser.allIds) || (currentUser && currentUser.allIds) || [patient.id];
     var scores;
     if (allIds.length > 1) {
       scores = await fetchScoresMulti(allIds);
