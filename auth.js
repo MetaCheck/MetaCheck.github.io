@@ -2,8 +2,8 @@
 //  auth.js — 認証（Supabase Auth）
 // ═══════════════════════════════════════════
 
-var currentUser = null;
-var currentAccessToken = null;
+let currentUser = null;
+let currentAccessToken = null;
 
 // ─── ログイン ────────────────────────────
 // ─── ログイン後に身体情報をpatient_profilesに保存 ──
