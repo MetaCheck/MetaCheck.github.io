@@ -1365,7 +1365,6 @@ window.addEventListener('DOMContentLoaded', async function() {
     }
     const user = await res.json();
     currentAccessToken = token;
-    window.currentAccessToken = token;
 
     // ログイン時に選んだタブのroleを必ず使う（同一メールで個人・法人両方ある場合の対応）
     if (!savedRole) savedRole = urlRole;
@@ -1388,17 +1387,15 @@ window.addEventListener('DOMContentLoaded', async function() {
         return;
       }
       const patientId = links[0].patient_id;
-      const patientRes = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H });
-      const patients = await patientRes.json();
-      const patientObj = (patients && patients.length) ? patients[0] : { id: patientId };
       currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
-      window.currentUser = currentUser;
+      currentAccessToken = token;
+      window.currentAccessToken = token;
       showScreen('screen-patient');
 
       const modalParam = new URLSearchParams(window.location.search).get('modal');
 
       if (typeof renderPatientPage === 'function') {
-        await renderPatientPage(patientObj);
+        await renderPatientPage({ id: patientId });
       }
 
       if (modalParam) {
