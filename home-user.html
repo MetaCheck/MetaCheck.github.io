@@ -9,57 +9,7 @@ var currentLang = localStorage.getItem('mc_lang') || 'ja';
 
 // patient.jsが必要とするDB関数（supabase.jsを読み込まないため直接定義）
 
-function getHeaders() {
-  if (window.currentAccessToken) {
-    return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + window.currentAccessToken, 'Content-Type': 'application/json' };
-  }
-  return HEADERS;
-}
-
-async function dbSelect(table, params) {
-  const p = params || '';
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + p, { headers: getHeaders() });
-  if (!res.ok) throw new Error('DB error: ' + table);
-  return res.json();
-}
-
-async function fetchScores(patientId) {
-  return dbSelect('scores', 'patient_id=eq.' + patientId + '&select=*&order=wavg_absfc.desc');
-}
-
-async function fetchScoresMulti(patientIds) {
-  if (!patientIds || !patientIds.length) return [];
-  const idList = patientIds.map(id => '"' + id + '"').join(',');
-  return dbSelect('scores', 'patient_id=in.(' + idList + ')&select=*&order=measured_at.asc,wavg_absfc.desc');
-}
-
-async function fetchPatient(patientId) {
-  const rows = await dbSelect('patients', 'id=eq.' + patientId + '&select=*');
-  return rows[0] || null;
-}
-
-async function fetchInsightsByCategory(patientId, category) {
-  const rows = await dbSelect('metabolite_insights', 'patient_id=eq.' + patientId + '&category=eq.' + encodeURIComponent(category) + '&limit=1');
-  return rows[0] || null;
-}
-
-async function linkAnalysisId(userId, analysisId, email) {
-  const res = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', {
-    method: 'POST',
-    headers: Object.assign({}, getHeaders(), { 'Prefer': 'return=minimal' }),
-    body: JSON.stringify({ user_id: userId, patient_id: analysisId, email: email || null })
-  });
-  if (!res.ok) throw new Error('紐付けに失敗しました: ' + res.status + ' ' + await res.text());
-}
-
-async function summarizeInsight(text, role) { return text; }
-async function translateText(text, lang) { return text; }
-
-function showChartTooltip(e, tip) {}
-function hideChartTooltip() {}
-function showToast(msg, type) { console.log(msg); }
-function openModal(id) {}
-function closeModal(id) {}
+// 関数はSUPABASE_URL/KEY定義後に読み込まれるため空
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -684,6 +634,36 @@ function closeModal(id) {}
 <script>
 const SUPABASE_URL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
+
+function getHeaders() {
+  if (window.currentAccessToken) {
+    return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + window.currentAccessToken, 'Content-Type': 'application/json' };
+  }
+  return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
+}
+async function dbSelect(table, params) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + (params||''), { headers: getHeaders() });
+  if (!res.ok) throw new Error('DB error: ' + table);
+  return res.json();
+}
+async function fetchScores(patientId) { return dbSelect('scores', 'patient_id=eq.' + patientId + '&select=*&order=wavg_absfc.desc'); }
+async function fetchScoresMulti(patientIds) {
+  if (!patientIds || !patientIds.length) return [];
+  return dbSelect('scores', 'patient_id=in.(' + patientIds.map(id => '"'+id+'"').join(',') + ')&select=*&order=measured_at.asc,wavg_absfc.desc');
+}
+async function fetchPatient(patientId) { const r = await dbSelect('patients', 'id=eq.'+patientId+'&select=*'); return r[0]||null; }
+async function fetchInsightsByCategory(patientId, category) { const r = await dbSelect('metabolite_insights', 'patient_id=eq.'+patientId+'&category=eq.'+encodeURIComponent(category)+'&limit=1'); return r[0]||null; }
+async function linkAnalysisId(userId, analysisId, email) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', { method:'POST', headers: Object.assign({}, getHeaders(), {'Prefer':'return=minimal'}), body: JSON.stringify({user_id:userId, patient_id:analysisId, email:email||null}) });
+  if (!res.ok) throw new Error('紐付けに失敗しました');
+}
+async function summarizeInsight(text) { return text; }
+async function translateText(text) { return text; }
+function showChartTooltip(){}
+function hideChartTooltip(){}
+function showToast(msg){console.log(msg);}
+function openModal(id){}
+function closeModal(id){}
 
 async function getSession() {
   // あらゆるキー名パターンを試す
