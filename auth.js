@@ -465,7 +465,10 @@ async function doBodyInfoSubmit() {
 async function restoreSession() {
   try {
     const raw = localStorage.getItem('sb-auth-token');
-    if (!raw) return;
+    if (!raw) {
+      showScreen('screen-login');
+      return;
+    }
     const saved = JSON.parse(raw);
     if (!saved || !saved.access_token) return;
 
@@ -473,7 +476,7 @@ async function restoreSession() {
     const userRes = await fetch(SUPABASE_AUTH_URL + '/user', {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + saved.access_token }
     });
-    if (!userRes.ok) { localStorage.removeItem('sb-auth-token'); return; }
+    if (!userRes.ok) { localStorage.removeItem('sb-auth-token'); showScreen('screen-login'); return; }
     const user = await userRes.json();
 
     currentAccessToken = saved.access_token;
@@ -504,6 +507,7 @@ async function restoreSession() {
   } catch(e) {
     console.error('セッション復元エラー:', e);
     localStorage.removeItem('sb-auth-token');
+    showScreen('screen-login');
   }
 }
 
