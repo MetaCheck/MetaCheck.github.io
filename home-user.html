@@ -37,6 +37,25 @@
   .nav-logout { font-size: 13px; color: var(--dim); background: none; border: 1px solid var(--border); border-radius: 100px; padding: 7px 14px; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.2s; }
   .nav-logout:hover { border-color: var(--accent); color: var(--accent); }
 
+  /* スコア画面 */
+  #score-screen { display: none; }
+  #score-screen.active { display: block; }
+  .score-header { padding: 20px; background: #10340f; color: #fff; }
+  .score-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .score-id { font-size: 11px; color: rgba(255,255,255,.5); font-family: monospace; }
+  .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 16px; }
+  .score-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px; cursor: pointer; }
+  .score-card:hover { border-color: #2a6e27; }
+  .score-card-name { font-size: 11px; color: #666; margin-bottom: 6px; }
+  .score-rank { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; font-size: 14px; font-weight: 700; }
+  .rank-A { background: #d8f3dc; color: #2d6a4f; }
+  .rank-B { background: #e8f5e9; color: #3a7d44; }
+  .rank-C { background: #fff9c4; color: #b8860b; }
+  .rank-D { background: #ffe5cc; color: #d4600a; }
+  .rank-E { background: #fdecea; color: #b03a2e; }
+  .back-btn { margin: 12px 16px; padding: 8px 16px; background: none; border: 1px solid #e8e8e8; border-radius: 8px; cursor: pointer; font-size: 13px; color: #666; }
+  .loading { padding: 40px; text-align: center; color: #aaa; }
+
   .hero { padding: 40px 20px 32px; border-bottom: 1px solid var(--border); }
   .hero-badge { display: inline-block; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(42,110,39,0.25); border-radius: 100px; padding: 3px 10px; margin-bottom: 16px; background: var(--accent-light); }
   .hero-title { font-size: 26px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.25; margin-bottom: 8px; color: var(--green); }
@@ -239,6 +258,16 @@
 </head>
 <body>
 
+<!-- スコア画面 -->
+<div id="score-screen">
+  <div class="score-header">
+    <button class="back-btn" onclick="showHomeScreen()" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;margin:0 0 12px 0">← ホームに戻る</button>
+    <div class="score-name" id="score-patient-name">—</div>
+    <div class="score-id" id="score-patient-id"></div>
+  </div>
+  <div id="score-grid" class="score-grid"><div class="loading">読み込み中...</div></div>
+</div>
+
 <nav>
   <a href="/home-user" class="nav-brand">Meta<span>Check</span></a>
   <div class="nav-right">
@@ -281,7 +310,7 @@
   </div>
 </div>
 
-<div class="hero">
+<div id="main-content"><div class="hero">
   <div class="page-title" id="t-page-title">ユーザー用ホーム画面</div>
   <h1 class="hero-title" id="t-title">代謝を知れば、<br><em>自分が変わる。</em></h1>
   <p class="hero-sub" id="t-sub">Metabolic Intelligence Platform</p>
@@ -310,7 +339,7 @@
     <div class="cat-right"><span class="cat-tag tag-coming" id="t-coming">準備中</span></div>
   </div>
 
-  <a href="/?role=individual" class="cat-card disabled" id="cat-result" style="cursor:pointer;text-decoration:none;display:block">
+  <div class="cat-card disabled" id="cat-result" onclick="goToScorePage()" style="cursor:pointer">
     <div class="cat-left">
       <div class="cat-icon icon-result">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4466cc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h2l2-4 2 8 2-4h2"/></svg>
@@ -638,10 +667,65 @@ function doLogout() {
   window.location.href = '/';
 }
 
+function showHomeScreen() {
+  document.getElementById('score-screen').classList.remove('active');
+  document.querySelector('nav').style.display = '';
+  document.getElementById('main-content').style.display = '';
+}
+
+const CAT_JA = {'Glycolysis':'炎症・糖依存傾向','TCA Cycle':'エネルギー産生能力','Energy currency / OXPHOS':'エネルギー産生能力','Redox balance / Glutathione':'抗酸化・修復力','Fatty acid metabolism':'脂肪燃焼能力','Amino acid / BCAA metabolism':'筋肉・栄養代謝','Cofactors / Vitamin B':'補酵素・ビタミン状態','Folate / Methionine–SAM cycle':'メチル化・遺伝子調節','Electrolyte / Minerals':'電解質・ミネラル安定性','Ketone body metabolism':'代替エネルギー利用力','Lipid detail':'脂質の質・血管影響','Pentose Phosphate Pathway':'抗酸化・修復力','Polyamine metabolism':'細胞増殖・再生バランス','Purine metabolism':'核酸・尿酸バランス','Pyrimidine metabolism':'DNA・細胞更新力','Urea Cycle':'アンモニア解毒能力'};
+
 async function goToScorePage() {
   const el = document.getElementById('cat-result');
   if (el && el.classList.contains('disabled')) return;
-  window.location.href = '/?role=individual';
+
+  // スコア画面を表示
+  document.querySelector('nav').style.display = 'none';
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('score-screen').classList.add('active');
+
+  const session = await getSession();
+  if (!session) return;
+
+  try {
+    const SURL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
+    const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
+    const H = { 'apikey': SKEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' };
+
+    // 解析IDを取得
+    const user = await verifyToken(session.access_token);
+    if (!user) return;
+
+    const links = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id', { headers: H }).then(r => r.json());
+    if (!links || !links.length) return;
+
+    const patientId = links[0].patient_id;
+
+    // 患者名を取得
+    const patients = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H }).then(r => r.json()).catch(() => []);
+    const patient = patients && patients.length ? patients[0] : { id: patientId };
+    document.getElementById('score-patient-name').textContent = patient.name || patientId;
+    document.getElementById('score-patient-id').textContent = '解析ID: ' + patientId;
+
+    // スコアを取得
+    const scores = await fetch(SURL + '/rest/v1/scores?patient_id=eq.' + patientId + '&is_released=eq.true&select=*&order=wavg_absfc.desc', { headers: H }).then(r => r.json()).catch(() => []);
+
+    const grid = document.getElementById('score-grid');
+    if (!scores || !scores.length) {
+      grid.innerHTML = '<div class="loading">スコアデータがありません</div>';
+      return;
+    }
+
+    grid.innerHTML = scores.map(s => {
+      const rank = s.rank || '—';
+      const name = CAT_JA[s.category] || s.category;
+      return '<div class="score-card"><div class="score-card-name">' + name + '</div><span class="score-rank rank-' + rank + '">' + rank + '</span></div>';
+    }).join('');
+
+  } catch(e) {
+    document.getElementById('score-grid').innerHTML = '<div class="loading">エラーが発生しました</div>';
+    console.error(e);
+  }
 }
 
 // ── モーダル開閉 ──
@@ -854,5 +938,6 @@ async function submitKitId() {
 
 init();
 </script>
+</div>
 </body>
 </html>
