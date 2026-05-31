@@ -8,9 +8,6 @@ var currentAccessToken = null;
 var currentLang = localStorage.getItem('mc_lang') || 'ja';
 
 // patient.jsが必要とするDB関数（supabase.jsを読み込まないため直接定義）
-const SUPABASE_URL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
-const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
 
 function getHeaders() {
   if (window.currentAccessToken) {
