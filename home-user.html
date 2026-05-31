@@ -860,7 +860,7 @@ async function init() {
   let isLoggedIn = false;
   let userId = null;
 
-  if (session && session.access_token && session.role === 'individual') {
+  if (session && session.access_token) {
     const user = await verifyToken(session.access_token);
     if (user) {
       isLoggedIn = true;
