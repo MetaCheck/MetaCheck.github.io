@@ -53,7 +53,7 @@ async function renderPatientPage(patient) {
     if (allIds.length > 1) {
       renderScoreTrendChart(allIds);
     }
-  } catch(e) { console.error(e); }
+  } catch(e) { console.error(e); alert('error: ' + e.message); }
 
 }
 
