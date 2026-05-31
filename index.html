@@ -1367,7 +1367,7 @@ window.addEventListener('DOMContentLoaded', async function() {
     currentAccessToken = token;
 
     // ログイン時に選んだタブのroleを必ず使う（同一メールで個人・法人両方ある場合の対応）
-    if (!savedRole) { localStorage.removeItem('sb-auth-token'); return; }
+    if (!savedRole) savedRole = urlRole;
     const isClinic = savedRole === 'clinic';
 
     if (isClinic) {
@@ -1381,27 +1381,21 @@ window.addEventListener('DOMContentLoaded', async function() {
     } else {
       const linksRes = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H });
       const links = await linksRes.json();
-      if (!links || !links.length) {
-        // 解析ID未登録 → ホーム画面へ
+      if (!Array.isArray(links) || !links.length) {
         window.location.href = '/home-user';
         return;
       }
       const patientId = links[0].patient_id;
       const patientRes = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H });
       const patients = await patientRes.json();
-      if (!patients || !patients.length) {
-        window.location.href = '/home-user';
-        return;
-      }
+      const patientObj = (Array.isArray(patients) && patients.length) ? patients[0] : { id: patientId };
       currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
       showScreen('screen-patient');
 
       // URLパラメータのmodalを処理
       const modalParam = new URLSearchParams(window.location.search).get('modal');
 
-      if (typeof renderPatientPage === 'function') {
-        await renderPatientPage(patients[0]);
-      }
+      await renderPatientPage(patientObj);
 
       if (modalParam) {
         // patient.jsのスクリプト読み込み完了を確実に待つ
