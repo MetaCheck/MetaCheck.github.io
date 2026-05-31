@@ -24,15 +24,8 @@ function insightField(ins, field) {
 }
 
 async function renderPatientPage(patient) {
-  // patientオブジェクトにnameがない場合はDBから取得
-  if (!patient.name && patient.id) {
-    try {
-      const p = await fetchPatient(patient.id);
-      if (p) patient = p;
-    } catch(e) {}
-  }
   const displayName = patient.name || patient.id;
-  document.getElementById('patient-avatar').textContent = (patient.id || '').slice(-3);
+  document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
   document.getElementById('patient-name-display').textContent = displayName + ' ' + t('patient.san');
   document.getElementById('patient-display-id').textContent = t('patient.analysisId') + ': ' + patient.id;
   document.getElementById('patient-display-name').textContent = displayName + ' ' + t('patient.san');
@@ -43,7 +36,7 @@ async function renderPatientPage(patient) {
   if (det) det.setAttribute('hidden', '');
 
   try {
-    const allIds = currentUser.allIds || [patient.id];
+    const allIds = (currentUser && currentUser.allIds) || [patient.id];
     var scores;
     if (allIds.length > 1) {
       scores = await fetchScoresMulti(allIds);
