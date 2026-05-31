@@ -861,19 +861,29 @@ async function init() {
   let userId = null;
 
   if (session && session.access_token) {
-    const user = await verifyToken(session.access_token);
-    if (user) {
-      isLoggedIn = true;
-      userId = user.id;
-      // ようこそ表示（名前だけ先にセット、表示は解析ID確認後）
-      const name = user.user_metadata?.full_name || user.email || '';
-      document.getElementById('welcome-name').textContent = name + ' さん';
-    }
+    isLoggedIn = true;
+    userId = session.user_id || null;
+    const name = session.email || '';
+    if (document.getElementById('welcome-name')) document.getElementById('welcome-name').textContent = name + ' さん';
+    verifyToken(session.access_token).then(function(user) {
+      if (user) {
+        userId = user.id;
+        const fullName = user.user_metadata?.full_name || user.email || '';
+        if (document.getElementById('welcome-name')) document.getElementById('welcome-name').textContent = fullName + ' さん';
+      }
+    }).catch(function(){});
   }
 
   if (isLoggedIn) {
     document.getElementById('nav-logout').classList.remove('hidden');
     document.getElementById('nav-login').classList.add('hidden');
+
+    // userIdが取得されるまで最大2秒待つ
+    for (let i = 0; i < 20; i++) {
+      if (userId) break;
+      await new Promise(r => setTimeout(r, 100));
+    }
+
     // 解析IDが紐付き済みか確認
     const links = await fetch(
       SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
@@ -881,12 +891,10 @@ async function init() {
     ).then(r => r.json()).catch(() => []);
 
     if (links && links.length > 0) {
-      // 解析ID登録済み → ようこそ＋カテゴリ有効
       document.getElementById('cat-result').classList.remove('disabled');
       document.getElementById('logged-in-banner').classList.remove('hidden');
       document.getElementById('welcome-banner').classList.remove('hidden');
     } else {
-      // 解析ID未登録 → 解析IDバナーのみ（ようこそは非表示）
       document.getElementById('welcome-banner').classList.add('hidden');
       document.getElementById('kit-banner').classList.remove('hidden');
       window._kitUserId = userId;
