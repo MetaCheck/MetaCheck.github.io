@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script>
+// patient.jsが必要とするグローバル変数
+var currentUser = null;
+var currentAccessToken = null;
+var currentLang = localStorage.getItem('mc_lang') || 'ja';
+
+// patient.jsが必要とするDB関数（supabase.jsを読み込まないため直接定義）
+const SUPABASE_URL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
+const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
+
+function getHeaders() {
+  if (window.currentAccessToken) {
+    return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + window.currentAccessToken, 'Content-Type': 'application/json' };
+  }
+  return HEADERS;
+}
+
+async function dbSelect(table, params) {
+  const p = params || '';
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + p, { headers: getHeaders() });
+  if (!res.ok) throw new Error('DB error: ' + table);
+  return res.json();
+}
+
+async function fetchScores(patientId) {
+  return dbSelect('scores', 'patient_id=eq.' + patientId + '&select=*&order=wavg_absfc.desc');
+}
+
+async function fetchScoresMulti(patientIds) {
+  if (!patientIds || !patientIds.length) return [];
+  const idList = patientIds.map(id => '"' + id + '"').join(',');
+  return dbSelect('scores', 'patient_id=in.(' + idList + ')&select=*&order=measured_at.asc,wavg_absfc.desc');
+}
+
+async function fetchPatient(patientId) {
+  const rows = await dbSelect('patients', 'id=eq.' + patientId + '&select=*');
+  return rows[0] || null;
+}
+
+async function fetchInsightsByCategory(patientId, category) {
+  const rows = await dbSelect('metabolite_insights', 'patient_id=eq.' + patientId + '&category=eq.' + encodeURIComponent(category) + '&limit=1');
+  return rows[0] || null;
+}
+
+async function linkAnalysisId(userId, analysisId, email) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', {
+    method: 'POST',
+    headers: Object.assign({}, getHeaders(), { 'Prefer': 'return=minimal' }),
+    body: JSON.stringify({ user_id: userId, patient_id: analysisId, email: email || null })
+  });
+  if (!res.ok) throw new Error('紐付けに失敗しました: ' + res.status + ' ' + await res.text());
+}
+
+async function summarizeInsight(text, role) { return text; }
+async function translateText(text, lang) { return text; }
+
+function showChartTooltip(e, tip) {}
+function hideChartTooltip() {}
+function showToast(msg, type) { console.log(msg); }
+function openModal(id) {}
+function closeModal(id) {}
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetaCheck — ユーザー用ホーム画面</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #10340f;
+    --accent: #2a6e27;
+    --accent-light: #e8f5e8;
+    --text: #1a1a1a;
+    --dim: #666;
+    --dimmer: #aaa;
+    --border: #e8e8e8;
+    --card-bg: #fafafa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fff; color: var(--text); font-family: 'Outfit', 'Noto Sans JP', sans-serif; min-height: 100vh; }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-brand { font-size: 17px; font-weight: 600; color: var(--green); text-decoration: none; }
+  .nav-brand span { color: var(--accent); }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .lang-switcher { display: flex; gap: 2px; }
+  .lang-btn { font-size: 10px; color: var(--dimmer); background: none; border: none; padding: 4px 7px; border-radius: 6px; cursor: pointer; font-family: 'Outfit', sans-serif; }
+  .lang-btn.active { color: var(--accent); background: var(--accent-light); }
+  .nav-login { font-size: 13px; color: var(--dim); text-decoration: none; padding: 7px 14px; border: 1px solid var(--border); border-radius: 100px; }
+  .nav-logout { font-size: 13px; color: var(--dim); background: none; border: 1px solid var(--border); border-radius: 100px; padding: 7px 14px; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.2s; }
+  .nav-logout:hover { border-color: var(--accent); color: var(--accent); }
+
+  .hero { padding: 40px 20px 32px; border-bottom: 1px solid var(--border); }
+  .hero-badge { display: inline-block; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(42,110,39,0.25); border-radius: 100px; padding: 3px 10px; margin-bottom: 16px; background: var(--accent-light); }
+  .hero-title { font-size: 26px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.25; margin-bottom: 8px; color: var(--green); }
+  .hero-title em { font-style: normal; color: var(--accent); }
+  .hero-sub { font-size: 12px; color: var(--dim); font-weight: 300; }
+
+  .logged-in-banner { margin: 16px 20px 0; background: var(--accent-light); border: 1px solid rgba(42,110,39,0.2); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+  .logged-in-banner .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .logged-in-banner .text { font-size: 12px; color: var(--dim); }
+  .logged-in-banner .text strong { color: var(--green); }
+
+  .section-label { padding: 24px 20px 10px; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dimmer); }
+
+  .categories { padding: 0 20px; display: flex; flex-direction: column; gap: 8px; }
+  .cat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px 16px; text-decoration: none; color: var(--text); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; }
+  .cat-card:hover:not(.disabled) { background: #fff; border-color: var(--accent); box-shadow: 0 2px 12px rgba(42,110,39,0.08); }
+  .cat-card.disabled { opacity: 0.45; cursor: default; pointer-events: none; }
+  .cat-left { display: flex; align-items: center; gap: 14px; }
+  .cat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .cat-icon svg { width: 18px; height: 18px; }
+  .icon-learn { background: #e8f5e8; }
+  .icon-result { background: #e8eeff; }
+  .icon-order { background: #fff8e8; }
+  .icon-shop { background: #ffe8e8; }
+  .icon-expert { background: #f0e8ff; }
+  .cat-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .cat-desc { font-size: 11px; color: var(--dim); font-weight: 300; }
+  .cat-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .cat-tag { font-size: 9px; padding: 3px 8px; border-radius: 100px; white-space: nowrap; }
+  .tag-member { background: #e8eeff; color: #4466cc; border: 1px solid #ccd4ff; }
+  .tag-coming { background: #f5f5f5; color: var(--dimmer); border: 1px solid var(--border); }
+  .cat-arrow { font-size: 18px; color: var(--dimmer); }
+
+  .register-banner { margin: 24px 20px; background: var(--green); border-radius: 14px; padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .register-banner-text strong { color: #fff; font-weight: 600; display: block; margin-bottom: 2px; font-size: 14px; }
+  .register-banner-text span { font-size: 11px; color: rgba(255,255,255,0.6); font-style: italic; }
+  .register-banner-btn { font-size: 13px; font-weight: 600; color: var(--green); background: #7dd87a; padding: 10px 18px; border-radius: 100px; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+
+  footer { padding: 24px 20px; border-top: 1px solid var(--border); text-align: center; }
+  .footer-brand { font-size: 14px; font-weight: 600; color: var(--green); margin-bottom: 6px; }
+  .footer-brand span { color: var(--accent); }
+  .footer-op { font-size: 10px; color: var(--dimmer); }
+
+  /* ようこそバナー */
+  .welcome-banner { margin: 16px 20px 0; background: var(--green); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
+  .welcome-banner .welcome-text { font-size: 13px; color: rgba(255,255,255,0.8); }
+  .welcome-banner .welcome-name { font-size: 15px; font-weight: 700; color: #fff; }
+
+  /* モーダル */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; padding: 0; }
+  .modal-overlay.hidden { display: none; }
+  .modal-sheet { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 540px; padding: 28px 24px 40px; }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--dim); margin-bottom: 20px; }
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label { display: block; font-size: 11px; color: var(--dim); margin-bottom: 5px; font-weight: 500; }
+  .modal-field input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .modal-field input:focus { border-color: var(--accent); }
+  .modal-error { color: #e53935; font-size: 12px; margin-bottom: 10px; display: none; }
+  .modal-error.show { display: block; }
+  .modal-success { color: var(--accent); font-size: 12px; margin-bottom: 10px; display: none; }
+  .modal-success.show { display: block; }
+  .modal-btn-primary { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: 100px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; }
+  .modal-btn-primary:hover { background: #1e5420; }
+  .modal-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .modal-btn-cancel { width: 100%; padding: 10px; background: none; border: none; color: var(--dim); font-family: 'Outfit', sans-serif; font-size: 13px; cursor: pointer; }
+
+  @media (min-width: 540px) { .modal-overlay { align-items: center; } .modal-sheet { border-radius: 20px; } }
+
+  .hidden { display: none !important; }
+
+  /* アカウント設定 */
+  .settings-grid {
+    padding: 0 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .settings-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px;
+    background: var(--card-bg); border: 1.5px solid var(--border);
+    border-radius: 14px; cursor: pointer;
+    font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+    color: var(--text); transition: all 0.2s; text-align: left;
+    width: 100%;
+  }
+  .settings-btn:hover { border-color: var(--accent); background: #fff; box-shadow: 0 2px 12px rgba(42,110,39,0.08); }
+  .settings-btn--primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .settings-btn--primary:hover { background: #1e4e1d; border-color: #1e4e1d; }
+  .settings-btn--primary .cat-title { color: #fff; }
+
+  @media (min-width: 768px) {
+    .settings-grid { max-width: 1100px; margin: 0 auto; padding: 0 40px 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  }
+  .kit-banner {
+    margin: 16px 20px 0;
+    background: var(--green);
+    border-radius: 14px;
+    padding: 20px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .kit-banner-icon { font-size: 28px; margin-bottom: 10px; }
+  .kit-banner-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .kit-banner-desc { font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 14px; line-height: 1.5; }
+  .kit-input-row { display: flex; gap: 8px; width: 100%; }
+  .kit-input {
+    flex: 1; min-width: 0; padding: 10px 14px;
+    border-radius: 8px; border: none;
+    font-family: 'Outfit', sans-serif; font-size: 14px;
+    background: rgba(255,255,255,0.15); color: #fff;
+    outline: none; letter-spacing: 0.05em;
+  }
+  .kit-input::placeholder { color: rgba(255,255,255,0.4); }
+  .kit-input:focus { background: rgba(255,255,255,0.22); }
+  .kit-submit-btn {
+    padding: 10px 18px; border: none; border-radius: 8px;
+    background: #7dd87a; color: var(--green);
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .kit-submit-btn:hover { background: #a0e89e; }
+  .kit-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .kit-error {
+    margin-top: 8px; font-size: 12px;
+    color: #ffcccc; background: rgba(255,0,0,0.15);
+    border-radius: 6px; padding: 6px 10px;
+  }
+  @keyframes slideInLeft {
+    0% { transform: translateX(-120%); opacity: 0; }
+    60% { transform: translateX(6px); opacity: 1; }
+    80% { transform: translateX(-2px); }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+  .page-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--green);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    padding: 8px 24px 8px 20px;
+    margin-left: -20px;
+    margin-bottom: 20px;
+    border-radius: 0 100px 100px 0;
+    font-family: "Outfit", sans-serif;
+    box-shadow: 3px 3px 16px rgba(16,52,15,0.18);
+    animation: slideInLeft 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .page-title::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #7dd87a;
+    flex-shrink: 0;
+    animation: pulseDot 2s ease-in-out infinite;
+    animation-delay: 0.8s;
+  }
+
+  /* PC表示 */
+  @media (min-width: 768px) {
+    body { background: #f5f5f5; }
+    nav { padding: 16px 40px; max-width: 100%; }
+    .nav-brand { font-size: 20px; }
+
+    .hero { padding: 60px 40px 48px; max-width: 1100px; margin: 0 auto; }
+    .hero-title { font-size: 42px; }
+    .hero-sub { font-size: 14px; }
+
+    .logged-in-banner { max-width: 1100px; margin: 24px auto 0; }
+
+    .section-label { max-width: 1100px; margin: 0 auto; padding: 32px 40px 12px; }
+
+    .categories { max-width: 1100px; margin: 0 auto; padding: 0 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .cat-card { border-radius: 16px; padding: 22px 20px; }
+    .cat-title { font-size: 15px; }
+    .cat-desc { font-size: 12px; }
+
+    .register-banner { max-width: 1100px; margin: 24px auto; padding: 28px 40px; border-radius: 16px; }
+    .register-banner-text strong { font-size: 18px; }
+
+    footer { padding: 32px 40px; }
+    .footer-brand { font-size: 16px; }
+  }
+
+  @media (min-width: 1200px) {
+    .categories { grid-template-columns: 1fr 1fr 1fr; }
+  }
+</style>
+<style>
+#mc-score-screen{display:none;position:fixed;inset:0;z-index:9999;background:#F7FAF8;flex-direction:column;overflow-y:auto}
+#mc-score-screen.visible{display:flex}
+.mc-topbar{background:#1A3C34;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0}
+.mc-topbar button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
+.mc-body{padding:16px}
+.mc-pt-header{background:#1A3C34;border-radius:10px;padding:18px 22px;margin-bottom:16px;color:#fff}
+.mc-pt-id{font-family:monospace;font-size:11px;color:#95D5B2;margin-bottom:4px}
+.mc-pt-name{font-size:20px;font-weight:500}
+.mc-score-list{display:flex;flex-direction:column;gap:6px}
+.mc-score-row{background:#fff;border:1px solid #D4E6DD;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.mc-score-name{font-size:12px;color:#2C4A40;flex:1}
+.mc-rank{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:13px;font-weight:700}
+.mc-rank-A{background:#D8F3DC;color:#2D6A4F}.mc-rank-B{background:#E8F5E9;color:#3A7D44}.mc-rank-C{background:#FFF9C4;color:#B8860B}.mc-rank-D{background:#FFE5CC;color:#D4600A}.mc-rank-E{background:#FDECEA;color:#B03A2E}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="i18n.js"></script>
+<script src="patient.js"></script>
+<style>
+:root{--forest:#1A3C34;--emerald:#2D6A4F;--sage:#52B788;--mint:#95D5B2;--foam:#D8F3DC;--paper:#F7FAF8;--white:#FFFFFF;--ink:#0F1F1A;--ink2:#2C4A40;--ink3:#5A7A6E;--ink4:#8FAAA0;--border:#D4E6DD;--amber:#D4811F;--amber-l:#FEF3E2;--ruby:#B03A2E;--r:10px;--font-mono:'JetBrains Mono',monospace}
+#mc-score-screen{display:none;position:fixed;inset:0;z-index:9999;background:var(--paper);flex-direction:column;overflow-y:auto}
+#mc-score-screen.visible{display:flex}
+.mc-topbar{background:var(--forest);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:1}
+.mc-topbar button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
+.mc-body{padding:16px}
+.pt-header{background:var(--forest);border-radius:var(--r);padding:18px 22px;margin-bottom:16px;color:#fff}
+.pt-id{font-family:var(--font-mono);font-size:11px;color:var(--mint);letter-spacing:1px;margin-bottom:4px}
+.pt-name{font-size:20px;font-weight:500;margin-bottom:6px}
+.pt-meta{display:flex;gap:12px;font-size:12px;color:rgba(255,255,255,.5)}
+.pt-score-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.pt-score-row{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:6px;position:relative;transition:all .15s}
+.pt-score-row:hover{border-color:var(--sage)}.pt-score-row.active{border-color:var(--emerald);box-shadow:0 0 0 2px var(--foam)}
+.pt-score-name{font-size:11px;color:var(--ink2);padding-right:32px;line-height:1.4}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:13px;font-weight:700;flex-shrink:0;position:absolute;top:10px;right:10px}
+.rank-A{background:#D8F3DC;color:#2D6A4F}.rank-B{background:#E8F5E9;color:#3A7D44}.rank-C{background:#FFF9C4;color:#B8860B}.rank-D{background:#FFE5CC;color:#D4600A}.rank-E{background:#FDECEA;color:#B03A2E}
+.patient-detail-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px}
+.detail-card__title{font-size:15px;font-weight:600;color:var(--forest);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.pt-tab{padding:8px 14px;font-size:13px;cursor:pointer;color:var(--ink4);border:none;background:none;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;transition:all .15s}
+.pt-tab--active{color:var(--emerald);border-bottom-color:var(--emerald)}
+.metabolite-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-family:var(--font-mono)}
+.metabolite-tag.down{background:#FDECEA;color:#B03A2E}.metabolite-tag.up{background:#E8F5E9;color:#2E7D32}.metabolite-tag.neutral{background:var(--border);color:var(--ink3)}
+.insight-box{padding:14px 16px;border-radius:10px;font-size:13px;line-height:1.8}
+.insight-box--amber{background:var(--amber-l);color:var(--ink2);border:1px solid #f0c580}
+.insight-label{font-size:11px;font-weight:600;color:var(--amber);margin-bottom:6px}
+.section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:12px;padding-left:4px}
+.alert-banner{padding:8px 14px;background:var(--amber-l);color:var(--amber);border-radius:8px;font-size:12px;margin-bottom:12px}
+.table-scroll-wrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<div id="mc-score-screen">
+  <div class="mc-topbar">
+    <button onclick="document.getElementById('mc-score-screen').classList.remove('visible')">← ホーム</button>
+    <div style="flex:1;color:#fff;font-weight:600;font-family:'Outfit',sans-serif">MetaCheck</div>
+    <button onclick="doLogout()">ログアウト</button>
+  </div>
+  <div class="mc-body">
+    <div class="pt-header">
+      <div class="pt-id" id="patient-display-id">—</div>
+      <div class="pt-name" id="patient-display-name">—</div>
+      <div class="pt-meta" id="patient-display-meta"></div>
+    </div>
+    <div id="patient-alert-banner" class="alert-banner" style="display:none"></div>
+    <div class="section-title">カテゴリ別スコア</div>
+    <div class="pt-score-list" id="patient-score-grid"></div>
+    <div id="patient-category-detail" hidden>
+      <div class="patient-detail-panel" id="patient-detail-card"></div>
+    </div>
+  </div>
+</div>
+<div id="mc-score-screen">
+  <div class="mc-topbar">
+    <button onclick="document.getElementById('mc-score-screen').classList.remove('visible')">← ホーム</button>
+    <div style="flex:1;color:#fff;font-weight:600">MetaCheck</div>
+    <button onclick="doLogout()">ログアウト</button>
+  </div>
+  <div class="mc-body">
+    <div class="mc-pt-header">
+      <div class="mc-pt-id" id="mc-pt-id"></div>
+      <div class="mc-pt-name" id="mc-pt-name">—</div>
+    </div>
+    <div class="mc-score-list" id="mc-score-list"><div style="padding:20px;color:#8FAAA0;text-align:center">読み込み中...</div></div>
+  </div>
+</div>
+
+<nav>
+  <a href="/home-user" class="nav-brand">Meta<span>Check</span></a>
+  <div class="nav-right">
+    <div class="lang-switcher">
+      <button class="lang-btn active" onclick="setLang('ja')">JA</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('vi')">VI</button>
+      <button class="lang-btn" onclick="setLang('zh')">中</button>
+    </div>
+    <a href="/?role=individual" class="nav-login" id="nav-login">ログイン</a>
+    <button class="nav-logout hidden" id="nav-logout" onclick="doLogout()">ログアウト</button>
+  </div>
+</nav>
+
+<div class="logged-in-banner hidden" id="logged-in-banner">
+  <div class="dot"></div>
+  <div class="text" id="t-logged-in">ログイン中</div>
+</div>
+
+<!-- ようこそバナー -->
+<div class="welcome-banner hidden" id="welcome-banner">
+  <div>
+    <div class="welcome-text">ようこそ</div>
+    <div class="welcome-name" id="welcome-name">—</div>
+  </div>
+</div>
+
+<!-- 解析ID未登録バナー -->
+<div class="kit-banner hidden" id="kit-banner">
+  <div class="kit-banner-body">
+    <div class="kit-banner-title" id="t-kit-banner-title">解析IDを登録してください</div>
+    <div class="kit-banner-desc" id="t-kit-banner-desc">キットに記載されているIDを追加すると、代謝スコアが表示されます</div>
+    <div class="kit-input-row">
+      <input type="text" id="kit-id-input" class="kit-input" placeholder="例：241210AB001" autocomplete="off">
+      <button class="kit-submit-btn" id="kit-submit-btn" onclick="submitKitId()">
+        <span id="t-kit-btn">追加</span>
+      </button>
+    </div>
+    <div class="kit-error hidden" id="kit-error"></div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="page-title" id="t-page-title">ユーザー用ホーム画面</div>
+  <h1 class="hero-title" id="t-title">代謝を知れば、<br><em>自分が変わる。</em></h1>
+  <p class="hero-sub" id="t-sub">Metabolic Intelligence Platform</p>
+</div>
+
+<div class="register-banner hidden" id="register-banner-top">
+  <div class="register-banner-text">
+    <strong id="t-banner-title-top">ユーザー会員登録を行う。</strong>
+  </div>
+  <a href="/register" class="register-banner-btn" id="t-banner-btn-top">登録する</a>
+</div>
+
+<div class="section-label" id="t-cat-label">カテゴリ</div>
+
+<div class="categories">
+  <div class="cat-card disabled">
+    <div class="cat-left">
+      <div class="cat-icon icon-learn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2a6e27" stroke-width="1.5"><path d="M12 6.25v11.5M6.75 9.5l5.25-3.25 5.25 3.25M4 19h16"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-c1-title">代謝について学ぶ</div>
+        <div class="cat-desc" id="t-c1-desc">代謝の傾向・生活習慣・最新知見</div>
+      </div>
+    </div>
+    <div class="cat-right"><span class="cat-tag tag-coming" id="t-coming">準備中</span></div>
+  </div>
+
+  <div class="cat-card disabled" id="cat-result" onclick="goToScorePage()" style="cursor:pointer">
+    <div class="cat-left">
+      <div class="cat-icon icon-result">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4466cc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h2l2-4 2 8 2-4h2"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-c2-title">自分の代謝を見る</div>
+        <div class="cat-desc" id="t-c2-desc">解析結果・スコア・経時変化</div>
+      </div>
+    </div>
+    <div class="cat-right">
+      <span class="cat-tag tag-member" id="t-member">会員限定</span>
+      <span class="cat-arrow">›</span>
+    </div>
+  </div>
+
+  <div class="cat-card disabled">
+    <div class="cat-left">
+      <div class="cat-icon icon-order">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#cc8800" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-c3-title">解析を依頼する</div>
+        <div class="cat-desc" id="t-c3-desc">提携クリニックで解析</div>
+      </div>
+    </div>
+    <div class="cat-right"><span class="cat-tag tag-coming">準備中</span></div>
+  </div>
+
+  <div class="cat-card disabled">
+    <div class="cat-left">
+      <div class="cat-icon icon-shop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#cc4444" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-c4-title">商品を探す</div>
+        <div class="cat-desc" id="t-c4-desc">食品・サプリ・化粧品</div>
+      </div>
+    </div>
+    <div class="cat-right"><span class="cat-tag tag-coming">準備中</span></div>
+  </div>
+
+  <div class="cat-card disabled">
+    <div class="cat-left">
+      <div class="cat-icon icon-expert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7744cc" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-c5-title">専門家に相談する</div>
+        <div class="cat-desc" id="t-c5-desc">医師、研究者、栄養士</div>
+      </div>
+    </div>
+    <div class="cat-right"><span class="cat-tag tag-coming">準備中</span></div>
+  </div>
+</div>
+
+<div class="section-label">アカウント設定</div>
+<div class="settings-grid">
+  <button class="settings-btn" onclick="openHomeModal('modal-change-pw')">
+    <div class="cat-left">
+      <div class="cat-icon" style="background:#f0e8ff">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7744cc" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-s1">パスワード変更</div>
+      </div>
+    </div>
+    <span class="cat-arrow">›</span>
+  </button>
+  <button class="settings-btn" onclick="openHomeModal('modal-change-email')">
+    <div class="cat-left">
+      <div class="cat-icon" style="background:#e8eeff">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4466cc" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-s2">メールアドレス変更</div>
+      </div>
+    </div>
+    <span class="cat-arrow">›</span>
+  </button>
+  <button class="settings-btn" onclick="openHomeModal('modal-body-info')">
+    <div class="cat-left">
+      <div class="cat-icon" style="background:#fff8e8">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#cc8800" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-s3">身体情報を編集</div>
+      </div>
+    </div>
+    <span class="cat-arrow">›</span>
+  </button>
+  <button class="settings-btn settings-btn--primary" onclick="openHomeModal('modal-add-analysis')">
+    <div class="cat-left">
+      <div class="cat-icon" style="background:rgba(255,255,255,0.15)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </div>
+      <div>
+        <div class="cat-title" id="t-s4">解析IDを追加</div>
+      </div>
+    </div>
+    <span class="cat-arrow" style="color:rgba(255,255,255,0.6)">›</span>
+  </button>
+</div>
+
+<!-- ══ パスワード変更モーダル ══ -->
+<div class="modal-overlay hidden" id="modal-change-pw" onclick="closeHomeModal('modal-change-pw')">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔑 パスワード変更</div>
+    <div class="modal-sub">新しいパスワードを設定します</div>
+    <div class="modal-field"><label>新しいパスワード（8文字以上）</label><input type="password" id="new-pw" placeholder="••••••••"></div>
+    <div class="modal-field"><label>確認</label><input type="password" id="new-pw2" placeholder="••••••••"></div>
+    <div class="modal-error" id="pw-error"></div>
+    <div class="modal-success" id="pw-success">パスワードを変更しました</div>
+    <button class="modal-btn-primary" onclick="doChangePw()">変更する</button>
+    <button class="modal-btn-cancel" onclick="closeHomeModal('modal-change-pw')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ メールアドレス変更モーダル ══ -->
+<div class="modal-overlay hidden" id="modal-change-email" onclick="closeHomeModal('modal-change-email')">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✉️ メールアドレス変更</div>
+    <div class="modal-sub">新しいメールアドレスに確認メールを送信します</div>
+    <div class="modal-field"><label>新しいメールアドレス</label><input type="email" id="new-email" placeholder="example@email.com"></div>
+    <div class="modal-error" id="email-error"></div>
+    <div class="modal-success" id="email-success">確認メールを送信しました</div>
+    <button class="modal-btn-primary" onclick="doChangeEmail()">変更する</button>
+    <button class="modal-btn-cancel" onclick="closeHomeModal('modal-change-email')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ 身体情報編集モーダル ══ -->
+<div class="modal-overlay hidden" id="modal-body-info" onclick="closeHomeModal('modal-body-info')">
+  <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:88vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👤 身体情報を編集</div>
+    <div class="modal-sub">解析精度向上のために使用します。後から変更可能です。</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="modal-field"><label>身長 (cm)</label><input type="number" id="h-height" placeholder="170" min="100" max="250"></div>
+      <div class="modal-field"><label>体重 (kg)</label><input type="number" id="h-weight" placeholder="65" min="20" max="300"></div>
+    </div>
+    <div class="modal-field"><label>性別</label>
+      <select id="h-sex" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none;background:#fafafa">
+        <option value="">選択してください</option><option value="male">男性</option><option value="female">女性</option><option value="other">その他・回答しない</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>生年月日</label><input type="date" id="h-birth"></div>
+    <div class="modal-field"><label>喫煙</label>
+      <select id="h-smoking" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none;background:#fafafa">
+        <option value="none">なし</option><option value="past">過去に喫煙（現在は禁煙）</option><option value="current">現在喫煙中</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>飲酒</label>
+      <select id="h-drinking" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none;background:#fafafa">
+        <option value="none">なし</option><option value="occasional">時々（週1〜2回以下）</option><option value="regular">定期的（週3〜4回）</option><option value="heavy">毎日・多量</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>運動習慣</label>
+      <select id="h-exercise" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;outline:none;background:#fafafa">
+        <option value="none">ほぼなし</option><option value="light">軽度（週1〜2回）</option><option value="moderate">中程度（週3〜4回）</option><option value="intense">高強度（ほぼ毎日）</option>
+      </select>
+    </div>
+
+    <div class="modal-field"><label>既往歴（複数選択可）</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="h-chk-medical">
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="diabetes" style="accent-color:var(--accent)">糖尿病</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="hypertension" style="accent-color:var(--accent)">高血圧</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="dyslipidemia" style="accent-color:var(--accent)">脂質異常症</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="liver_disease" style="accent-color:var(--accent)">肝疾患</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="kidney_disease" style="accent-color:var(--accent)">腎疾患</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="thyroid" style="accent-color:var(--accent)">甲状腺疾患</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="cancer" style="accent-color:var(--accent)">がん既往</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="none" style="accent-color:var(--accent)">なし</label>
+      </div>
+    </div>
+
+    <div class="modal-field"><label>服薬（複数選択可）</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="h-chk-medications">
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="antihypertensive" style="accent-color:var(--accent)">降圧剤</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="statin" style="accent-color:var(--accent)">スタチン</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="diabetes_med" style="accent-color:var(--accent)">糖尿病薬</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="thyroid_med" style="accent-color:var(--accent)">甲状腺薬</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="none" style="accent-color:var(--accent)">なし</label>
+      </div>
+    </div>
+
+    <div class="modal-field"><label>サプリメント（複数選択可）</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="h-chk-supplements">
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="vitamin_b" style="accent-color:var(--accent)">ビタミンB群</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="vitamin_c" style="accent-color:var(--accent)">ビタミンC</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="vitamin_d" style="accent-color:var(--accent)">ビタミンD</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="magnesium" style="accent-color:var(--accent)">マグネシウム</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="zinc" style="accent-color:var(--accent)">亜鉛</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="omega3" style="accent-color:var(--accent)">オメガ3</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="nad_nmn" style="accent-color:var(--accent)">NAD/NMN</label>
+        <label style="display:flex;align-items:center;gap:5px;background:#fafafa;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px"><input type="checkbox" value="none" style="accent-color:var(--accent)">なし</label>
+      </div>
+    </div>
+    <div class="modal-field"><label>サプリメント（その他）</label><input type="text" id="h-supplements-other" placeholder="例：マルチビタミン"></div>
+
+    <div class="modal-error" id="body-error"></div>
+    <div class="modal-success" id="body-success">保存しました</div>
+    <button class="modal-btn-primary" onclick="doSaveBodyInfo()">保存する</button>
+    <button class="modal-btn-cancel" onclick="closeHomeModal('modal-body-info')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ 解析ID追加モーダル ══ -->
+<div class="modal-overlay hidden" id="modal-add-analysis" onclick="closeHomeModal('modal-add-analysis')">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">＋ 解析IDを追加</div>
+    <div class="modal-sub">キットに記載されているIDを入力してください</div>
+    <div class="modal-field"><label>解析ID</label><input type="text" id="new-analysis-id" placeholder="例：241210AB001"></div>
+    <div class="modal-error" id="analysis-error"></div>
+    <div class="modal-success" id="analysis-success">解析IDを追加しました</div>
+    <button class="modal-btn-primary" onclick="doAddAnalysisId()">追加する</button>
+    <button class="modal-btn-cancel" onclick="closeHomeModal('modal-add-analysis')">キャンセル</button>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-brand">Meta<span>Check</span></div>
+  <div class="footer-op">© MetaCheck — 運営：一般社団法人 CPC BANK</div>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
+
+async function getSession() {
+  // あらゆるキー名パターンを試す
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    // supabase関連のキーを全部試す
+    if (key.includes('auth') || key.includes('supabase') || key.includes('token') || key.includes('sb-')) {
+      try {
+        const raw = localStorage.getItem(key);
+        const v = JSON.parse(raw);
+        if (v && v.access_token) return v;
+        // ネストされている場合
+        if (v && v.currentSession && v.currentSession.access_token) return v.currentSession;
+      } catch(e) {}
+    }
+  }
+  // sessionStorageも確認
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (!key) continue;
+    try {
+      const v = JSON.parse(sessionStorage.getItem(key));
+      if (v && v.access_token) return v;
+    } catch(e) {}
+  }
+  return null;
+}
+
+async function verifyToken(token) {
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/user', { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + token } });
+    return res.ok ? await res.json() : null;
+  } catch(e) { return null; }
+}
+
+const T = {
+  ja: { pageTitle:'ユーザー用ホーム画面', login:'ログイン', loggedIn:'<strong>ログイン中</strong> — 全カテゴリが利用可能です', title:'代謝を知れば、<br><em>自分が変わる。</em>', sub:'Metabolic Intelligence Platform', catLabel:'カテゴリ', c1title:'代謝について学ぶ', c1desc:'代謝の傾向・生活習慣・最新知見', c2title:'自分の代謝を見る', c2desc:'解析結果・スコア・経時変化', c3title:'解析を依頼する', c3desc:'提携クリニックで解析', c4title:'商品を探す', c4desc:'食品・サプリ・化粧品', c5title:'専門家に相談する', c5desc:'医師、研究者、栄養士', member:'会員限定', coming:'準備中', bannerTitle:'ユーザー会員登録を行う。', bannerDesc:'', bannerBtn:'登録する', kitBannerTitle:'解析IDを登録してください', kitBannerDesc:'キットに記載されているIDを追加すると、代謝スコアが表示されます', kitBtn:'追加', s1:'パスワード変更', s2:'メールアドレス変更', s3:'身体情報を編集', s4:'解析IDを追加' },
+  en: { pageTitle:'User Home Screen', login:'Login', loggedIn:'<strong>Logged in</strong> — All categories available', title:'Know your metabolism.<br><em>Change your life.</em>', sub:'Metabolic Intelligence Platform', catLabel:'Categories', c1title:'Learn about metabolism', c1desc:'Trends, lifestyle & latest insights', c2title:'View my metabolism', c2desc:'Results, scores & trends over time', c3title:'Request analysis', c3desc:'Partner clinic analysis', c4title:'Browse products', c4desc:'Food, supplements & cosmetics', c5title:'Consult an expert', c5desc:'Doctors, researchers & nutritionists', member:'Members only', coming:'Coming soon', bannerTitle:'Register as a user member.', bannerDesc:'', bannerBtn:'Sign up', kitBannerTitle:'Add your Analysis ID', kitBannerDesc:'Enter the ID from your kit to view your metabolic scores', kitBtn:'Add', s1:'Change Password', s2:'Change Email', s3:'Edit Body Info', s4:'Add Analysis ID' },
+  vi: { pageTitle:'Màn hình trang chủ người dùng', login:'Đăng nhập', loggedIn:'<strong>Đã đăng nhập</strong>', title:'Hiểu chuyển hóa,<br><em>thay đổi bản thân.</em>', sub:'Nền tảng Thông minh Chuyển hóa', catLabel:'Danh mục', c1title:'Tìm hiểu chuyển hóa', c1desc:'Xu hướng, lối sống & kiến thức mới', c2title:'Xem chuyển hóa của tôi', c2desc:'Kết quả, điểm số & thay đổi', c3title:'Yêu cầu phân tích', c3desc:'Phân tích tại phòng khám liên kết', c4title:'Tìm sản phẩm', c4desc:'Thực phẩm, bổ sung & mỹ phẩm', c5title:'Tư vấn chuyên gia', c5desc:'Bác sĩ, nhà nghiên cứu & chuyên gia dinh dưỡng', member:'Thành viên', coming:'Sắp ra mắt', bannerTitle:'Đăng ký thành viên người dùng.', bannerDesc:'', bannerBtn:'Đăng ký', kitBannerTitle:'Thêm ID phân tích', kitBannerDesc:'Nhập ID trên kit để xem điểm chuyển hóa của bạn', kitBtn:'Thêm', s1:'Đổi mật khẩu', s2:'Đổi email', s3:'Sửa thông tin cơ thể', s4:'Thêm ID phân tích' },
+  zh: { pageTitle:'用户主页面', login:'登录', loggedIn:'<strong>已登录</strong>', title:'了解代谢，<br><em>改变自己。</em>', sub:'代谢智能平台', catLabel:'类别', c1title:'了解代谢', c1desc:'代谢趋势・生活习惯・最新知识', c2title:'查看我的代谢', c2desc:'分析结果・评分・时间变化', c3title:'申请分析', c3desc:'在合作诊所进行分析', c4title:'浏览商品', c4desc:'食品・保健品・化妆品', c5title:'咨询专家', c5desc:'医生、研究者、营养师', member:'会员专属', coming:'即将推出', bannerTitle:'进行用户会员注册。', bannerDesc:'', bannerBtn:'注册', kitBannerTitle:'请添加解析ID', kitBannerDesc:'输入kit上记载的ID即可查看代谢评分', kitBtn:'添加', s1:'修改密码', s2:'修改邮箱', s3:'编辑身体信息', s4:'添加解析ID' }
+};
+
+function setLang(lang) {
+  const t = T[lang];
+  // localStorage に保存
+  localStorage.setItem('mc_lang', lang);
+  currentLang = lang;
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+  function setHTML(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = val;
+  }
+
+  setText('t-page-title', t.pageTitle);
+  setText('nav-login', t.login);
+  setHTML('t-logged-in', t.loggedIn);
+  setHTML('t-title', t.title);
+  setText('t-sub', t.sub);
+  setText('t-cat-label', t.catLabel);
+  setText('t-c1-title', t.c1title);
+  setText('t-c1-desc', t.c1desc);
+  setText('t-c2-title', t.c2title);
+  setText('t-c2-desc', t.c2desc);
+  setText('t-c3-title', t.c3title);
+  setText('t-c3-desc', t.c3desc);
+  setText('t-c4-title', t.c4title);
+  setText('t-c4-desc', t.c4desc);
+  setText('t-c5-title', t.c5title);
+  setText('t-c5-desc', t.c5desc);
+  setText('t-member', t.member);
+  // t-coming は複数あるので全部更新
+  document.querySelectorAll('.tag-coming').forEach(el => el.textContent = t.coming);
+  setText('t-banner-title', t.bannerTitle);
+  setText('t-banner-btn', t.bannerBtn);
+  setText('t-banner-title-top', t.bannerTitle);
+  setText('t-banner-btn-top', t.bannerBtn);
+  setText('t-kit-banner-title', t.kitBannerTitle);
+  setText('t-kit-banner-desc', t.kitBannerDesc);
+  setText('t-kit-btn', t.kitBtn);
+  setText('t-s1', t.s1);
+  setText('t-s2', t.s2);
+  setText('t-s3', t.s3);
+  setText('t-s4', t.s4);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === (lang === 'zh' ? '中' : lang.toUpperCase())));
+}
+
+function doLogout() {
+  localStorage.removeItem('sb-auth-token');
+  sessionStorage.clear();
+  window.location.href = '/';
+}
+
+const MC_CATS = {'Glycolysis':'炎症・糖依存傾向','TCA Cycle':'エネルギー産生能力','Energy currency / OXPHOS':'エネルギー産生能力','Redox balance / Glutathione':'抗酸化・修復力','Fatty acid metabolism':'脂肪燃焼能力','Amino acid / BCAA metabolism':'筋肉・栄養代謝','Cofactors / Vitamin B':'補酵素・ビタミン状態','Folate / Methionine–SAM cycle':'メチル化・遺伝子調節','Electrolyte / Minerals':'電解質・ミネラル安定性','Ketone body metabolism':'代替エネルギー利用力','Lipid detail':'脂質の質・血管影響','Pentose Phosphate Pathway':'抗酸化・修復力','Polyamine metabolism':'細胞増殖・再生バランス','Purine metabolism':'核酸・尿酸バランス','Pyrimidine metabolism':'DNA・細胞更新力','Urea Cycle':'アンモニア解毒能力'};
+
+async function goToScorePage() {
+  const el = document.getElementById('cat-result');
+  if (el && el.classList.contains('disabled')) return;
+
+  document.getElementById('mc-score-screen').classList.add('visible');
+
+  const session = await getSession();
+  if (!session || !session.access_token) return;
+
+  try {
+    const H = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' };
+    const user = await verifyToken(session.access_token);
+    if (!user) return;
+
+    const links = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H }).then(r => r.json()).catch(() => []);
+    if (!Array.isArray(links) || !links.length) return;
+
+    const patientId = links[0].patient_id;
+    const allIds = links.map(l => l.patient_id);
+
+    const patients = await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H }).then(r => r.json()).catch(() => []);
+    const patient = (Array.isArray(patients) && patients.length) ? patients[0] : { id: patientId };
+
+    currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: allIds };
+    currentAccessToken = session.access_token;
+    window.currentAccessToken = session.access_token;
+    currentLang = localStorage.getItem('mc_lang') || 'ja';
+
+    if (typeof renderPatientPage === 'function') {
+      await renderPatientPage(patient);
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+
+async function doChangePw() {
+  const pw = document.getElementById('new-pw').value;
+  const pw2 = document.getElementById('new-pw2').value;
+  const errEl = document.getElementById('pw-error');
+  const okEl = document.getElementById('pw-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!pw || pw.length < 8) { errEl.textContent = '8文字以上で入力してください'; errEl.classList.add('show'); return; }
+  if (pw !== pw2) { errEl.textContent = 'パスワードが一致しません'; errEl.classList.add('show'); return; }
+  const session = await getSession();
+  if (!session) return;
+  const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
+    method: 'PUT',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pw })
+  });
+  if (res.ok) { okEl.classList.add('show'); document.getElementById('new-pw').value = ''; document.getElementById('new-pw2').value = ''; }
+  else { errEl.textContent = '変更に失敗しました'; errEl.classList.add('show'); }
+}
+
+// ── メールアドレス変更 ──
+async function doChangeEmail() {
+  const email = document.getElementById('new-email').value.trim();
+  const errEl = document.getElementById('email-error');
+  const okEl = document.getElementById('email-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!email || !email.includes('@')) { errEl.textContent = '正しいメールアドレスを入力してください'; errEl.classList.add('show'); return; }
+  const session = await getSession();
+  if (!session) return;
+  const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
+    method: 'PUT',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  });
+  if (res.ok) { okEl.classList.add('show'); document.getElementById('new-email').value = ''; }
+  else { errEl.textContent = '変更に失敗しました'; errEl.classList.add('show'); }
+}
+
+// ── 身体情報保存 ──
+async function doSaveBodyInfo() {
+  const errEl = document.getElementById('body-error');
+  const okEl = document.getElementById('body-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  const session = await getSession();
+  if (!session) return;
+  const user = await verifyToken(session.access_token);
+  if (!user) return;
+
+  function getChecked(id) {
+    return Array.from(document.querySelectorAll('#' + id + ' input:checked')).map(el => el.value);
+  }
+
+  const bodyInfo = {
+    user_id: user.id,
+    height_cm: parseFloat(document.getElementById('h-height').value) || null,
+    weight_kg: parseFloat(document.getElementById('h-weight').value) || null,
+    sex: document.getElementById('h-sex').value || null,
+    birth_date: document.getElementById('h-birth').value || null,
+    smoking: document.getElementById('h-smoking').value || 'none',
+    drinking: document.getElementById('h-drinking').value || 'none',
+    exercise: document.getElementById('h-exercise').value || 'none',
+    medical_history: getChecked('h-chk-medical'),
+    medications: getChecked('h-chk-medications'),
+    supplements: getChecked('h-chk-supplements'),
+    supplements_other: document.getElementById('h-supplements-other').value.trim() || null,
+    updated_at: new Date().toISOString()
+  };
+  const res = await fetch(SUPABASE_URL + '/rest/v1/patient_profiles', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(bodyInfo)
+  });
+  if (res.ok) { okEl.classList.add('show'); }
+  else { errEl.textContent = '保存に失敗しました'; errEl.classList.add('show'); }
+}
+
+// ── 解析ID追加 ──
+async function doAddAnalysisId() {
+  const analysisId = document.getElementById('new-analysis-id').value.trim().toUpperCase();
+  const errEl = document.getElementById('analysis-error');
+  const okEl = document.getElementById('analysis-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!analysisId) { errEl.textContent = '解析IDを入力してください'; errEl.classList.add('show'); return; }
+  const session = await getSession();
+  if (!session) return;
+  const user = await verifyToken(session.access_token);
+  if (!user) return;
+  // 存在確認
+  const check = await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + analysisId + '&select=id',
+    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
+  ).then(r => r.json()).catch(() => []);
+  if (!check || !check.length) { errEl.textContent = '解析IDが見つかりません'; errEl.classList.add('show'); return; }
+  // 紐付け
+  const res = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ user_id: user.id, patient_id: analysisId })
+  });
+  if (res.ok) {
+    // 成功 → スコアページへ遷移
+    window.location.href = '/?role=individual';
+  } else {
+    errEl.textContent = '追加に失敗しました（既に登録済みの可能性があります）';
+    errEl.classList.add('show');
+  }
+}
+
+async function init() {
+  const session = await getSession();
+  let isLoggedIn = false;
+  let userId = null;
+
+  if (session && session.access_token) {
+    const user = await verifyToken(session.access_token);
+    if (user) {
+      isLoggedIn = true;
+      userId = user.id;
+      // ようこそ表示（名前だけ先にセット、表示は解析ID確認後）
+      const name = user.user_metadata?.full_name || user.email || '';
+      document.getElementById('welcome-name').textContent = name + ' さん';
+    }
+  }
+
+  if (isLoggedIn) {
+    document.getElementById('nav-logout').classList.remove('hidden');
+    document.getElementById('nav-login').classList.add('hidden');
+    // 解析IDが紐付き済みか確認
+    const links = await fetch(
+      SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
+    ).then(r => r.json()).catch(() => []);
+
+    if (links && links.length > 0) {
+      // 解析ID登録済み → ようこそ＋カテゴリ有効
+      document.getElementById('cat-result').classList.remove('disabled');
+      document.getElementById('logged-in-banner').classList.remove('hidden');
+      document.getElementById('welcome-banner').classList.remove('hidden');
+    } else {
+      // 解析ID未登録 → 解析IDバナーのみ（ようこそは非表示）
+      document.getElementById('welcome-banner').classList.add('hidden');
+      document.getElementById('kit-banner').classList.remove('hidden');
+      window._kitUserId = userId;
+      window._kitToken = session.access_token;
+    }
+  } else {
+    document.getElementById('nav-login').classList.remove('hidden');
+    document.getElementById('register-banner-top').classList.remove('hidden');
+  }
+
+  const savedLang = localStorage.getItem('mc_lang') || 'ja';
+  setLang(savedLang);
+}
+
+async function submitKitId() {
+  const input = document.getElementById('kit-id-input');
+  const btn = document.getElementById('kit-submit-btn');
+  const errEl = document.getElementById('kit-error');
+  const analysisId = input.value.trim().toUpperCase();
+
+  if (!analysisId) return;
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+
+  try {
+    // 解析IDの存在確認
+    const check = await fetch(
+      SUPABASE_URL + '/rest/v1/patients?id=eq.' + analysisId + '&select=id',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + (window._kitToken || SUPABASE_KEY) } }
+    ).then(r => r.json());
+
+    if (!check || !check.length) {
+      errEl.textContent = '解析IDが見つかりません。キットに記載のIDを確認してください';
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      return;
+    }
+
+    // user_analysis_ids に紐付け
+    const res = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (window._kitToken || SUPABASE_KEY),
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ user_id: window._kitUserId, patient_id: analysisId })
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      throw new Error('紐付けに失敗しました: ' + res.status + ' ' + errBody);
+    }
+
+    // 成功 → スコアページへ
+    window.location.href = '/?role=individual';
+
+  } catch(e) {
+    errEl.textContent = e.message || 'エラーが発生しました';
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
