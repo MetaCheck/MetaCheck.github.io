@@ -68,45 +68,16 @@ async function doLogin() {
     try {
       const session = await authSignIn(email, pw);
       currentAccessToken = session.access_token;
-      const userId = session.user.id;
-
-      // user_idで解析IDを直接取得（ユーザートークン使用）
-      const linksRes = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id,linked_at&order=linked_at.asc', {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }
-      });
-      const links = await linksRes.json();
-
-      if (!links || !links.length) {
-        // 解析IDが未紐付け → ホーム画面へ
-        localStorage.setItem('sb-auth-token', JSON.stringify({ 
-          access_token: session.access_token, 
-          refresh_token: session.refresh_token || null,
-          role: 'individual',
-          user_id: userId,
-          email: email
-        }));
-        window.location.href = '/home-user';
-        return;
-      }
-
-      // 最初の解析IDで患者データを取得
-      const patientId = links[0].patient_id;
-      currentUser = { role: 'individual', id: patientId, userId, email, allIds: links.map(l => l.patient_id) };
+      const userId = session.user?.id || null;
       showLoginError(false);
-      savePendingBodyInfo(currentUser.userId);
-      savePendingNickname(patientId);
-      sessionStorage.clear();
-      localStorage.setItem('sb-auth-token', JSON.stringify({ 
-        access_token: session.access_token, 
+      localStorage.setItem('sb-auth-token', JSON.stringify({
+        access_token: session.access_token,
         refresh_token: session.refresh_token || null,
         role: 'individual',
-        patient_id: patientId,
-        all_ids: links.map(l => l.patient_id),
         user_id: userId,
         email: email
       }));
       window.location.href = '/home-user';
-
     } catch(e) {
       console.error(e);
       showLoginError(true);
