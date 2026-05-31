@@ -461,8 +461,56 @@ async function doBodyInfoSubmit() {
   }
 }
 
+// ─── セッション復元（自動ログイン） ────────────────────────
+async function restoreSession() {
+  try {
+    const raw = localStorage.getItem('sb-auth-token');
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!saved || !saved.access_token) return;
+
+    // トークンの有効性確認
+    const userRes = await fetch(SUPABASE_AUTH_URL + '/user', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + saved.access_token }
+    });
+    if (!userRes.ok) { localStorage.removeItem('sb-auth-token'); return; }
+    const user = await userRes.json();
+
+    currentAccessToken = saved.access_token;
+
+    if (saved.role === 'clinic') {
+      const clinics = await dbSelect('clinics', 'email=eq.' + encodeURIComponent(user.email) + '&select=*');
+      if (!clinics.length) return;
+      const clinic = clinics[0];
+      currentUser = { role: 'clinic', id: clinic.id, name: clinic.name, clinicId: clinic.id, status: clinic.status };
+      showScreen('screen-clinic');
+      if (typeof renderClinicPage === 'function') renderClinicPage(clinic.id, clinic.status);
+    } else {
+      // 個人ユーザー
+      const linksRes = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + saved.access_token }
+      });
+      const links = await linksRes.json();
+      if (!links || !links.length) { window.location.href = '/home-user'; return; }
+
+      const patientId = links[0].patient_id;
+      const patient = await fetchPatient(patientId);
+      if (!patient) return;
+
+      currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
+      showScreen('screen-patient');
+      if (typeof renderPatientPage === 'function') await renderPatientPage(patient);
+    }
+  } catch(e) {
+    console.error('セッション復元エラー:', e);
+    localStorage.removeItem('sb-auth-token');
+  }
+}
+
 // ─── イベント登録 ────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
+  // セッション復元
+  restoreSession();
   document.getElementById('btn-login')?.addEventListener('click', doLogin);
   document.getElementById('btn-register-submit')?.addEventListener('click', doRegister);
   document.getElementById('btn-terms-next')?.addEventListener('click', doTermsNext);
