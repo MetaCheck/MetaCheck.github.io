@@ -238,7 +238,6 @@
 </style>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script>
-// patient.jsが参照するグローバル変数を先に定義
 var currentUser = null;
 var currentAccessToken = null;
 var currentLang = localStorage.getItem('mc_lang') || 'ja';
@@ -247,7 +246,7 @@ var currentLang = localStorage.getItem('mc_lang') || 'ja';
 <script src="i18n.js"></script>
 <script src="patient.js"></script>
 <style>
-:root{--forest:#1A3C34;--emerald:#2D6A4F;--sage:#52B788;--mint:#95D5B2;--foam:#D8F3DC;--paper:#F7FAF8;--white:#FFFFFF;--ink:#0F1F1A;--ink2:#2C4A40;--ink3:#5A7A6E;--ink4:#8FAAA0;--border:#D4E6DD;--amber:#D4811F;--amber-l:#FEF3E2;--ruby:#B03A2E;--ruby-l:#FDECEA;--r:10px}
+:root{--forest:#1A3C34;--emerald:#2D6A4F;--sage:#52B788;--mint:#95D5B2;--foam:#D8F3DC;--paper:#F7FAF8;--white:#FFFFFF;--ink:#0F1F1A;--ink2:#2C4A40;--ink3:#5A7A6E;--ink4:#8FAAA0;--border:#D4E6DD;--amber:#D4811F;--amber-l:#FEF3E2;--ruby:#B03A2E;--r:10px}
 #mc-score-screen{display:none;position:fixed;inset:0;z-index:9999;background:var(--paper);overflow-y:auto;flex-direction:column}
 #mc-score-screen.visible{display:flex}
 .mc-topbar{background:var(--forest);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:sticky;top:0}
@@ -271,7 +270,7 @@ var currentLang = localStorage.getItem('mc_lang') || 'ja';
 .metabolite-tag.down{background:#FDECEA;color:#B03A2E}.metabolite-tag.up{background:#E8F5E9;color:#2E7D32}.metabolite-tag.neutral{background:var(--border);color:var(--ink3)}
 .insight-box--amber{background:var(--amber-l);color:var(--ink2);border:1px solid #f0c580;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.8}
 .insight-label{font-size:11px;font-weight:600;color:var(--amber);margin-bottom:6px}
-.alert-banner{padding:8px 14px;background:var(--amber-l);color:var(--amber);border-radius:8px;font-size:12px;margin-bottom:12px;display:none}
+.alert-banner{padding:8px 14px;background:var(--amber-l);color:var(--amber);border-radius:8px;font-size:12px;margin-bottom:12px}
 .section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:12px;padding-left:4px}
 </style>
 </head>
@@ -288,7 +287,7 @@ var currentLang = localStorage.getItem('mc_lang') || 'ja';
       <div class="pt-name" id="patient-display-name">—</div>
       <div class="pt-meta" id="patient-display-meta"></div>
     </div>
-    <div id="patient-alert-banner" class="alert-banner"></div>
+    <div id="patient-alert-banner" class="alert-banner" style="display:none"></div>
     <div class="section-title">カテゴリ別スコア</div>
     <div class="pt-score-list" id="patient-score-grid"></div>
     <div id="patient-category-detail" hidden>
@@ -718,24 +717,20 @@ async function goToScorePage() {
     const user = await verifyToken(session.access_token);
     if (!user) return;
 
-    // 全解析IDを取得
     const links = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H }).then(r => r.json()).catch(() => []);
     if (!Array.isArray(links) || !links.length) return;
 
     const patientId = links[0].patient_id;
     const allIds = links.map(l => l.patient_id);
 
-    // 患者情報取得
     const patients = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H }).then(r => r.json()).catch(() => []);
     const patient = (Array.isArray(patients) && patients.length) ? patients[0] : { id: patientId };
 
-    // currentUser・currentAccessToken・currentLangをセット
     currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: allIds };
     currentAccessToken = session.access_token;
     window.currentAccessToken = session.access_token;
     currentLang = localStorage.getItem('mc_lang') || 'ja';
 
-    // patient.jsのrenderPatientPageを使って全機能表示
     if (typeof renderPatientPage === 'function') {
       await renderPatientPage(patient);
     }
@@ -860,49 +855,42 @@ async function init() {
   let isLoggedIn = false;
   let userId = null;
 
-  if (session && session.access_token && (session.role === 'individual' || !session.role || session.role !== 'clinic')) {
+  if (session && session.access_token) {
     isLoggedIn = true;
     userId = session.user_id || null;
     const name = session.email || '';
     document.getElementById('welcome-name').textContent = name + ' さん';
-    // バックグラウンドでユーザー情報を取得して名前を更新
+    // バックグラウンドで正確な名前を取得
     verifyToken(session.access_token).then(function(user) {
       if (user) {
-        userId = user.id;
+        userId = userId || user.id;
         const fullName = user.user_metadata?.full_name || user.email || '';
         document.getElementById('welcome-name').textContent = fullName + ' さん';
       }
-    });
+    }).catch(function(){});
   }
 
   if (isLoggedIn) {
     document.getElementById('nav-logout').classList.remove('hidden');
     document.getElementById('nav-login').classList.add('hidden');
+    // 解析IDが紐付き済みか確認
+    const links = await fetch(
+      SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
+    ).then(r => r.json()).catch(() => []);
 
-    // userIdが取得できるまで待つ
-    const waitForUserId = async () => {
-      for (let i = 0; i < 20; i++) {
-        if (userId) break;
-        await new Promise(r => setTimeout(r, 100));
-      }
-      // 解析IDが紐付き済みか確認
-      const links = await fetch(
-        SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
-        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
-      ).then(r => r.json()).catch(() => []);
-
-      if (links && links.length > 0) {
-        document.getElementById('cat-result').classList.remove('disabled');
-        document.getElementById('logged-in-banner').classList.remove('hidden');
-        document.getElementById('welcome-banner').classList.remove('hidden');
-      } else {
-        document.getElementById('welcome-banner').classList.add('hidden');
-        document.getElementById('kit-banner').classList.remove('hidden');
-        window._kitUserId = userId;
-        window._kitToken = session.access_token;
-      }
-    };
-    waitForUserId();
+    if (links && links.length > 0) {
+      // 解析ID登録済み → ようこそ＋カテゴリ有効
+      document.getElementById('cat-result').classList.remove('disabled');
+      document.getElementById('logged-in-banner').classList.remove('hidden');
+      document.getElementById('welcome-banner').classList.remove('hidden');
+    } else {
+      // 解析ID未登録 → 解析IDバナーのみ（ようこそは非表示）
+      document.getElementById('welcome-banner').classList.add('hidden');
+      document.getElementById('kit-banner').classList.remove('hidden');
+      window._kitUserId = userId;
+      window._kitToken = session.access_token;
+    }
   } else {
     document.getElementById('nav-login').classList.remove('hidden');
     document.getElementById('register-banner-top').classList.remove('hidden');
