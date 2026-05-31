@@ -1392,7 +1392,6 @@ window.addEventListener('DOMContentLoaded', async function() {
       currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
       showScreen('screen-patient');
 
-      // URLパラメータのmodalを処理
       const modalParam = new URLSearchParams(window.location.search).get('modal');
 
       await renderPatientPage(patientObj);
