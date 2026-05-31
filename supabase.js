@@ -11,9 +11,16 @@ const HEADERS = {
   'Content-Type': 'application/json'
 };
 
+function getHeaders() {
+  if (typeof currentAccessToken !== 'undefined' && currentAccessToken) {
+    return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + currentAccessToken, 'Content-Type': 'application/json' };
+  }
+  return HEADERS;
+}
+
 async function dbSelect(table, params) {
   const p = params || '';
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + p, { headers: HEADERS });
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + p, { headers: getHeaders() });
   if (!res.ok) throw new Error('DB error: ' + table);
   return res.json();
 }
@@ -79,8 +86,16 @@ async function insertPatient(data) {
 }
 
 async function fetchInsightsByCategory(patientId, category) {
-  const encoded = encodeURIComponent(category);
-  const pidEncoded = encodeURIComponent(patientId);
+  const encoded = category.split('').map(function(c) {
+    if (c === ' ') return '%20';
+    if (c === '/') return '%2F';
+    return c;
+  }).join('');
+  const pidEncoded = patientId.split('').map(function(c) {
+    if (c === ' ') return '%20';
+    return c;
+  }).join('');
+  // patient_idとcategoryで直接検索
   const rows = await dbSelect('metabolite_insights',
     'patient_id=eq.' + pidEncoded + '&category=eq.' + encoded + '&select=*&limit=1');
   return rows[0] || null;
