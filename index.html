@@ -465,7 +465,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 <body>
 
 <!-- ══════════════ SCREEN: LOGIN ══════════════ -->
-<div id="screen-login" class="screen">
+<div id="screen-login" class="screen active">
   <div class="login-lang-switcher">
     <button class="login-lang-btn active" onclick="setLoginLang('ja')"><span class="lang-text">JA</span></button>
     <button class="login-lang-btn" onclick="setLoginLang('en')"><span class="lang-text">EN</span></button>
@@ -1387,20 +1387,16 @@ window.addEventListener('DOMContentLoaded', async function() {
         return;
       }
       const patientId = links[0].patient_id;
-      const patientRes = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H });
-      const patients = await patientRes.json();
-      if (!patients || !patients.length) {
-        window.location.href = '/home-user';
-        return;
-      }
       currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
       showScreen('screen-patient');
 
-      // URLパラメータのmodalを処理
       const modalParam = new URLSearchParams(window.location.search).get('modal');
 
       if (typeof renderPatientPage === 'function') {
-        await renderPatientPage(patients[0]);
+        const patientRes = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H });
+        const patients = await patientRes.json();
+        const patientObj = (patients && patients.length) ? patients[0] : { id: patientId };
+        await renderPatientPage(patientObj);
       }
 
       if (modalParam) {
