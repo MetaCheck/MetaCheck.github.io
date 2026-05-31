@@ -601,28 +601,23 @@ const SUPABASE_URL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
 
 async function getSession() {
-  // あらゆるキー名パターンを試す
+  // sb-auth-tokenを直接取得
+  try {
+    const raw = localStorage.getItem('sb-auth-token');
+    if (raw) {
+      const v = JSON.parse(raw);
+      if (v && v.access_token) return v;
+    }
+  } catch(e) {}
+  // 全キーを探す
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (!key) continue;
-    // supabase関連のキーを全部試す
-    if (key.includes('auth') || key.includes('supabase') || key.includes('token') || key.includes('sb-')) {
-      try {
-        const raw = localStorage.getItem(key);
-        const v = JSON.parse(raw);
-        if (v && v.access_token) return v;
-        // ネストされている場合
-        if (v && v.currentSession && v.currentSession.access_token) return v.currentSession;
-      } catch(e) {}
-    }
-  }
-  // sessionStorageも確認
-  for (let i = 0; i < sessionStorage.length; i++) {
-    const key = sessionStorage.key(i);
-    if (!key) continue;
     try {
-      const v = JSON.parse(sessionStorage.getItem(key));
+      const raw = localStorage.getItem(key);
+      const v = JSON.parse(raw);
       if (v && v.access_token) return v;
+      if (v && v.currentSession && v.currentSession.access_token) return v.currentSession;
     } catch(e) {}
   }
   return null;
