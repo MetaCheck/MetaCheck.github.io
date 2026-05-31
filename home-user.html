@@ -863,11 +863,17 @@ async function init() {
   let isLoggedIn = false;
   let userId = null;
 
-  if (session && session.access_token && session.user_id) {
+  if (session && session.access_token) {
     isLoggedIn = true;
-    userId = session.user_id;
+    userId = session.user_id || null;
     const name = session.email || '';
     if (document.getElementById('welcome-name')) document.getElementById('welcome-name').textContent = name + ' さん';
+    // userIdがない場合はverifyTokenで取得
+    if (!userId) {
+      verifyToken(session.access_token).then(function(user) {
+        if (user) userId = user.id;
+      }).catch(function(){});
+    }
   }
 
   if (isLoggedIn) {
