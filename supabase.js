@@ -12,8 +12,8 @@ const HEADERS = {
 };
 
 function getHeaders() {
-  if (typeof currentAccessToken !== 'undefined' && currentAccessToken) {
-    return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + currentAccessToken, 'Content-Type': 'application/json' };
+  if (window.currentAccessToken) {
+    return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + window.currentAccessToken, 'Content-Type': 'application/json' };
   }
   return HEADERS;
 }

@@ -1365,6 +1365,7 @@ window.addEventListener('DOMContentLoaded', async function() {
     }
     const user = await res.json();
     currentAccessToken = token;
+    window.currentAccessToken = token;
 
     // ログイン時に選んだタブのroleを必ず使う（同一メールで個人・法人両方ある場合の対応）
     if (!savedRole) savedRole = urlRole;
