@@ -856,35 +856,24 @@ async function doAddAnalysisId() {
 }
 
 async function init() {
-  const session = await getSession();
+  // sb-auth-tokenから直接取得
+  let session = null;
+  try { session = JSON.parse(localStorage.getItem('sb-auth-token')); } catch(e) {}
+
   let isLoggedIn = false;
   let userId = null;
 
-  if (session && session.access_token) {
+  if (session && session.access_token && session.user_id) {
     isLoggedIn = true;
-    userId = session.user_id || null;
+    userId = session.user_id;
     const name = session.email || '';
     if (document.getElementById('welcome-name')) document.getElementById('welcome-name').textContent = name + ' さん';
-    verifyToken(session.access_token).then(function(user) {
-      if (user) {
-        userId = user.id;
-        const fullName = user.user_metadata?.full_name || user.email || '';
-        if (document.getElementById('welcome-name')) document.getElementById('welcome-name').textContent = fullName + ' さん';
-      }
-    }).catch(function(){});
   }
 
   if (isLoggedIn) {
     document.getElementById('nav-logout').classList.remove('hidden');
     document.getElementById('nav-login').classList.add('hidden');
 
-    // userIdが取得されるまで最大2秒待つ
-    for (let i = 0; i < 20; i++) {
-      if (userId) break;
-      await new Promise(r => setTimeout(r, 100));
-    }
-
-    // 解析IDが紐付き済みか確認
     const links = await fetch(
       SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
