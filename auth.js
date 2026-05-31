@@ -68,7 +68,7 @@ async function doLogin() {
     try {
       const session = await authSignIn(email, pw);
       currentAccessToken = session.access_token;
-      const userId = session.user.id;
+      const userId = session.user?.id || session.user_id || null;
 
       // user_idで解析IDを直接取得（ユーザートークン使用）
       const linksRes = await fetch(SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id,linked_at&order=linked_at.asc', {
