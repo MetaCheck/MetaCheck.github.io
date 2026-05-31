@@ -251,6 +251,37 @@
 .mc-rank{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:13px;font-weight:700;flex-shrink:0}
 .mc-rank-A{background:#D8F3DC;color:#2D6A4F}.mc-rank-B{background:#E8F5E9;color:#3A7D44}.mc-rank-C{background:#FFF9C4;color:#B8860B}.mc-rank-D{background:#FFE5CC;color:#D4600A}.mc-rank-E{background:#FDECEA;color:#B03A2E}
 </style>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+var currentUser = null;
+var currentAccessToken = null;
+var currentLang = localStorage.getItem('mc_lang') || 'ja';
+</script>
+<script src="supabase.js"></script>
+<script src="i18n.js"></script>
+<script src="patient.js"></script>
+<style>
+.pt-header{background:#1A3C34;border-radius:10px;padding:18px 22px;margin-bottom:16px;color:#fff}
+.pt-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:#95D5B2;letter-spacing:1px;margin-bottom:4px}
+.pt-name{font-size:20px;font-weight:500;margin-bottom:6px}
+.pt-meta{display:flex;gap:12px;font-size:12px;color:rgba(255,255,255,.5)}
+.pt-score-list{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.pt-score-row{background:#fff;border:1px solid #D4E6DD;border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .15s}
+.pt-score-row:hover{border-color:#52B788}.pt-score-row.active{border-color:#2D6A4F;box-shadow:0 0 0 2px #D8F3DC}
+.pt-score-name{font-size:12px;color:#2C4A40;flex:1;line-height:1.3}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:13px;font-weight:700;flex-shrink:0}
+.rank-A{background:#D8F3DC;color:#2D6A4F}.rank-B{background:#E8F5E9;color:#3A7D44}.rank-C{background:#FFF9C4;color:#B8860B}.rank-D{background:#FFE5CC;color:#D4600A}.rank-E{background:#FDECEA;color:#B03A2E}
+.patient-detail-panel{background:#fff;border:1px solid #D4E6DD;border-radius:10px;padding:18px;margin-bottom:16px}
+.detail-card__title{font-size:15px;font-weight:600;color:#1A3C34;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.pt-tab{padding:8px 14px;font-size:13px;cursor:pointer;color:#8FAAA0;border:none;background:none;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;transition:all .15s}
+.pt-tab--active{color:#2D6A4F;border-bottom-color:#2D6A4F}
+.metabolite-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-family:'JetBrains Mono',monospace}
+.metabolite-tag.down{background:#FDECEA;color:#B03A2E}.metabolite-tag.up{background:#E8F5E9;color:#2E7D32}.metabolite-tag.neutral{background:#D4E6DD;color:#5A7A6E}
+.insight-box--amber{background:#FEF3E2;color:#2C4A40;border:1px solid #f0c580;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.8}
+.insight-label{font-size:11px;font-weight:600;color:#D4811F;margin-bottom:6px}
+.alert-banner{padding:8px 14px;background:#FEF3E2;color:#D4811F;border-radius:8px;font-size:12px;margin-bottom:12px}
+.section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8FAAA0;margin-bottom:12px;padding-left:4px}
+</style>
 </head>
 <body>
 <div id="mc-score-screen">
@@ -260,12 +291,17 @@
     <button onclick="doLogout()">ログアウト</button>
   </div>
   <div class="mc-body">
-    <div class="mc-pt-header">
-      <div class="mc-pt-id" id="mc-pt-id">—</div>
-      <div class="mc-pt-name" id="mc-pt-name">—</div>
+    <div class="pt-header">
+      <div class="pt-id" id="patient-display-id">—</div>
+      <div class="pt-name" id="patient-display-name">—</div>
+      <div class="pt-meta" id="patient-display-meta"></div>
     </div>
-    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8FAAA0;margin-bottom:12px">カテゴリ別スコア</div>
-    <div class="mc-score-list" id="mc-score-list"><div style="color:#8FAAA0;padding:20px;text-align:center">読み込み中...</div></div>
+    <div id="patient-alert-banner" class="alert-banner" style="display:none"></div>
+    <div class="section-title">カテゴリ別スコア</div>
+    <div class="pt-score-list" id="patient-score-grid"></div>
+    <div id="patient-category-detail" hidden>
+      <div class="patient-detail-panel" id="patient-detail-card"></div>
+    </div>
   </div>
 </div>
 
@@ -619,6 +655,7 @@ function setLang(lang) {
   const t = T[lang];
   // localStorage に保存
   localStorage.setItem('mc_lang', lang);
+  currentLang = lang;
 
   function setText(id, val) {
     const el = document.getElementById(id);
@@ -668,14 +705,11 @@ function doLogout() {
   window.location.href = '/';
 }
 
-const MC_CATS = {'Glycolysis':'炎症・糖依存傾向','TCA Cycle':'エネルギー産生能力','Energy currency / OXPHOS':'エネルギー産生能力','Redox balance / Glutathione':'抗酸化・修復力','Fatty acid metabolism':'脂肪燃焼能力','Amino acid / BCAA metabolism':'筋肉・栄養代謝','Cofactors / Vitamin B':'補酵素・ビタミン状態','Folate / Methionine–SAM cycle':'メチル化・遺伝子調節','Electrolyte / Minerals':'電解質・ミネラル安定性','Ketone body metabolism':'代替エネルギー利用力','Lipid detail':'脂質の質・血管影響','Pentose Phosphate Pathway':'抗酸化・修復力','Polyamine metabolism':'細胞増殖・再生バランス','Purine metabolism':'核酸・尿酸バランス','Pyrimidine metabolism':'DNA・細胞更新力','Urea Cycle':'アンモニア解毒能力'};
-
 async function goToScorePage() {
   const el = document.getElementById('cat-result');
   if (el && el.classList.contains('disabled')) return;
 
   document.getElementById('mc-score-screen').classList.add('visible');
-  document.getElementById('mc-score-list').innerHTML = '<div style="color:#8FAAA0;padding:20px;text-align:center">読み込み中...</div>';
 
   const session = await getSession();
   if (!session || !session.access_token) return;
@@ -683,38 +717,30 @@ async function goToScorePage() {
   try {
     const SURL = 'https://fmpetihjnsuogbvnfauc.supabase.co';
     const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGV0aWhqbnN1b2didm5mYXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTcyMDEsImV4cCI6MjA4NjkzMzIwMX0.OALF9p7TWQBPvoqE-E15wgBLKRVFSrc6S21mfrwVMk0';
-    const H = { 'apikey': SKEY, 'Authorization': 'Bearer ' + session.access_token };
+    const H = { 'apikey': SKEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' };
 
     const user = await verifyToken(session.access_token);
     if (!user) return;
 
-    const links = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id', { headers: H }).then(r => r.json()).catch(() => []);
+    const links = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H }).then(r => r.json()).catch(() => []);
     if (!Array.isArray(links) || !links.length) return;
 
     const patientId = links[0].patient_id;
+    const allIds = links.map(l => l.patient_id);
 
-    const patients = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=id,name', { headers: H }).then(r => r.json()).catch(() => []);
+    const patients = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H }).then(r => r.json()).catch(() => []);
     const patient = (Array.isArray(patients) && patients.length) ? patients[0] : { id: patientId };
-    document.getElementById('mc-pt-id').textContent = '解析ID: ' + patientId;
-    document.getElementById('mc-pt-name').textContent = patient.name || patientId;
 
-    const scores = await fetch(SURL + '/rest/v1/scores?patient_id=eq.' + patientId + '&is_released=eq.true&select=category,rank,wavg_absfc&order=wavg_absfc.desc', { headers: H }).then(r => r.json()).catch(() => []);
+    currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: allIds };
+    currentAccessToken = session.access_token;
+    window.currentAccessToken = session.access_token;
+    currentLang = localStorage.getItem('mc_lang') || 'ja';
 
-    const list = document.getElementById('mc-score-list');
-    if (!Array.isArray(scores) || !scores.length) {
-      list.innerHTML = '<div style="color:#8FAAA0;padding:20px;text-align:center">スコアデータがありません</div>';
-      return;
+    if (typeof renderPatientPage === 'function') {
+      await renderPatientPage(patient);
     }
-
-    list.innerHTML = scores.map(s => {
-      const rank = s.rank || '—';
-      const name = MC_CATS[s.category] || s.category;
-      return '<div class="mc-score-row"><span class="mc-score-name">' + name + '</span><span class="mc-rank mc-rank-' + rank + '">' + rank + '</span></div>';
-    }).join('');
-
   } catch(e) {
     console.error(e);
-    document.getElementById('mc-score-list').innerHTML = '<div style="color:#B03A2E;padding:20px;text-align:center">エラーが発生しました</div>';
   }
 }
 
