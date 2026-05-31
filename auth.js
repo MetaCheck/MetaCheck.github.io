@@ -108,21 +108,6 @@ async function doLogin() {
 
     } catch(e) {
       console.error(e);
-      // エラーでも/home-userに遷移を試みる
-      try {
-        const session = await authSignIn(email, document.getElementById('input-individual-pw')?.value);
-        if (session && session.access_token) {
-          localStorage.setItem('sb-auth-token', JSON.stringify({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token || null,
-            role: 'individual',
-            user_id: session.user?.id || null,
-            email: email
-          }));
-          window.location.href = '/home-user';
-          return;
-        }
-      } catch(e2) {}
       showLoginError(true);
     }
 
