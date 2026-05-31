@@ -25,11 +25,11 @@ function insightField(ins, field) {
 
 async function renderPatientPage(patient) {
   const displayName = patient.name || patient.id;
-  document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
-  document.getElementById('patient-name-display').textContent = displayName + ' ' + t('patient.san');
-  document.getElementById('patient-display-id').textContent = t('patient.analysisId') + ': ' + patient.id;
-  document.getElementById('patient-display-name').textContent = displayName + ' ' + t('patient.san');
-  document.getElementById('patient-display-meta').textContent =
+  if (document.getElementById('patient-avatar')) document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
+  if (document.getElementById('patient-name-display')) document.getElementById('patient-name-display').textContent = displayName + ' ' + t('patient.san');
+  if (document.getElementById('patient-display-id')) document.getElementById('patient-display-id').textContent = t('patient.analysisId') + ': ' + patient.id;
+  if (document.getElementById('patient-display-name')) document.getElementById('patient-display-name').textContent = displayName + ' ' + t('patient.san');
+  if (document.getElementById('patient-display-meta')) document.getElementById('patient-display-meta').textContent =
     [patient.sex, patient.country].filter(Boolean).join(' / ') || '';
 
   const det = document.getElementById('patient-category-detail');
