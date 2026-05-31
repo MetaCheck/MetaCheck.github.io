@@ -1381,20 +1381,23 @@ window.addEventListener('DOMContentLoaded', async function() {
     } else {
       const linksRes = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H });
       const links = await linksRes.json();
-      if (!Array.isArray(links) || !links.length) {
+      if (!links || !links.length) {
+        // 解析ID未登録 → ホーム画面へ
         window.location.href = '/home-user';
         return;
       }
       const patientId = links[0].patient_id;
       const patientRes = await fetch(SURL + '/rest/v1/patients?id=eq.' + patientId + '&select=*', { headers: H });
       const patients = await patientRes.json();
-      const patientObj = (Array.isArray(patients) && patients.length) ? patients[0] : { id: patientId };
+      const patientObj = (patients && patients.length) ? patients[0] : { id: patientId };
       currentUser = { role: 'individual', id: patientId, userId: user.id, email: user.email, allIds: links.map(l => l.patient_id) };
       showScreen('screen-patient');
 
       const modalParam = new URLSearchParams(window.location.search).get('modal');
 
-      await renderPatientPage(patientObj);
+      if (typeof renderPatientPage === 'function') {
+        await renderPatientPage(patientObj);
+      }
 
       if (modalParam) {
         // patient.jsのスクリプト読み込み完了を確実に待つ
