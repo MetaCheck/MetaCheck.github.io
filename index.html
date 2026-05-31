@@ -1380,9 +1380,8 @@ window.addEventListener('DOMContentLoaded', async function() {
       if (typeof renderClinicPage === 'function') renderClinicPage(clinic.id, clinic.status);
     } else {
       const linksRes = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H });
-      const links = await linksRes.json();
-      if (!links || !links.length) {
-        // 解析ID未登録 → ホーム画面へ
+      const links = await linksRes.json().catch(() => []);
+      if (!Array.isArray(links) || !links.length) {
         window.location.href = '/home-user';
         return;
       }
