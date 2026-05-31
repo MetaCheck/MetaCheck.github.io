@@ -861,37 +861,48 @@ async function init() {
   let userId = null;
 
   if (session && session.access_token && (session.role === 'individual' || !session.role || session.role !== 'clinic')) {
-    const user = await verifyToken(session.access_token);
-    if (user) {
-      isLoggedIn = true;
-      userId = user.id;
-      // ようこそ表示（名前だけ先にセット、表示は解析ID確認後）
-      const name = user.user_metadata?.full_name || user.email || '';
-      document.getElementById('welcome-name').textContent = name + ' さん';
-    }
+    isLoggedIn = true;
+    userId = session.user_id || null;
+    const name = session.email || '';
+    document.getElementById('welcome-name').textContent = name + ' さん';
+    // バックグラウンドでユーザー情報を取得して名前を更新
+    verifyToken(session.access_token).then(function(user) {
+      if (user) {
+        userId = user.id;
+        const fullName = user.user_metadata?.full_name || user.email || '';
+        document.getElementById('welcome-name').textContent = fullName + ' さん';
+      }
+    });
   }
 
   if (isLoggedIn) {
     document.getElementById('nav-logout').classList.remove('hidden');
     document.getElementById('nav-login').classList.add('hidden');
-    // 解析IDが紐付き済みか確認
-    const links = await fetch(
-      SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
-    ).then(r => r.json()).catch(() => []);
 
-    if (links && links.length > 0) {
-      // 解析ID登録済み → ようこそ＋カテゴリ有効
-      document.getElementById('cat-result').classList.remove('disabled');
-      document.getElementById('logged-in-banner').classList.remove('hidden');
-      document.getElementById('welcome-banner').classList.remove('hidden');
-    } else {
-      // 解析ID未登録 → 解析IDバナーのみ（ようこそは非表示）
-      document.getElementById('welcome-banner').classList.add('hidden');
-      document.getElementById('kit-banner').classList.remove('hidden');
-      window._kitUserId = userId;
-      window._kitToken = session.access_token;
-    }
+    // userIdが取得できるまで待つ
+    const waitForUserId = async () => {
+      for (let i = 0; i < 20; i++) {
+        if (userId) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      // 解析IDが紐付き済みか確認
+      const links = await fetch(
+        SUPABASE_URL + '/rest/v1/user_analysis_ids?user_id=eq.' + userId + '&select=patient_id',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
+      ).then(r => r.json()).catch(() => []);
+
+      if (links && links.length > 0) {
+        document.getElementById('cat-result').classList.remove('disabled');
+        document.getElementById('logged-in-banner').classList.remove('hidden');
+        document.getElementById('welcome-banner').classList.remove('hidden');
+      } else {
+        document.getElementById('welcome-banner').classList.add('hidden');
+        document.getElementById('kit-banner').classList.remove('hidden');
+        window._kitUserId = userId;
+        window._kitToken = session.access_token;
+      }
+    };
+    waitForUserId();
   } else {
     document.getElementById('nav-login').classList.remove('hidden');
     document.getElementById('register-banner-top').classList.remove('hidden');
