@@ -237,44 +237,64 @@
   }
 </style>
 <style>
-#mc-score-screen{display:none;position:fixed;inset:0;z-index:9999;background:#F7FAF8;flex-direction:column;overflow-y:auto}
+:root{--forest:#1A3C34;--emerald:#2D6A4F;--sage:#52B788;--mint:#95D5B2;--foam:#D8F3DC;--paper:#F7FAF8;--white:#FFFFFF;--ink:#0F1F1A;--ink2:#2C4A40;--ink3:#5A7A6E;--ink4:#8FAAA0;--border:#D4E6DD;--amber:#D4811F;--amber-l:#FEF3E2;--ruby:#B03A2E;--r:10px;--rank-a:#2D6A4F;--rank-b:#3A7D44;--rank-c:#B8860B;--rank-d:#D4600A;--rank-e:#B03A2E;--rank-a-bg:#D8F3DC;--rank-b-bg:#E8F5E9;--rank-c-bg:#FFF9C4;--rank-d-bg:#FFE5CC;--rank-e-bg:#FDECEA;--font-mono:'JetBrains Mono',monospace}
+#mc-score-screen{display:none;position:fixed;inset:0;z-index:9999;flex-direction:column}
 #mc-score-screen.visible{display:flex}
-.mc-topbar{background:#1A3C34;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0}
+.mc-topbar{background:var(--forest);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:1;flex-shrink:0}
 .mc-topbar button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
-.mc-body{padding:16px}
-.mc-pt-header{background:#1A3C34;border-radius:10px;padding:18px 22px;margin-bottom:16px;color:#fff}
-.mc-pt-id{font-family:monospace;font-size:11px;color:#95D5B2;margin-bottom:4px}
-.mc-pt-name{font-size:20px;font-weight:500}
-.mc-score-list{display:flex;flex-direction:column;gap:6px}
-.mc-score-row{background:#fff;border:1px solid #D4E6DD;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s}
-.mc-score-row:hover{border-color:#52B788}.mc-score-row.active{border-color:#2D6A4F;box-shadow:0 0 0 2px #D8F3DC}
-.mc-rank-A{background:#D8F3DC;color:#2D6A4F}.mc-rank-B{background:#E8F5E9;color:#3A7D44}.mc-rank-C{background:#FFF9C4;color:#B8860B}.mc-rank-D{background:#FFE5CC;color:#D4600A}.mc-rank-E{background:#FDECEA;color:#B03A2E}
-.mc-score-name{font-size:12px;color:#2C4A40;flex:1}
-.mc-rank{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:13px;font-weight:700}
-.mc-rank-A{background:#D8F3DC;color:#2D6A4F}.mc-rank-B{background:#E8F5E9;color:#3A7D44}.mc-rank-C{background:#FFF9C4;color:#B8860B}.mc-rank-D{background:#FFE5CC;color:#D4600A}.mc-rank-E{background:#FDECEA;color:#B03A2E}
+.patient-body{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:var(--paper);padding:20px}
+.pt-header{background:var(--forest);border-radius:var(--r);padding:18px 22px;margin-bottom:16px;color:#fff}
+.pt-id{font-family:var(--font-mono);font-size:11px;color:var(--mint);letter-spacing:1px;margin-bottom:3px}
+.pt-name{font-size:19px;font-weight:500;margin-bottom:6px}
+.pt-meta{display:flex;gap:14px;font-size:12px;color:rgba(255,255,255,.5)}
+.alert-banner{background:var(--amber-l);border:1px solid #f0c580;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:var(--amber);display:none}
+.section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:10px;padding-left:2px}
+.pt-score-list{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.pt-score-row{display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .2s}
+.pt-score-row:hover{border-color:var(--sage);transform:translateX(2px)}
+.pt-score-row.active{border-color:var(--emerald);box-shadow:0 0 0 2px var(--foam)}
+.pt-score-name{font-size:12px;color:var(--ink2);flex:1;line-height:1.3}
+.pt-score-bar-wrap{width:80px;height:5px;background:var(--border);border-radius:3px;flex-shrink:0}
+.pt-score-bar{height:5px;border-radius:3px;transition:width .5s ease}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:13px;font-weight:700;flex-shrink:0}
+.rank-A{background:var(--rank-a-bg);color:var(--rank-a)}.rank-B{background:var(--rank-b-bg);color:var(--rank-b)}.rank-C{background:var(--rank-c-bg);color:var(--rank-c)}.rank-D{background:var(--rank-d-bg);color:var(--rank-d)}.rank-E{background:var(--rank-e-bg);color:var(--rank-e)}
+.patient-detail-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px}
+.detail-card__title{font-size:14px;font-weight:600;color:var(--forest);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.pt-tab{padding:8px 14px;font-size:12px;cursor:pointer;color:var(--ink4);border:none;background:transparent;border-bottom:2px solid transparent;transition:all .15s;font-family:'DM Sans',sans-serif}
+.pt-tab--active{color:var(--emerald);border-bottom-color:var(--emerald)}
+.insight-box{border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:13px;line-height:1.8}
+.insight-box--amber{background:var(--amber-l);border:1px solid #f0c580;color:var(--ink2)}
+.insight-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;color:var(--ink3)}
+.metabolite-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-family:var(--font-mono)}
+.metabolite-tag.up{background:var(--rank-e-bg);color:var(--rank-e)}.metabolite-tag.down{background:var(--rank-a-bg);color:var(--rank-a)}
 </style>
 </head>
 <body>
 <div id="mc-score-screen">
   <div class="mc-topbar">
     <button onclick="document.getElementById('mc-score-screen').classList.remove('visible')">← ホーム</button>
-    <div style="flex:1;color:#fff;font-weight:600">MetaCheck</div>
+    <div style="flex:1"></div>
     <button onclick="doLogout()">ログアウト</button>
   </div>
-  <div class="mc-body">
-    <div class="mc-pt-header">
-      <div class="mc-pt-id" id="mc-pt-id"></div>
-      <div class="mc-pt-name" id="mc-pt-name">—</div>
+  <div class="patient-body">
+    <div class="pt-header">
+      <div class="pt-id" id="mc-pt-id">—</div>
+      <div class="pt-name" id="mc-pt-name">—</div>
+      <div class="pt-meta" id="mc-pt-meta"></div>
     </div>
-    <div class="mc-score-list" id="mc-score-list"><div style="padding:20px;color:#8FAAA0;text-align:center">読み込み中...</div></div>
-    <div id="mc-detail" style="display:none;background:#fff;border:1px solid #D4E6DD;border-radius:10px;padding:16px;margin-top:8px">
-      <div id="mc-detail-title" style="font-size:14px;font-weight:600;color:#1A3C34;margin-bottom:12px;display:flex;align-items:center;gap:8px"></div>
-      <div style="display:flex;border-bottom:1px solid #D4E6DD;margin-bottom:12px">
-        <button id="mc-tab-met-btn" onclick="mcShowTab('met')" style="padding:8px 14px;font-size:13px;cursor:pointer;color:#2D6A4F;border:none;background:none;border-bottom:2px solid #2D6A4F;font-family:'Outfit',sans-serif">代謝物</button>
-        <button id="mc-tab-adv-btn" onclick="mcShowTab('adv')" style="padding:8px 14px;font-size:13px;cursor:pointer;color:#8FAAA0;border:none;background:none;border-bottom:2px solid transparent;font-family:'Outfit',sans-serif">アドバイス</button>
+    <div class="alert-banner" id="mc-alert-banner"></div>
+    <div class="section-title">カテゴリ別スコア</div>
+    <div class="pt-score-list" id="mc-score-list"></div>
+    <div id="mc-detail" style="display:none">
+      <div class="patient-detail-panel">
+        <div class="detail-card__title" id="mc-detail-title"></div>
+        <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:16px">
+          <button class="pt-tab pt-tab--active" id="mc-tab-met-btn" onclick="mcShowTab('met')">代謝物</button>
+          <button class="pt-tab" id="mc-tab-adv-btn" onclick="mcShowTab('adv')">アドバイス</button>
+        </div>
+        <div id="mc-tab-met-content"></div>
+        <div id="mc-tab-adv-content" style="display:none"></div>
       </div>
-      <div id="mc-tab-met-content"></div>
-      <div id="mc-tab-adv-content" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -706,6 +726,9 @@ async function goToScorePage() {
     const patient = (Array.isArray(patients) && patients.length) ? patients[0] : { id: patientId };
     document.getElementById('mc-pt-id').textContent = '解析ID: ' + patientId;
     document.getElementById('mc-pt-name').textContent = patient.name || patientId;
+    if (document.getElementById('mc-pt-meta')) {
+      document.getElementById('mc-pt-meta').textContent = [patient.sex, patient.country].filter(Boolean).join(' / ') || '';
+    }
 
     const scores = await fetch(SURL + '/rest/v1/scores?patient_id=eq.' + patientId + '&is_released=eq.true&select=category,rank,wavg_absfc&order=wavg_absfc.desc', { headers: H }).then(r => r.json()).catch(() => []);
     const list = document.getElementById('mc-score-list');
@@ -716,75 +739,20 @@ async function goToScorePage() {
     window._mcScores = scores;
     window._mcPatientId = patientId;
     window._mcToken = session.access_token;
-    list.innerHTML = scores.map((s,i) => '<div class="mc-score-row" onclick="mcSelectDetail(' + i + ',this)"><span class="mc-score-name">' + (MC_CATS[s.category]||s.category) + '</span><span class="mc-rank mc-rank-' + s.rank + '">' + s.rank + '</span></div>').join('');
+    const maxScore = Math.max(...scores.map(s => s.wavg_absfc || 0), 1);
+    const barColors = {A:'var(--rank-a)',B:'var(--rank-b)',C:'var(--rank-c)',D:'var(--rank-d)',E:'var(--rank-e)'};
+    list.innerHTML = scores.map((s,i) => {
+      const rank = s.rank || '—';
+      const barW = Math.round((s.wavg_absfc || 0) / maxScore * 100);
+      return '<div class="pt-score-row" onclick="mcSelectDetail(' + i + ',this)">' +
+        '<span class="rank-badge rank-' + rank + '">' + rank + '</span>' +
+        '<span class="pt-score-name">' + (MC_CATS[s.category]||s.category) + '</span>' +
+        '<div class="pt-score-bar-wrap"><div class="pt-score-bar" style="width:' + barW + '%;background:' + (barColors[rank]||'#ccc') + '"></div></div>' +
+      '</div>';
+    }).join('');
   } catch(e) {
     console.error(e);
   }
-}
-
-// ── スコア詳細表示 ──
-async function mcSelectDetail(i, el) {
-  document.querySelectorAll('.mc-score-row').forEach(r => r.classList.remove('active'));
-  if (el) el.classList.add('active');
-  const s = window._mcScores && window._mcScores[i];
-  if (!s) return;
-
-  const det = document.getElementById('mc-detail');
-  det.style.display = 'block';
-
-  const rank = s.rank || '—';
-  const rankColors = {A:'#D8F3DC',B:'#E8F5E9',C:'#FFF9C4',D:'#FFE5CC',E:'#FDECEA'};
-  const rankTextColors = {A:'#2D6A4F',B:'#3A7D44',C:'#B8860B',D:'#D4600A',E:'#B03A2E'};
-  document.getElementById('mc-detail-title').innerHTML =
-    '<span style="background:' + (rankColors[rank]||'#eee') + ';color:' + (rankTextColors[rank]||'#333') + ';width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">' + rank + '</span>' +
-    (MC_CATS[s.category] || s.category);
-
-  document.getElementById('mc-tab-met-content').innerHTML = '<div style="color:#8FAAA0;font-size:12px">読み込み中...</div>';
-  document.getElementById('mc-tab-adv-content').innerHTML = '<div style="color:#8FAAA0;font-size:12px">読み込み中...</div>';
-  mcShowTab('met');
-
-  const SURL = SUPABASE_URL;
-  const H = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + window._mcToken };
-
-  // 代謝物
-  try {
-    const compounds = await fetch(SURL + '/rest/v1/compound_categories?category=eq.' + encodeURIComponent(s.category) + '&select=compound&order=weight.desc', {headers:H}).then(r=>r.json()).catch(()=>[]);
-    if (Array.isArray(compounds) && compounds.length) {
-      const compList = compounds.map(c=>'"'+c.compound+'"').join(',');
-      const facts = await fetch(SURL + '/rest/v1/fact?patient_id=eq.' + window._mcPatientId + '&compound=in.(' + compList + ')&select=compound,log2fc&order=log2fc.desc', {headers:H}).then(r=>r.json()).catch(()=>[]);
-      const metEl = document.getElementById('mc-tab-met-content');
-      if (Array.isArray(facts) && facts.length) {
-        metEl.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
-          facts.filter(f=>f.log2fc!=null).slice(0,12).map(f => {
-            const isUp = Number(f.log2fc) >= 0;
-            return '<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-family:monospace;background:' + (isUp?'#FDECEA':'#E8F5E9') + ';color:' + (isUp?'#B03A2E':'#2E7D32') + '">' + (isUp?'↑':'↓') + ' ' + f.compound + '</span>';
-          }).join('') +
-        '</div>';
-      } else {
-        metEl.innerHTML = '<div style="color:#8FAAA0;font-size:12px">データなし</div>';
-      }
-    }
-  } catch(e) {}
-
-  // アドバイス
-  try {
-    const insights = await fetch(SURL + '/rest/v1/metabolite_insights?patient_id=eq.' + window._mcPatientId + '&category=eq.' + encodeURIComponent(s.category) + '&limit=1', {headers:H}).then(r=>r.json()).catch(()=>[]);
-    const advEl = document.getElementById('mc-tab-adv-content');
-    if (Array.isArray(insights) && insights.length && insights[0].patient_comment) {
-      advEl.innerHTML = '<div style="background:#FEF3E2;border:1px solid #f0c580;border-radius:10px;padding:14px;font-size:13px;line-height:1.8;color:#2C4A40">' + insights[0].patient_comment + '</div>';
-    } else {
-      advEl.innerHTML = '<div style="color:#8FAAA0;font-size:12px">データなし</div>';
-    }
-  } catch(e) {}
-}
-
-function mcShowTab(tab) {
-  document.getElementById('mc-tab-met-content').style.display = tab === 'met' ? '' : 'none';
-  document.getElementById('mc-tab-adv-content').style.display = tab === 'adv' ? '' : 'none';
-  document.getElementById('mc-tab-met-btn').style.color = tab === 'met' ? '#2D6A4F' : '#8FAAA0';
-  document.getElementById('mc-tab-met-btn').style.borderBottomColor = tab === 'met' ? '#2D6A4F' : 'transparent';
-  document.getElementById('mc-tab-adv-btn').style.color = tab === 'adv' ? '#2D6A4F' : '#8FAAA0';
-  document.getElementById('mc-tab-adv-btn').style.borderBottomColor = tab === 'adv' ? '#2D6A4F' : 'transparent';
 }
 
 // ── モーダル開閉 ──
