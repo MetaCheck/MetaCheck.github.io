@@ -149,6 +149,12 @@ async function selectClinicPatient(patientId) {
   document.getElementById('clinic-detail-id').textContent = patient.id;
   document.getElementById('clinic-detail-name').textContent = patient.name || patient.id;
 
+  // メモを読み込む
+  var memoEl = document.getElementById('clinic-memo');
+  if (memoEl) {
+    memoEl.value = patient.clinic_memo || '';
+  }
+
   const meta = [patient.sex, patient.country, patient.age ? patient.age + '歳' : '', patient.disease].filter(Boolean);
   document.getElementById('clinic-detail-meta').innerHTML =
     meta.map(function(m) { return '<span class="badge badge--green">' + m + '</span>'; }).join('') +
@@ -288,10 +294,17 @@ async function selectClinicCat(cardEl, patientId, category) {
     const rank = s.rank || '—';
     const catJa = (typeof catName === 'function') ? catName(category) : ((window.CAT_JA && CAT_JA[category]) ? CAT_JA[category] : category);
 
-    // metabolite_insightsからmovementを取得
-    const insData = await fetchInsightsByCategory(patientId, category);
-    const movement = insData ? insData.movement : null;
-    const metTags = movement ? movement.split('、').map(function(m) {
+    // category_resultsからmetabolitesタグ取得
+    const crRows = await (async function() {
+      try {
+        const encoded = category.split('').map(function(c) {
+          if (c === ' ') return '%20'; if (c === '/') return '%2F'; return c;
+        }).join('');
+        return await dbSelect('category_results', 'category=eq.' + encoded + '&select=id,metabolites&limit=1');
+      } catch(e) { return []; }
+    })();
+    const cr = crRows[0];
+    const metTags = cr && cr.metabolites ? cr.metabolites.split('、').map(function(m) {
       const dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
       return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
     }).join('') : '';
@@ -993,4 +1006,47 @@ function renderClinicScoreTrend(patientIds, allScores) {
         baseline + xLabels + bars + lines +
       '</svg>' +
     '</div>';
+}
+
+// ── メモ保存 ──
+(function() {
+  var memoTimer = null;
+  document.addEventListener('DOMContentLoaded', function() {
+    var memoEl = document.getElementById('clinic-memo');
+    if (!memoEl) return;
+    memoEl.addEventListener('input', function() {
+      clearTimeout(memoTimer);
+      memoTimer = setTimeout(function() { saveClinicMemo(); }, 1000);
+    });
+    memoEl.addEventListener('blur', function() {
+      clearTimeout(memoTimer);
+      saveClinicMemo();
+    });
+  });
+})();
+
+async function saveClinicMemo() {
+  var patientId = window._clinicPatientId;
+  if (!patientId) return;
+  var memoEl = document.getElementById('clinic-memo');
+  if (!memoEl) return;
+  var memo = memoEl.value;
+  try {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/patients?id=eq.' + patientId, {
+      method: 'PATCH',
+      headers: Object.assign({}, HEADERS, { 'Prefer': 'return=minimal' }),
+      body: JSON.stringify({ clinic_memo: memo })
+    });
+    if (res.ok) {
+      var savedEl = document.getElementById('memo-saved');
+      if (savedEl) {
+        savedEl.classList.remove('hidden');
+        savedEl.classList.add('show');
+        setTimeout(function() { savedEl.classList.remove('show'); }, 2000);
+      }
+      // allPatientsのキャッシュも更新
+      var p = allPatients && allPatients.find(function(x) { return x.id === patientId; });
+      if (p) p.clinic_memo = memo;
+    }
+  } catch(e) { console.error('メモ保存失敗', e); }
 }
