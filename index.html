@@ -1369,7 +1369,7 @@ window.addEventListener('DOMContentLoaded', async function() {
     currentAccessToken = token;
 
     // ログイン時に選んだタブのroleを必ず使う（同一メールで個人・法人両方ある場合の対応）
-    if (!savedRole) { localStorage.removeItem('sb-auth-token'); return; }
+    if (!savedRole) savedRole = urlRole;
     const isClinic = savedRole === 'clinic';
 
     if (isClinic) {
@@ -1399,7 +1399,6 @@ window.addEventListener('DOMContentLoaded', async function() {
 
       const modalParam = new URLSearchParams(window.location.search).get('modal');
 
-      alert('renderPatientPage type: ' + typeof renderPatientPage + ' / patientId: ' + patientId);
       if (typeof renderPatientPage === 'function') {
         await renderPatientPage(patientObj);
       }
