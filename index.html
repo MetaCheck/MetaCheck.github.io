@@ -1399,6 +1399,7 @@ window.addEventListener('DOMContentLoaded', async function() {
 
       const modalParam = new URLSearchParams(window.location.search).get('modal');
 
+      alert('renderPatientPage type: ' + typeof renderPatientPage + ' / patientId: ' + patientId);
       if (typeof renderPatientPage === 'function') {
         await renderPatientPage(patientObj);
       }

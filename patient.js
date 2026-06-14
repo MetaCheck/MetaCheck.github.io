@@ -1,4 +1,5 @@
 // patient.js — 患者マイページ
+alert('patient.js loaded');
 
 // catName is defined in i18n.js
 
