@@ -1,5 +1,4 @@
 // patient.js — 患者マイページ
-alert('patient.js loaded');
 
 // catName is defined in i18n.js
 
@@ -26,12 +25,12 @@ function insightField(ins, field) {
 
 async function renderPatientPage(patient) {
   const displayName = patient.name || patient.id;
-  const _set = function(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; };
-  _set('patient-avatar', patient.id.slice(-3));
-  _set('patient-name-display', displayName + ' ' + t('patient.san'));
-  _set('patient-display-id', t('patient.analysisId') + ': ' + patient.id);
-  _set('patient-display-name', displayName + ' ' + t('patient.san'));
-  _set('patient-display-meta', [patient.sex, patient.country].filter(Boolean).join(' / ') || '');
+  document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
+  document.getElementById('patient-name-display').textContent = displayName + ' ' + t('patient.san');
+  document.getElementById('patient-display-id').textContent = t('patient.analysisId') + ': ' + patient.id;
+  document.getElementById('patient-display-name').textContent = displayName + ' ' + t('patient.san');
+  document.getElementById('patient-display-meta').textContent =
+    [patient.sex, patient.country].filter(Boolean).join(' / ') || '';
 
   const det = document.getElementById('patient-category-detail');
   if (det) det.setAttribute('hidden', '');
@@ -54,7 +53,7 @@ async function renderPatientPage(patient) {
     if (allIds.length > 1) {
       renderScoreTrendChart(allIds);
     }
-  } catch(e) { console.error(e); alert('ERR: ' + e.message); }
+  } catch(e) { console.error(e); }
 
 }
 
@@ -103,11 +102,9 @@ function selectPatientScore(index, el) {
   card.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px">'+t('patient.loading')+'</div>';
 
   var metTags = '';
-  {
+  var catDescText = (typeof CAT_DESC !== 'undefined' && CAT_DESC[currentLang] && CAT_DESC[currentLang][s.category]) || '';
 
-    var catDescText = (typeof CAT_DESC !== 'undefined' && CAT_DESC[currentLang] && CAT_DESC[currentLang][s.category]) || '';
-
-    card.innerHTML =
+  card.innerHTML =
       '<div class="detail-card__title">' +
         '<span class="rank-badge rank-' + rank + '">' + rank + '</span> ' + catName(s.category) +
       '</div>' +
@@ -149,7 +146,6 @@ function selectPatientScore(index, el) {
           '</div>' +
         '</div>';
     });
-  });
 }
 
 function showFullInsight(encodedText) {
