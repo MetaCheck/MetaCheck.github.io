@@ -465,7 +465,7 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 <body>
 
 <!-- ══════════════ SCREEN: LOGIN ══════════════ -->
-<div id="screen-login" class="screen">
+<div id="screen-login" class="screen active">
   <div class="login-lang-switcher">
     <button class="login-lang-btn active" onclick="setLoginLang('ja')"><span class="lang-text">JA</span></button>
     <button class="login-lang-btn" onclick="setLoginLang('en')"><span class="lang-text">EN</span></button>
@@ -1367,7 +1367,7 @@ window.addEventListener('DOMContentLoaded', async function() {
     currentAccessToken = token;
 
     // ログイン時に選んだタブのroleを必ず使う（同一メールで個人・法人両方ある場合の対応）
-    if (!savedRole) savedRole = urlRole;
+    if (!savedRole) { localStorage.removeItem('sb-auth-token'); return; }
     const isClinic = savedRole === 'clinic';
 
     if (isClinic) {
@@ -1380,8 +1380,9 @@ window.addEventListener('DOMContentLoaded', async function() {
       if (typeof renderClinicPage === 'function') renderClinicPage(clinic.id, clinic.status);
     } else {
       const linksRes = await fetch(SURL + '/rest/v1/user_analysis_ids?user_id=eq.' + user.id + '&select=patient_id,linked_at&order=linked_at.asc', { headers: H });
-      const links = await linksRes.json().catch(() => []);
-      if (!Array.isArray(links) || !links.length) {
+      const links = await linksRes.json();
+      if (!links || !links.length) {
+        // 解析ID未登録 → ホーム画面へ
         window.location.href = '/home-user';
         return;
       }
