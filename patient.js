@@ -25,12 +25,12 @@ function insightField(ins, field) {
 
 async function renderPatientPage(patient) {
   const displayName = patient.name || patient.id;
-  if (document.getElementById('patient-avatar')) document.getElementById('patient-avatar').textContent = patient.id.slice(-3);
-  if (document.getElementById('patient-name-display')) document.getElementById('patient-name-display').textContent = displayName + ' ' + t('patient.san');
-  if (document.getElementById('patient-display-id')) document.getElementById('patient-display-id').textContent = t('patient.analysisId') + ': ' + patient.id;
-  if (document.getElementById('patient-display-name')) document.getElementById('patient-display-name').textContent = displayName + ' ' + t('patient.san');
-  if (document.getElementById('patient-display-meta')) document.getElementById('patient-display-meta').textContent =
-    [patient.sex, patient.country].filter(Boolean).join(' / ') || '';
+  const _set = function(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; };
+  _set('patient-avatar', patient.id.slice(-3));
+  _set('patient-name-display', displayName + ' ' + t('patient.san'));
+  _set('patient-display-id', t('patient.analysisId') + ': ' + patient.id);
+  _set('patient-display-name', displayName + ' ' + t('patient.san'));
+  _set('patient-display-meta', [patient.sex, patient.country].filter(Boolean).join(' / ') || '');
 
   const det = document.getElementById('patient-category-detail');
   if (det) det.setAttribute('hidden', '');
@@ -53,7 +53,7 @@ async function renderPatientPage(patient) {
     if (allIds.length > 1) {
       renderScoreTrendChart(allIds);
     }
-  } catch(e) { console.error(e); alert('error: ' + e.message); }
+  } catch(e) { console.error(e); }
 
 }
 
