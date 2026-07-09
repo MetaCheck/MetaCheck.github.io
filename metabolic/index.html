@@ -931,8 +931,6 @@ section {
 .cat-icon { flex-shrink: 0; }
 .cat-name-ja { font-size: 13px; font-weight: 700; color: var(--forest); line-height: 1.3; }
 .cat-name-cn { font-size: 13px; font-weight: 700; color: var(--forest); line-height: 1.3; font-family: 'Noto Sans SC', sans-serif; }
-.cat-keyword { font-size: 10px; color: var(--ink4); font-family: 'DM Sans', monospace; letter-spacing: .5px; margin-bottom: 8px; }
-.cat-keyword.en, .cat-keyword.vi { display: none; }
 
 .cat-summary-ja { font-size: 12px; color: var(--ink3); line-height: 1.7; }
 .cat-summary-cn { font-size: 12px; color: var(--ink3); line-height: 1.7; font-family: 'Noto Sans SC', sans-serif; }
@@ -995,7 +993,7 @@ section {
 .pathway-map-svg, .heatmap-illust-svg { width: 100%; height: auto; max-height: 320px; }
 .analysis-note {
   margin-top: 28px; font-size: 12.5px; color: var(--ink3); line-height: 1.8;
-  text-align: center; max-width: 720px; margin-left: auto; margin-right: auto;
+  text-align: left; max-width: 720px;
 }
 @media (max-width: 900px) {
   .analysis-grid { grid-template-columns: 1fr; gap: 16px; }
@@ -2233,9 +2231,9 @@ body.lang-vi span.vi { display: inline; }
 <section class="s-flow">
   <div style="max-width:960px;margin:0 auto">
     <div class="section-eyebrow reveal">Cycle</div>
-    <div class="section-title reveal ja" style="transition-delay:.1s">検査・治療方針・治療を繰り返す</div>
+    <div class="section-title reveal ja" style="transition-delay:.1s">検査・治療方針の検討・治療を繰り返す</div>
     <div class="section-title reveal en" style="transition-delay:.1s">A Repeating Cycle of Testing and Care</div>
-    <div class="section-title reveal cn" style="transition-delay:.1s">检查·治疗方针·治疗的循环</div>
+    <div class="section-title reveal cn" style="transition-delay:.1s">检查·探讨治疗方针·治疗的循环</div>
     <div class="section-title reveal vi" style="transition-delay:.1s">Chu Trình Xét Nghiệm và Chăm Sóc</div>
     <div class="section-subtitle reveal" style="transition-delay:.15s">
       <span class="ja">検査で状態を知り、治療方針を考え、治療を行う。そしてまた検査へ ― MetaCheckはこの繰り返しをサポートします。</span>
@@ -2251,7 +2249,7 @@ body.lang-vi span.vi { display: inline; }
         <div class="flow-step-label en">Testing</div>
         <div class="flow-step-label cn">检查</div>
         <div class="flow-step-label vi">Xét Nghiệm</div>
-        <div class="flow-step-desc ja">生体検体を採取し、AIが代謝を網羅的に解析</div>
+        <div class="flow-step-desc ja">生体検体を採取し、AIが代謝を網羅的に解析します。</div>
         <div class="flow-step-desc en">Collect a specimen; AI comprehensively analyzes your metabolism</div>
         <div class="flow-step-desc cn">采集生物样本，AI全面解析代谢状态</div>
         <div class="flow-step-desc vi">Thu thập mẫu sinh học, AI phân tích toàn diện quá trình chuyển hóa</div>
@@ -2262,7 +2260,7 @@ body.lang-vi span.vi { display: inline; }
         <div class="flow-step-label en">Treatment Planning</div>
         <div class="flow-step-label cn">探讨治疗方针</div>
         <div class="flow-step-label vi">Lập Kế Hoạch Điều Trị</div>
-        <div class="flow-step-desc ja">16軸のスコアをもとに、医師と一緒に方針を検討</div>
+        <div class="flow-step-desc ja">16軸のスコアをもとに、医師と一緒に方針を検討します。</div>
         <div class="flow-step-desc en">Based on scores across 16 axes, plan a direction together with your doctor</div>
         <div class="flow-step-desc cn">基于16个维度的评分，与医生共同探讨方针</div>
         <div class="flow-step-desc vi">Dựa trên điểm số 16 trục, cùng bác sĩ lên kế hoạch điều trị</div>
@@ -2273,7 +2271,7 @@ body.lang-vi span.vi { display: inline; }
         <div class="flow-step-label en">Treatment & Lifestyle</div>
         <div class="flow-step-label cn">治疗·生活改善</div>
         <div class="flow-step-label vi">Điều Trị & Lối Sống</div>
-        <div class="flow-step-desc ja">食事・運動・治療など、方針に沿った介入を実施</div>
+        <div class="flow-step-desc ja">食事・運動・治療など、方針に沿った介入を実施します。</div>
         <div class="flow-step-desc en">Carry out diet, exercise, or treatment aligned with the plan</div>
         <div class="flow-step-desc cn">按照方针实施饮食、运动、治疗等干预</div>
         <div class="flow-step-desc vi">Thực hiện chế độ ăn, vận động, điều trị theo kế hoạch</div>
@@ -2284,7 +2282,7 @@ body.lang-vi span.vi { display: inline; }
         <div class="flow-step-label en">Retest & Track Change</div>
         <div class="flow-step-label cn">复检确认变化</div>
         <div class="flow-step-label vi">Tái Xét Nghiệm</div>
-        <div class="flow-step-desc ja">一定期間後に再検査し、①に戻って変化を確認・継続</div>
+        <div class="flow-step-desc ja">一定期間後に再検査し、①に戻って変化を確認・継続します。</div>
         <div class="flow-step-desc en">Retest after a period, returning to Step 1 to confirm change and continue</div>
         <div class="flow-step-desc cn">一段时间后复检，回到①确认变化并持续</div>
         <div class="flow-step-desc vi">Tái xét nghiệm sau một thời gian, quay lại bước 1 để theo dõi thay đổi</div>
@@ -2591,17 +2589,16 @@ body.lang-vi span.vi { display: inline; }
     <div class="section-title reveal cn" style="transition-delay:.1s">16个代谢分析类别</div>
     <div class="section-title reveal vi" style="transition-delay:.1s">16 Danh Mục Chuyển Hóa</div>
     <div class="section-subtitle reveal" style="transition-delay:.15s">
-      <span class="ja">カードをクリックすると、スコアが低いときに何が起きるかを確認できます</span>
-      <span class="en">Click any card to see what happens when scores are low.</span>
-      <span class="cn">点击卡片可查看评分偏低时的健康影响</span>
-      <span class="vi">Nhấp vào thẻ để xem điều gì xảy ra khi điểm thấp.</span>
+      <span class="ja">カードをクリックすると、各カテゴリの詳しい説明と臨床での意義を確認できます</span>
+      <span class="en">Click any card to see a detailed explanation and its clinical significance.</span>
+      <span class="cn">点击卡片可查看各类别的详细说明与临床意义</span>
+      <span class="vi">Nhấp vào thẻ để xem giải thích chi tiết và ý nghĩa lâm sàng của từng danh mục.</span>
     </div>
     <div class="cat-cards">
       <div class="cat-card reveal" data-group="energy" style="transition-delay:0.00ss" onclick="toggleCat(this)">
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-bolt"/></svg></span>
           <div><div class="cat-name-ja ja">エネルギー産生</div><div class="cat-name-cn cn">能量产生</div><div class="cat-name-ja en">Energy / OXPHOS</div><div class="cat-name-ja vi">Energy / OXPHOS</div></div>
         </div>
-        <div class="cat-keyword ja">エネルギー産生</div><div class="cat-keyword cn">能量产生</div><div class="cat-keyword en">Energy / OXPHOS</div><div class="cat-keyword vi">Energy / OXPHOS</div>
         <div class="cat-summary-ja ja">細胞がどれだけ効率よくエネルギー（ATP）を作れているかを示します。</div><div class="cat-summary-cn cn">反映细胞产生能量（ATP）的效率。</div><div class="cat-summary-ja en">Shows how efficiently cells produce energy (ATP).</div><div class="cat-summary-ja vi">Phản ánh hiệu quả tế bào tạo năng lượng (ATP).</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2615,7 +2612,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-hexring"/></svg></span>
           <div><div class="cat-name-ja ja">解糖・糖新生</div><div class="cat-name-cn cn">糖酵解·糖异生</div><div class="cat-name-ja en">Glycolysis</div><div class="cat-name-ja vi">Glycolysis</div></div>
         </div>
-        <div class="cat-keyword ja">解糖・糖新生</div><div class="cat-keyword cn">糖酵解·糖异生</div><div class="cat-keyword en">Glycolysis</div><div class="cat-keyword vi">Glycolysis</div>
         <div class="cat-summary-ja ja">糖をエネルギーに変える経路と、糖を作り出す経路のバランスを示します。</div><div class="cat-summary-cn cn">反映糖酵解与糖异生之间的代谢平衡。</div><div class="cat-summary-ja en">Shows the balance between glycolysis and gluconeogenesis.</div><div class="cat-summary-ja vi">Phản ánh cân bằng đường phân và tân tạo đường.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2629,7 +2625,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-droplet"/></svg></span>
           <div><div class="cat-name-ja ja">脂質代謝</div><div class="cat-name-cn cn">脂质代谢</div><div class="cat-name-ja en">Fatty Acid</div><div class="cat-name-ja vi">Fatty Acid</div></div>
         </div>
-        <div class="cat-keyword ja">脂質代謝</div><div class="cat-keyword cn">脂质代谢</div><div class="cat-keyword en">Fatty Acid</div><div class="cat-keyword vi">Fatty Acid</div>
         <div class="cat-summary-ja ja">体脂肪をエネルギーとして燃やせているかどうかを示します。</div><div class="cat-summary-cn cn">反映机体将脂肪转化为能量的能力。</div><div class="cat-summary-ja en">Shows whether the body can burn body fat as energy.</div><div class="cat-summary-ja vi">Phản ánh khả năng đốt mỡ thành năng lượng.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2643,7 +2638,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-beads"/></svg></span>
           <div><div class="cat-name-ja ja">アミノ酸代謝</div><div class="cat-name-cn cn">氨基酸代谢</div><div class="cat-name-ja en">Amino Acid</div><div class="cat-name-ja vi">Amino Acid</div></div>
         </div>
-        <div class="cat-keyword ja">アミノ酸代謝</div><div class="cat-keyword cn">氨基酸代谢</div><div class="cat-keyword en">Amino Acid</div><div class="cat-keyword vi">Amino Acid</div>
         <div class="cat-summary-ja ja">タンパク質の材料であるアミノ酸のバランスと代謝の状態を示します。</div><div class="cat-summary-cn cn">反映蛋白质原料——氨基酸的平衡与代谢状态。</div><div class="cat-summary-ja en">Shows the balance and metabolic status of amino acids.</div><div class="cat-summary-ja vi">Phản ánh cân bằng và trạng thái chuyển hóa axit amin.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2657,7 +2651,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-battery"/></svg></span>
           <div><div class="cat-name-ja ja">代替エネルギー利用力</div><div class="cat-name-cn cn">替代能源利用</div><div class="cat-name-ja en">Ketone Body</div><div class="cat-name-ja vi">Ketone Body</div></div>
         </div>
-        <div class="cat-keyword ja">代替エネルギー利用力</div><div class="cat-keyword cn">替代能源利用</div><div class="cat-keyword en">Ketone Body</div><div class="cat-keyword vi">Ketone Body</div>
         <div class="cat-summary-ja ja">糖が不足したとき、脂肪からケトン体を使えるかどうかを示します。</div><div class="cat-summary-cn cn">反映机体在糖分不足时利用酮体作为备用能量的能力。</div><div class="cat-summary-ja en">Shows whether the body can use ketones as backup energy.</div><div class="cat-summary-ja vi">Phản ánh khả năng dùng ketone làm năng lượng dự phòng.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2671,7 +2664,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-bicyclic"/></svg></span>
           <div><div class="cat-name-ja ja">タンパク質・核酸分解</div><div class="cat-name-cn cn">蛋白质·核酸分解</div><div class="cat-name-ja en">Purine</div><div class="cat-name-ja vi">Purine</div></div>
         </div>
-        <div class="cat-keyword ja">タンパク質・核酸分解</div><div class="cat-keyword cn">蛋白质·核酸分解</div><div class="cat-keyword en">Purine</div><div class="cat-keyword vi">Purine</div>
         <div class="cat-summary-ja ja">細胞の新陳代謝の速さと、分解産物（尿酸など）の処理状態を示します。</div><div class="cat-summary-cn cn">反映细胞新陈代谢速率及尿酸等分解产物的处理状态。</div><div class="cat-summary-ja en">Shows the rate of cellular turnover and processing of breakdown products.</div><div class="cat-summary-ja vi">Phản ánh tốc độ đổi mới tế bào và xử lý sản phẩm phân hủy.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2685,7 +2677,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-pentring"/></svg></span>
           <div><div class="cat-name-ja ja">ビタミン・補酵素代謝</div><div class="cat-name-cn cn">维生素·辅酶代谢</div><div class="cat-name-ja en">Pentose Phosphate</div><div class="cat-name-ja vi">Pentose Phosphate</div></div>
         </div>
-        <div class="cat-keyword ja">ビタミン・補酵素代謝</div><div class="cat-keyword cn">维生素·辅酶代谢</div><div class="cat-keyword en">Pentose Phosphate</div><div class="cat-keyword vi">Pentose Phosphate</div>
         <div class="cat-summary-ja ja">代謝反応を支える補因子の充足度を示します。</div><div class="cat-summary-cn cn">反映支持代谢反应的辅因子充足程度。</div><div class="cat-summary-ja en">Shows the sufficiency of cofactors supporting metabolic reactions.</div><div class="cat-summary-ja vi">Phản ánh mức độ đầy đủ của các cofactor hỗ trợ chuyển hóa.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2699,7 +2690,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-shield"/></svg></span>
           <div><div class="cat-name-ja ja">酸化ストレス</div><div class="cat-name-cn cn">氧化应激</div><div class="cat-name-ja en">Redox / Glutathione</div><div class="cat-name-ja vi">Redox / Glutathione</div></div>
         </div>
-        <div class="cat-keyword ja">酸化ストレス</div><div class="cat-keyword cn">氧化应激</div><div class="cat-keyword en">Redox / Glutathione</div><div class="cat-keyword vi">Redox / Glutathione</div>
         <div class="cat-summary-ja ja">体の中の錆び（活性酸素）をどれだけ除去できているかを示します。スコアが悪いと、細胞のダメージが蓄積し、老化や炎症が進みやすくなります。</div><div class="cat-summary-cn cn">反映机体清除活性氧的能力。评分偏低时，细胞损伤积累，加速衰老与炎症。</div><div class="cat-summary-ja en">Shows how well the body removes reactive oxygen species. Low scores lead to cell damage.</div><div class="cat-summary-ja vi">Phản ánh khả năng loại bỏ gốc oxy hóa. Điểm thấp dẫn đến tổn thương tế bào.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2713,7 +2703,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-leaf"/></svg></span>
           <div><div class="cat-name-ja ja">腸内環境</div><div class="cat-name-cn cn">肠道环境</div><div class="cat-name-ja en">Gut Microbiome</div><div class="cat-name-ja vi">Gut Microbiome</div></div>
         </div>
-        <div class="cat-keyword ja">腸内環境</div><div class="cat-keyword cn">肠道环境</div><div class="cat-keyword en">Gut Microbiome</div><div class="cat-keyword vi">Gut Microbiome</div>
         <div class="cat-summary-ja ja">腸内細菌叢の状態と、腸が作り出す有益・有害物質のバランスを示します。</div><div class="cat-summary-cn cn">反映肠道菌群状态及有益/有害物质的平衡。</div><div class="cat-summary-ja en">Shows the state of gut microbiota and the balance of beneficial and harmful substances.</div><div class="cat-summary-ja vi">Phản ánh trạng thái vi khuẩn đường ruột.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2727,7 +2716,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-flame"/></svg></span>
           <div><div class="cat-name-ja ja">免疫・炎症</div><div class="cat-name-cn cn">免疫·炎症</div><div class="cat-name-ja en">Urea Cycle</div><div class="cat-name-ja vi">Urea Cycle</div></div>
         </div>
-        <div class="cat-keyword ja">免疫・炎症</div><div class="cat-keyword cn">免疫·炎症</div><div class="cat-keyword en">Urea Cycle</div><div class="cat-keyword vi">Urea Cycle</div>
         <div class="cat-summary-ja ja">免疫系の活動状態と、体内に慢性炎症が潜在しているかどうかを示します。</div><div class="cat-summary-cn cn">反映免疫系统活动状态及体内是否存在慢性炎症。</div><div class="cat-summary-ja en">Shows immune system activity and whether chronic inflammation is present.</div><div class="cat-summary-ja vi">Phản ánh hoạt động miễn dịch và tình trạng viêm mãn tính.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2741,7 +2729,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-neuro"/></svg></span>
           <div><div class="cat-name-ja ja">神経伝達</div><div class="cat-name-cn cn">神经传导</div><div class="cat-name-ja en">Pyrimidine</div><div class="cat-name-ja vi">Pyrimidine</div></div>
         </div>
-        <div class="cat-keyword ja">神経伝達</div><div class="cat-keyword cn">神经传导</div><div class="cat-keyword en">Pyrimidine</div><div class="cat-keyword vi">Pyrimidine</div>
         <div class="cat-summary-ja ja">セロトニン・ドーパミンなど脳の神経伝達物質の合成・分解バランスを示します。</div><div class="cat-summary-cn cn">反映大脑血清素、多巴胺等神经递质的合成与分解平衡。</div><div class="cat-summary-ja en">Shows the synthesis and breakdown balance of brain neurotransmitters.</div><div class="cat-summary-ja vi">Phản ánh cân bằng tổng hợp và phân hủy chất dẫn truyền thần kinh.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2755,7 +2742,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-scale"/></svg></span>
           <div><div class="cat-name-ja ja">ホルモン代謝</div><div class="cat-name-cn cn">激素代谢</div><div class="cat-name-ja en">TCA Cycle</div><div class="cat-name-ja vi">TCA Cycle</div></div>
         </div>
-        <div class="cat-keyword ja">ホルモン代謝</div><div class="cat-keyword cn">激素代谢</div><div class="cat-keyword en">TCA Cycle</div><div class="cat-keyword vi">TCA Cycle</div>
         <div class="cat-summary-ja ja">ストレスホルモン・性ホルモン・甲状腺ホルモンの代謝バランスを示します。</div><div class="cat-summary-cn cn">反映应激激素、性激素及甲状腺激素的代谢平衡。</div><div class="cat-summary-ja en">Shows the metabolic balance of stress, sex, and thyroid hormones.</div><div class="cat-summary-ja vi">Phản ánh cân bằng chuyển hóa hormone căng thẳng, sinh dục và tuyến giáp.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2769,7 +2755,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-helix"/></svg></span>
           <div><div class="cat-name-ja ja">メチル化代謝</div><div class="cat-name-cn cn">甲基化代谢</div><div class="cat-name-ja en">Folate / SAM Cycle</div><div class="cat-name-ja vi">Folate / SAM Cycle</div></div>
         </div>
-        <div class="cat-keyword ja">メチル化代謝</div><div class="cat-keyword cn">甲基化代谢</div><div class="cat-keyword en">Folate / SAM Cycle</div><div class="cat-keyword vi">Folate / SAM Cycle</div>
         <div class="cat-summary-ja ja">遺伝子発現を制御するエピジェネティクスの原材料を供給する代謝経路。</div><div class="cat-summary-cn cn">为控制基因表达的表观遗传学提供原材料的代谢通路。</div><div class="cat-summary-ja en">The metabolic pathway providing raw materials for epigenetics.</div><div class="cat-summary-ja vi">Con đường chuyển hóa cung cấp nguyên liệu cho biểu sinh học.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2783,7 +2768,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-organelle"/></svg></span>
           <div><div class="cat-name-ja ja">ミトコンドリア機能</div><div class="cat-name-cn cn">线粒体功能</div><div class="cat-name-ja en">Mitochondria</div><div class="cat-name-ja vi">Mitochondria</div></div>
         </div>
-        <div class="cat-keyword ja">ミトコンドリア機能</div><div class="cat-keyword cn">线粒体功能</div><div class="cat-keyword en">Mitochondria</div><div class="cat-keyword vi">Mitochondria</div>
         <div class="cat-summary-ja ja">細胞のエネルギー工場、ミトコンドリアの稼働効率を示します。</div><div class="cat-summary-cn cn">反映细胞能量工厂——线粒体的运行效率。</div><div class="cat-summary-ja en">Shows the operating efficiency of mitochondria, the cell's energy factory.</div><div class="cat-summary-ja vi">Phản ánh hiệu suất vận hành của ti thể.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2797,7 +2781,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-sprout"/></svg></span>
           <div><div class="cat-name-ja ja">解毒代謝</div><div class="cat-name-cn cn">解毒代谢</div><div class="cat-name-ja en">Polyamine</div><div class="cat-name-ja vi">Polyamine</div></div>
         </div>
-        <div class="cat-keyword ja">解毒代謝</div><div class="cat-keyword cn">解毒代谢</div><div class="cat-keyword en">Polyamine</div><div class="cat-keyword vi">Polyamine</div>
         <div class="cat-summary-ja ja">肝臓が薬物・毒素・代謝廃棄物を無毒化する能力を示します。</div><div class="cat-summary-cn cn">反映肝脏对药物、毒素及代谢废物的解毒能力。</div><div class="cat-summary-ja en">Shows the liver's ability to detoxify drugs, toxins, and metabolic waste.</div><div class="cat-summary-ja vi">Phản ánh khả năng gan giải độc.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -2811,7 +2794,6 @@ body.lang-vi span.vi { display: inline; }
         <div class="cat-card-top"><span class="cat-icon cat-icon-badge"><svg class="icon"><use href="#i-kidney"/></svg></span>
           <div><div class="cat-name-ja ja">腎機能・尿代謝</div><div class="cat-name-cn cn">肾功能·尿液代谢</div><div class="cat-name-ja en">DNA / Cell Renewal</div><div class="cat-name-ja vi">DNA / Cell Renewal</div></div>
         </div>
-        <div class="cat-keyword ja">腎機能・尿代謝</div><div class="cat-keyword cn">肾功能·尿液代谢</div><div class="cat-keyword en">DNA / Cell Renewal</div><div class="cat-keyword vi">DNA / Cell Renewal</div>
         <div class="cat-summary-ja ja">腎臓が老廃物を排泄する機能と、尿中の代謝物バランスを示します。</div><div class="cat-summary-cn cn">反映肾脏排泄废物的功能及尿液中代谢物的平衡。</div><div class="cat-summary-ja en">Shows kidney function in excreting waste and the balance of urinary metabolites.</div><div class="cat-summary-ja vi">Phản ánh chức năng thận bài tiết chất thải.</div>
         <div class="cat-detail"><div class="cat-detail-inner">
             <div class="cat-detail-label ja">このカテゴリで見えること</div><div class="cat-detail-label cn">此类别可观察到的模式</div><div class="cat-detail-label en">Patterns this category reveals</div><div class="cat-detail-label vi">Các mẫu danh mục này tiết lộ</div>
@@ -3402,10 +3384,10 @@ body.lang-vi span.vi { display: inline; }
     </div>
 
     <div class="analysis-note reveal" style="transition-delay:.4s">
-      <span class="ja">項目すべてを詳細に読み解く必要はありません。パスウェイマップとヒートマップを組み合わせることで、患者様の治療方針検討に役立つ全体像を素早く把握できます。</span>
-      <span class="en">You don't need to interpret every data point in detail. Combining the pathway map and heatmap gives a quick overview to support treatment planning for your patients.</span>
-      <span class="cn">无需逐项详细解读。将通路图与热图结合，可快速把握有助于患者治疗方针探讨的整体情况。</span>
-      <span class="vi">Không cần diễn giải chi tiết từng mục. Kết hợp bản đồ con đường và bản đồ nhiệt giúp nắm nhanh tổng quan để hỗ trợ lập kế hoạch điều trị cho bệnh nhân.</span>
+      <span class="ja">パスウェイマップとヒートマップを組み合わせることで、患者様の治療方針検討に役立つ全体像を素早く把握できます。</span>
+      <span class="en">Combining the pathway map and heatmap gives a quick overview to support treatment planning for your patients.</span>
+      <span class="cn">将通路图与热图结合，可快速把握有助于患者治疗方针探讨的整体情况。</span>
+      <span class="vi">Kết hợp bản đồ con đường và bản đồ nhiệt giúp nắm nhanh tổng quan để hỗ trợ lập kế hoạch điều trị cho bệnh nhân.</span>
     </div>
   </div>
 </section>
