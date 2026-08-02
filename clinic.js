@@ -210,6 +210,12 @@ async function selectClinicPatient(patientId) {
     renderScoreOverview(scores.filter(function(s) { return dateFromPatientId(s.patient_id) === selectedDate; }));
     renderCatGrid(scores.filter(function(s) { return dateFromPatientId(s.patient_id) === selectedDate; }), patientId);
     if (allPatientIds.length > 1) { renderClinicScoreTrend(allPatientIds, scores); }
+
+    // パスウェイモードが表示中なら、選び直した患者のデータで再描画
+    var pathwayView = document.getElementById('clinic-view-pathway');
+    if (pathwayView && !pathwayView.classList.contains('hidden')) {
+      renderPathwayMode(patientId, selectedDate);
+    }
   } catch(e) { console.error(e); }
 }
 
@@ -243,6 +249,11 @@ async function switchDate(date, patientId) {
   const filtered = scores.filter(function(s) { return dateFromPatientId(s.patient_id) === date; });
   renderScoreOverview(filtered);
   renderCatGrid(filtered, patientId);
+
+  var pathwayView = document.getElementById('clinic-view-pathway');
+  if (pathwayView && !pathwayView.classList.contains('hidden')) {
+    renderPathwayMode(patientId, date);
+  }
 }
 
 function renderScoreOverview(scores) {
