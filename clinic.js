@@ -1202,13 +1202,14 @@ function renderPathwayOverlay(factMap) {
     }).filter(Boolean);
     if (!coords.length) return;
 
-    // 2化合物の関係性を1つの枠で囲む(離れてる場合は横長・縦長の枠になる)
-    const minX = Math.min.apply(null, coords.map(function(c){return c.x;})) * COORD_SCALE - 10;
-    const minY = Math.min.apply(null, coords.map(function(c){return c.y;})) * COORD_SCALE - 10;
-    const maxX = Math.max.apply(null, coords.map(function(c){return c.x + 19;})) * COORD_SCALE + 10;
-    const maxY = Math.max.apply(null, coords.map(function(c){return c.y + 19;})) * COORD_SCALE + 10;
-    patternHtml += '<rect class="pathway-pattern-rect" x="' + minX + '" y="' + minY + '" width="' + (maxX-minX) + '" height="' + (maxY-minY) +
-      '" rx="14" fill="none" stroke="#e600ac" stroke-width="5" filter="url(#pathway-glow)" ' +
+    // 化合物同士を「太い帯状の線」で結ぶ(四角い枠だと離れてる場合に大きくなりすぎるため)
+    const centers = coords.map(function(c) { return [(c.x + 9.5) * COORD_SCALE, (c.y + 9.5) * COORD_SCALE]; });
+    let pathD = 'M ' + centers[0][0] + ' ' + centers[0][1];
+    for (let i = 1; i < centers.length; i++) {
+      pathD += ' L ' + centers[i][0] + ' ' + centers[i][1];
+    }
+    patternHtml += '<path class="pathway-pattern-rect" d="' + pathD + '" fill="none" stroke="#e600ac" stroke-width="26" ' +
+      'stroke-linecap="round" stroke-linejoin="round" opacity="0.35" filter="url(#pathway-glow)" ' +
       'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
   });
 
