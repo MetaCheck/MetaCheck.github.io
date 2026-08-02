@@ -1187,7 +1187,27 @@ function renderPathwayOverlay(factMap) {
     log2fcMap[c] = (f && f.sample_value > 0 && f.baseline > 0) ? f.log2fc : null;
   });
 
-  const patterns = detectPathwayPatterns(log2fcMap);
+  let patterns = detectPathwayPatterns(log2fcMap);
+
+  // 化合物同士が離れすぎてるパターンは、この時点で対象から除外する(パターンとして扱わない)
+  patterns = patterns.filter(function(p) {
+    const coords = p.members.map(function(m) {
+      const s = _pathwayCoords.find(function(c) {
+        let dbName = c.compound;
+        Object.keys(PATHWAY_ALIAS).forEach(function(db) { if (PATHWAY_ALIAS[db] === c.compound) dbName = db; });
+        return dbName === m;
+      });
+      return s;
+    }).filter(Boolean);
+    if (!coords.length) return false;
+    const rawMinX = Math.min.apply(null, coords.map(function(c){return c.x;}));
+    const rawMaxX = Math.max.apply(null, coords.map(function(c){return c.x + 19;}));
+    const rawMinY = Math.min.apply(null, coords.map(function(c){return c.y;}));
+    const rawMaxY = Math.max.apply(null, coords.map(function(c){return c.y + 19;}));
+    const spread = Math.max(rawMaxX - rawMinX, rawMaxY - rawMinY);
+    return spread <= 300;
+  });
+
   window._pathwayPatterns = patterns;
 
   let patternHtml = '';
@@ -1203,10 +1223,15 @@ function renderPathwayOverlay(factMap) {
     if (!coords.length) return;
 
     // 関係する化合物全部をまとめて1つの塗りつぶし枠で囲む(前後の動きをひとまとまりとして見せる)
-    const minX = Math.min.apply(null, coords.map(function(c){return c.x;})) * COORD_SCALE - 12;
-    const minY = Math.min.apply(null, coords.map(function(c){return c.y;})) * COORD_SCALE - 12;
-    const maxX = Math.max.apply(null, coords.map(function(c){return c.x + 19;})) * COORD_SCALE + 12;
-    const maxY = Math.max.apply(null, coords.map(function(c){return c.y + 19;})) * COORD_SCALE + 12;
+    const rawMinX = Math.min.apply(null, coords.map(function(c){return c.x;}));
+    const rawMaxX = Math.max.apply(null, coords.map(function(c){return c.x + 19;}));
+    const rawMinY = Math.min.apply(null, coords.map(function(c){return c.y;}));
+    const rawMaxY = Math.max.apply(null, coords.map(function(c){return c.y + 19;}));
+
+    const minX = rawMinX * COORD_SCALE - 12;
+    const minY = rawMinY * COORD_SCALE - 12;
+    const maxX = rawMaxX * COORD_SCALE + 12;
+    const maxY = rawMaxY * COORD_SCALE + 12;
     patternHtml += '<rect class="pathway-pattern-rect" x="' + minX + '" y="' + minY + '" width="' + (maxX-minX) + '" height="' + (maxY-minY) +
       '" rx="14" fill="rgba(230,0,172,0.12)" stroke="#e600ac" stroke-width="4" filter="url(#pathway-glow)" ' +
       'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
