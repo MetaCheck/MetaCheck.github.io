@@ -1,5 +1,93 @@
 [
  [
+  "Glc",
+  "G6P"
+ ],
+ [
+  "G6P",
+  "F6P"
+ ],
+ [
+  "F6P",
+  "F1,6P"
+ ],
+ [
+  "F1,6P",
+  "DHAP"
+ ],
+ [
+  "F1,6P",
+  "G3P"
+ ],
+ [
+  "DHAP",
+  "G3P"
+ ],
+ [
+  "G3P",
+  "1,3BPG"
+ ],
+ [
+  "1,3BPG",
+  "3PG"
+ ],
+ [
+  "3PG",
+  "2PG"
+ ],
+ [
+  "2PG",
+  "PEP"
+ ],
+ [
+  "PEP",
+  "Pyruvate"
+ ],
+ [
+  "Pyruvate",
+  "Lactate"
+ ],
+ [
+  "Pyruvate",
+  "Acetyl CoA"
+ ],
+ [
+  "Acetyl CoA",
+  "Citrate+Isocitrate"
+ ],
+ [
+  "Citrate+Isocitrate",
+  "cis-Aconitate"
+ ],
+ [
+  "cis-Aconitate",
+  "2-Oxoglutarate"
+ ],
+ [
+  "2-Oxoglutarate",
+  "Succinyl CoA"
+ ],
+ [
+  "Succinyl CoA",
+  "Succinate"
+ ],
+ [
+  "Succinate",
+  "Fumarate"
+ ],
+ [
+  "Fumarate",
+  "Malate"
+ ],
+ [
+  "Malate",
+  "Oxaloacetate"
+ ],
+ [
+  "Oxaloacetate",
+  "Citrate+Isocitrate"
+ ],
+ [
   "Ornithine",
   "Citrulline"
  ],
