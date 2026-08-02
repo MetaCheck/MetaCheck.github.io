@@ -1202,15 +1202,14 @@ function renderPathwayOverlay(factMap) {
     }).filter(Boolean);
     if (!coords.length) return;
 
-    // 化合物同士を「太い帯状の線」で結ぶ(四角い枠だと離れてる場合に大きくなりすぎるため)
-    const centers = coords.map(function(c) { return [(c.x + 9.5) * COORD_SCALE, (c.y + 9.5) * COORD_SCALE]; });
-    let pathD = 'M ' + centers[0][0] + ' ' + centers[0][1];
-    for (let i = 1; i < centers.length; i++) {
-      pathD += ' L ' + centers[i][0] + ' ' + centers[i][1];
-    }
-    patternHtml += '<path class="pathway-pattern-rect" d="' + pathD + '" fill="none" stroke="#e600ac" stroke-width="26" ' +
-      'stroke-linecap="round" stroke-linejoin="round" opacity="0.35" filter="url(#pathway-glow)" ' +
-      'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
+    // 化合物ごとに個別の塗りつぶし枠で囲む
+    coords.forEach(function(s) {
+      const cx = s.x * COORD_SCALE - 10, cy = s.y * COORD_SCALE - 10;
+      const w = 19 * COORD_SCALE + 20, h = 19 * COORD_SCALE + 20;
+      patternHtml += '<rect class="pathway-pattern-rect" x="' + cx + '" y="' + cy + '" width="' + w + '" height="' + h +
+        '" rx="10" fill="rgba(230,0,172,0.10)" stroke="#e600ac" stroke-width="4" filter="url(#pathway-glow)" ' +
+        'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
+    });
   });
 
   svg.innerHTML = '<defs><filter id="pathway-glow" x="-50%" y="-50%" width="200%" height="200%">' +
