@@ -1198,19 +1198,32 @@ function showPathwayCompound(safeId) {
   panel.classList.remove('hidden');
   panel.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-      '<h3 style="margin:0;color:var(--emerald);font-size:16px">' + dbName + '</h3>' +
-      '<button onclick="document.getElementById(\'pathway-detail-panel\').classList.add(\'hidden\')" style="background:none;border:none;font-size:20px;color:var(--ink4);cursor:pointer">✕</button>' +
+      '<h3 style="margin:0!important;color:var(--emerald);font-size:16px!important;font-weight:700!important;line-height:1.3!important">' + dbName + '</h3>' +
+      '<button onclick="document.getElementById(\'pathway-detail-panel\').classList.add(\'hidden\')" style="background:none;border:none;font-size:20px!important;color:var(--ink4);cursor:pointer">✕</button>' +
     '</div>' +
-    '<div style="background:var(--foam);padding:10px 12px;border-radius:8px;font-size:13px;color:var(--ink2);margin-bottom:10px">' + role + '</div>' +
+    '<div style="background:var(--foam);padding:10px 12px;border-radius:8px;font-size:13px!important;line-height:1.6!important;color:var(--ink2);margin-bottom:10px">' + role + '</div>' +
     '<div style="display:flex;gap:10px;margin-bottom:10px">' +
-      '<div style="background:#eef2ff;padding:8px 10px;border-radius:8px;text-align:center;flex:1"><div style="font-size:10px;color:var(--ink4)">実測値</div><div style="font-size:15px;font-weight:700">' + (sampleValue !== null ? sampleValue : '—') + '</div></div>' +
-      '<div style="background:#eef2ff;padding:8px 10px;border-radius:8px;text-align:center;flex:1"><div style="font-size:10px;color:var(--ink4)">基準値</div><div style="font-size:15px;font-weight:700">' + (baseline !== null ? Number(baseline).toFixed(2) : '—') + '</div></div>' +
-      '<div style="background:#eef2ff;padding:8px 10px;border-radius:8px;text-align:center;flex:1"><div style="font-size:10px;color:var(--ink4)">log2FC</div><div style="font-size:15px;font-weight:700">' + (log2fc !== null ? (log2fc>0?'+':'')+log2fc.toFixed(2) : '—') + '</div>' + (fold ? '<div style="font-size:10px;color:var(--ink4)">基準の' + fold + '倍</div>' : '') + '</div>' +
+      '<div style="background:#eef2ff;padding:8px 10px;border-radius:8px;text-align:center;flex:1"><div style="font-size:10px!important;color:var(--ink4)">実測値</div><div style="font-size:15px!important;font-weight:700!important">' + (sampleValue !== null ? sampleValue : '—') + '</div></div>' +
+      '<div style="background:#eef2ff;padding:8px 10px;border-radius:8px;text-align:center;flex:1"><div style="font-size:10px!important;color:var(--ink4)">基準値</div><div style="font-size:15px!important;font-weight:700!important">' + (baseline !== null ? Number(baseline).toFixed(2) : '—') + '</div></div>' +
+      '<div style="background:#eef2ff;padding:8px 10px;border-radius:8px;text-align:center;flex:1"><div style="font-size:10px!important;color:var(--ink4)">log2FC</div><div style="font-size:15px!important;font-weight:700!important">' + (log2fc !== null ? (log2fc>0?'+':'')+log2fc.toFixed(2) : '—') + '</div>' + (fold ? '<div style="font-size:10px!important;color:var(--ink4)">基準の' + fold + '倍</div>' : '') + '</div>' +
     '</div>' +
     (hasClinical ?
-      '<div style="background:#fee2e2;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:12px"><strong>↑高い場合:</strong> ' + high + '</div>' +
-      '<div style="background:#dbeafe;padding:8px 10px;border-radius:8px;font-size:12px"><strong>↓低い場合:</strong> ' + low + '</div>'
-      : '<div style="font-size:10px;color:var(--ink4);border-top:1px dashed var(--border);padding-top:6px;margin-top:6px">この化合物の血中変動と臨床病態を結びつける確立された知見は限定的です。</div>');
+      '<div style="background:#fee2e2;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:12px!important;line-height:1.6!important"><strong>↑高い場合:</strong> ' + high + '</div>' +
+      '<div style="background:#dbeafe;padding:8px 10px;border-radius:8px;font-size:12px!important;line-height:1.6!important"><strong>↓低い場合:</strong> ' + low + '</div>'
+      : '<div style="font-size:10px!important;color:var(--ink4);border-top:1px dashed var(--border);padding-top:6px;margin-top:6px">この化合物の血中変動と臨床病態を結びつける確立された知見は限定的です。</div>');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+let _pathwayZoomLevel = 1.0;
+function pathwayZoom(delta) {
+  if (delta === 0) { _pathwayZoomLevel = 1.0; }
+  else { _pathwayZoomLevel = Math.max(0.5, Math.min(3.0, _pathwayZoomLevel + delta)); }
+  const img = document.getElementById('pathway-img');
+  const svg = document.getElementById('pathway-svg');
+  const pct = (_pathwayZoomLevel * 100) + '%';
+  img.style.width = pct;
+  svg.style.width = pct;
+  svg.style.height = 'auto';
 }
 
 function togglePathwayPatterns() {
