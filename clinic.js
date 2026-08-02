@@ -1110,7 +1110,6 @@ async function renderPathwayMode(patientId, date) {
   await loadPathwayAssets();
 
   const img = document.getElementById('pathway-img');
-  img.src = '/pathway_base.png';
 
   // この患者のfactデータ(baseline・log2fc含む)を取得
   let facts;
@@ -1126,7 +1125,14 @@ async function renderPathwayMode(patientId, date) {
   const factMap = {};
   facts.forEach(function(f) { factMap[f.compound] = f; });
 
-  renderPathwayOverlay(factMap);
+  // 画像の読み込みが完了してから(レイアウトが確定してから)SVGを描画する
+  function draw() { renderPathwayOverlay(factMap); }
+  if (img.src === (location.origin + '/pathway_base.png') && img.complete && img.naturalWidth > 0) {
+    draw();
+  } else {
+    img.onload = draw;
+    img.src = '/pathway_base.png';
+  }
 }
 
 function pathwayColorForLog2fc(log2fc) {
