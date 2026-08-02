@@ -1125,12 +1125,19 @@ async function renderPathwayMode(patientId, date) {
   const factMap = {};
   facts.forEach(function(f) { factMap[f.compound] = f; });
 
-  // 画像の読み込みが完了してから(レイアウトが確定してから)SVGを描画する
   function draw() { renderPathwayOverlay(factMap); }
-  if (img.src === (location.origin + '/pathway_base.png') && img.complete && img.naturalWidth > 0) {
-    draw();
+
+  // レイアウト確定を待ってから描画(rAFを2回挟んでブラウザの描画完了を確実に待つ)
+  function drawAfterLayout() {
+    requestAnimationFrame(function() {
+      requestAnimationFrame(draw);
+    });
+  }
+
+  if (img.complete && img.naturalWidth > 0) {
+    drawAfterLayout();
   } else {
-    img.onload = draw;
+    img.onload = drawAfterLayout;
     img.src = '/pathway_base.png';
   }
 }
@@ -1238,3 +1245,17 @@ function togglePathwayPatterns() {
     r.style.display = checked ? 'block' : 'none';
   });
 }
+
+// ウィンドウリサイズ時、パスウェイモード表示中なら再描画してズレを防ぐ
+(function() {
+  let resizeTimer = null;
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+      const pathwayView = document.getElementById('clinic-view-pathway');
+      if (pathwayView && !pathwayView.classList.contains('hidden') && window._pathwayFactMap) {
+        renderPathwayOverlay(window._pathwayFactMap);
+      }
+    }, 250);
+  });
+})();
