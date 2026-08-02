@@ -1202,31 +1202,14 @@ function renderPathwayOverlay(factMap) {
     }).filter(Boolean);
     if (!coords.length) return;
 
-    const rawMinX = Math.min.apply(null, coords.map(function(c){return c.x;}));
-    const rawMaxX = Math.max.apply(null, coords.map(function(c){return c.x;}));
-    const rawMinY = Math.min.apply(null, coords.map(function(c){return c.y;}));
-    const rawMaxY = Math.max.apply(null, coords.map(function(c){return c.y;}));
-    const spread = Math.max(rawMaxX - rawMinX, rawMaxY - rawMinY);
-
-    // 化合物同士が離れてる場合(詰まり型で遠い場所にある等)は、
-    // 1つの大きな枠で囲まず、各化合物ごとに個別の小さな枠で囲む
-    if (spread > 250) {
-      coords.forEach(function(s) {
-        const cx = s.x * COORD_SCALE - 10, cy = s.y * COORD_SCALE - 10;
-        const w = 19 * COORD_SCALE + 20, h = 19 * COORD_SCALE + 20;
-        patternHtml += '<rect class="pathway-pattern-rect" x="' + cx + '" y="' + cy + '" width="' + w + '" height="' + h +
-          '" rx="10" fill="rgba(230,0,172,0.10)" stroke="#e600ac" stroke-width="4" filter="url(#pathway-glow)" ' +
-          'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
-      });
-    } else {
-      const minX = rawMinX * COORD_SCALE - 18*COORD_SCALE/2;
-      const minY = rawMinY * COORD_SCALE - 18*COORD_SCALE/2;
-      const maxX = rawMaxX * COORD_SCALE + 19*COORD_SCALE + 18*COORD_SCALE/2;
-      const maxY = rawMaxY * COORD_SCALE + 19*COORD_SCALE + 18*COORD_SCALE/2;
-      patternHtml += '<rect class="pathway-pattern-rect" x="' + minX + '" y="' + minY + '" width="' + (maxX-minX) + '" height="' + (maxY-minY) +
-        '" rx="14" fill="rgba(230,0,172,0.06)" stroke="#e600ac" stroke-width="6" filter="url(#pathway-glow)" ' +
+    // 大きな1つの枠は使わず、常に化合物ごとに個別の小さな枠で囲む(無関係な範囲を巻き込まないため)
+    coords.forEach(function(s) {
+      const cx = s.x * COORD_SCALE - 10, cy = s.y * COORD_SCALE - 10;
+      const w = 19 * COORD_SCALE + 20, h = 19 * COORD_SCALE + 20;
+      patternHtml += '<rect class="pathway-pattern-rect" x="' + cx + '" y="' + cy + '" width="' + w + '" height="' + h +
+        '" rx="10" fill="rgba(230,0,172,0.10)" stroke="#e600ac" stroke-width="4" filter="url(#pathway-glow)" ' +
         'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
-    }
+    });
   });
 
   svg.innerHTML = '<defs><filter id="pathway-glow" x="-50%" y="-50%" width="200%" height="200%">' +
@@ -1293,7 +1276,9 @@ function detectPathwayPatterns(log2fcMap) {
         }
       });
     }
-    if (cluster.length >= 3) {
+    // クラスタが大きすぎる(複数のパスウェイにまたがる)場合は、
+    // 臨床的な意味が薄れる&図上で巨大な範囲を占めてしまうため採用しない
+    if (cluster.length >= 3 && cluster.length <= 6) {
       patterns.push({
         members: cluster,
         type: '供給不足型',
