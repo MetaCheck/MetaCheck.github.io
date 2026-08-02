@@ -1,0 +1,387 @@
+[
+ {
+  "compound": "楕円 130",
+  "x": 546,
+  "y": 120
+ },
+ {
+  "compound": "DHAP",
+  "x": 609,
+  "y": 190
+ },
+ {
+  "compound": "PRPP",
+  "x": 434,
+  "y": 164
+ },
+ {
+  "compound": "His",
+  "x": 433,
+  "y": 205
+ },
+ {
+  "compound": "Tyr",
+  "x": 555,
+  "y": 263
+ },
+ {
+  "compound": "Phe",
+  "x": 555,
+  "y": 314
+ },
+ {
+  "compound": "Trp",
+  "x": 466,
+  "y": 312
+ },
+ {
+  "compound": "Ala",
+  "x": 633,
+  "y": 300
+ },
+ {
+  "compound": "Pyruvate",
+  "x": 707,
+  "y": 329
+ },
+ {
+  "compound": "Lactate",
+  "x": 752,
+  "y": 300
+ },
+ {
+  "compound": "Hypotaurine",
+  "x": 825,
+  "y": 105
+ },
+ {
+  "compound": "Cys",
+  "x": 865,
+  "y": 139
+ },
+ {
+  "compound": "Ser",
+  "x": 817,
+  "y": 179
+ },
+ {
+  "compound": "Gly",
+  "x": 835,
+  "y": 223
+ },
+ {
+  "compound": "Met",
+  "x": 897,
+  "y": 70
+ },
+ {
+  "compound": "Thr",
+  "x": 873,
+  "y": 250
+ },
+ {
+  "compound": "Ile",
+  "x": 927,
+  "y": 255
+ },
+ {
+  "compound": "Hypoxanthine",
+  "x": 954,
+  "y": 334
+ },
+ {
+  "compound": "Xanthine",
+  "x": 889,
+  "y": 335
+ },
+ {
+  "compound": "Sarcosine",
+  "x": 981,
+  "y": 14
+ },
+ {
+  "compound": "N,N-Dimethylglycine",
+  "x": 1029,
+  "y": 108
+ },
+ {
+  "compound": "Betaine",
+  "x": 997,
+  "y": 138
+ },
+ {
+  "compound": "Choline",
+  "x": 1050,
+  "y": 159
+ },
+ {
+  "compound": "2-Oxobutyrate",
+  "x": 776,
+  "y": 347
+ },
+ {
+  "compound": "Val",
+  "x": 819,
+  "y": 392
+ },
+ {
+  "compound": "Leu",
+  "x": 792,
+  "y": 393
+ },
+ {
+  "compound": "Acetyl CoA",
+  "x": 687,
+  "y": 359
+ },
+ {
+  "compound": "Citrate",
+  "x": 734,
+  "y": 393
+ },
+ {
+  "compound": "cis-Aconitate",
+  "x": 769,
+  "y": 433
+ },
+ {
+  "compound": "Isocitrate",
+  "x": 777,
+  "y": 479
+ },
+ {
+  "compound": "Glu",
+  "x": 799,
+  "y": 524
+ },
+ {
+  "compound": "Gln",
+  "x": 799,
+  "y": 570
+ },
+ {
+  "compound": "2-Oxoglutarate",
+  "x": 756,
+  "y": 523
+ },
+ {
+  "compound": "2-Hydroxyglutarate",
+  "x": 762,
+  "y": 565
+ },
+ {
+  "compound": "Succinyl CoA",
+  "x": 695,
+  "y": 542
+ },
+ {
+  "compound": "Succinate",
+  "x": 644,
+  "y": 529
+ },
+ {
+  "compound": "Fumarate",
+  "x": 611,
+  "y": 484
+ },
+ {
+  "compound": "Malate",
+  "x": 617,
+  "y": 434
+ },
+ {
+  "compound": "alpha-Aminoadipate",
+  "x": 727,
+  "y": 600
+ },
+ {
+  "compound": "Lys",
+  "x": 764,
+  "y": 662
+ },
+ {
+  "compound": "Asn",
+  "x": 487,
+  "y": 363
+ },
+ {
+  "compound": "Asp",
+  "x": 537,
+  "y": 392
+ },
+ {
+  "compound": "Citrulline",
+  "x": 498,
+  "y": 417
+ },
+ {
+  "compound": "Ornithine",
+  "x": 458,
+  "y": 487
+ },
+ {
+  "compound": "Arg",
+  "x": 569,
+  "y": 493
+ },
+ {
+  "compound": "Creatine",
+  "x": 546,
+  "y": 552
+ },
+ {
+  "compound": "Creatinine",
+  "x": 599,
+  "y": 605
+ },
+ {
+  "compound": "Pro",
+  "x": 384,
+  "y": 474
+ },
+ {
+  "compound": "Putrescine(1,4-Butanediamine)",
+  "x": 363,
+  "y": 533
+ },
+ {
+  "compound": "N1-Acetylspermidine",
+  "x": 303,
+  "y": 575
+ },
+ {
+  "compound": "N1-Acetylspermine",
+  "x": 303,
+  "y": 620
+ },
+ {
+  "compound": "Spermidine",
+  "x": 363,
+  "y": 599
+ },
+ {
+  "compound": "Spermine",
+  "x": 362,
+  "y": 672
+ },
+ {
+  "compound": "N-Acetylputrescine",
+  "x": 405,
+  "y": 600
+ },
+ {
+  "compound": "ATP",
+  "x": 1024,
+  "y": 550
+ },
+ {
+  "compound": "ADP",
+  "x": 1023,
+  "y": 495
+ },
+ {
+  "compound": "beta-Ala",
+  "x": 150,
+  "y": 126
+ },
+ {
+  "compound": "Hydroxyproline",
+  "x": 358,
+  "y": 427
+ },
+ {
+  "compound": "GMP",
+  "x": 890,
+  "y": 438
+ },
+ {
+  "compound": "IMP",
+  "x": 954,
+  "y": 438
+ },
+ {
+  "compound": "AMP",
+  "x": 1022,
+  "y": 438
+ },
+ {
+  "compound": "GDP",
+  "x": 890,
+  "y": 495
+ },
+ {
+  "compound": "Glutathione(ox)",
+  "x": 740,
+  "y": 67
+ },
+ {
+  "compound": "Glutathione(red)",
+  "x": 741,
+  "y": 94
+ },
+ {
+  "compound": "F1,6P",
+  "x": 632,
+  "y": 101
+ },
+ {
+  "compound": "G3P",
+  "x": 664,
+  "y": 144
+ },
+ {
+  "compound": "PEP",
+  "x": 705,
+  "y": 288
+ },
+ {
+  "compound": "2PG",
+  "x": 698,
+  "y": 248
+ },
+ {
+  "compound": "3PG",
+  "x": 687,
+  "y": 211
+ },
+ {
+  "compound": "UMP",
+  "x": 329,
+  "y": 125
+ },
+ {
+  "compound": "UDP",
+  "x": 330,
+  "y": 179
+ },
+ {
+  "compound": "UTP",
+  "x": 331,
+  "y": 234
+ },
+ {
+  "compound": "SAM+",
+  "x": 948,
+  "y": 31
+ },
+ {
+  "compound": "6-Phosphogluconate",
+  "x": 522,
+  "y": 47
+ },
+ {
+  "compound": "Glycerophosphate",
+  "x": 609,
+  "y": 228
+ },
+ {
+  "compound": "GABA",
+  "x": 472,
+  "y": 631
+ },
+ {
+  "compound": "Urate",
+  "x": 890,
+  "y": 288
+ }
+]
