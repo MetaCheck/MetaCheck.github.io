@@ -1202,23 +1202,14 @@ function renderPathwayOverlay(factMap) {
     }).filter(Boolean);
     if (!coords.length) return;
 
-    // 大きな1つの枠は使わず、化合物ごとに個別の小さな枠で囲み、枠同士を線でつないで関係性を示す
-    if (coords.length >= 2) {
-      for (let i = 0; i < coords.length - 1; i++) {
-        const c1 = coords[i], c2 = coords[i+1];
-        const x1 = (c1.x + 9.5) * COORD_SCALE, y1 = (c1.y + 9.5) * COORD_SCALE;
-        const x2 = (c2.x + 9.5) * COORD_SCALE, y2 = (c2.y + 9.5) * COORD_SCALE;
-        patternHtml += '<line class="pathway-pattern-rect" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
-          '" stroke="#e600ac" stroke-width="3" stroke-dasharray="6,4" opacity="0.7" style="pointer-events:none"/>';
-      }
-    }
-    coords.forEach(function(s) {
-      const cx = s.x * COORD_SCALE - 10, cy = s.y * COORD_SCALE - 10;
-      const w = 19 * COORD_SCALE + 20, h = 19 * COORD_SCALE + 20;
-      patternHtml += '<rect class="pathway-pattern-rect" x="' + cx + '" y="' + cy + '" width="' + w + '" height="' + h +
-        '" rx="10" fill="rgba(230,0,172,0.10)" stroke="#e600ac" stroke-width="4" filter="url(#pathway-glow)" ' +
-        'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
-    });
+    // 2化合物の関係性を1つの枠で囲む(離れてる場合は横長・縦長の枠になる)
+    const minX = Math.min.apply(null, coords.map(function(c){return c.x;})) * COORD_SCALE - 10;
+    const minY = Math.min.apply(null, coords.map(function(c){return c.y;})) * COORD_SCALE - 10;
+    const maxX = Math.max.apply(null, coords.map(function(c){return c.x + 19;})) * COORD_SCALE + 10;
+    const maxY = Math.max.apply(null, coords.map(function(c){return c.y + 19;})) * COORD_SCALE + 10;
+    patternHtml += '<rect class="pathway-pattern-rect" x="' + minX + '" y="' + minY + '" width="' + (maxX-minX) + '" height="' + (maxY-minY) +
+      '" rx="14" fill="none" stroke="#e600ac" stroke-width="5" filter="url(#pathway-glow)" ' +
+      'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
   });
 
   svg.innerHTML = '<defs><filter id="pathway-glow" x="-50%" y="-50%" width="200%" height="200%">' +
