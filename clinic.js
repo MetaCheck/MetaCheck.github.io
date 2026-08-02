@@ -1202,14 +1202,14 @@ function renderPathwayOverlay(factMap) {
     }).filter(Boolean);
     if (!coords.length) return;
 
-    // 化合物ごとに個別の塗りつぶし枠で囲む
-    coords.forEach(function(s) {
-      const cx = s.x * COORD_SCALE - 10, cy = s.y * COORD_SCALE - 10;
-      const w = 19 * COORD_SCALE + 20, h = 19 * COORD_SCALE + 20;
-      patternHtml += '<rect class="pathway-pattern-rect" x="' + cx + '" y="' + cy + '" width="' + w + '" height="' + h +
-        '" rx="10" fill="rgba(230,0,172,0.10)" stroke="#e600ac" stroke-width="4" filter="url(#pathway-glow)" ' +
-        'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
-    });
+    // 関係する化合物全部をまとめて1つの塗りつぶし枠で囲む(前後の動きをひとまとまりとして見せる)
+    const minX = Math.min.apply(null, coords.map(function(c){return c.x;})) * COORD_SCALE - 12;
+    const minY = Math.min.apply(null, coords.map(function(c){return c.y;})) * COORD_SCALE - 12;
+    const maxX = Math.max.apply(null, coords.map(function(c){return c.x + 19;})) * COORD_SCALE + 12;
+    const maxY = Math.max.apply(null, coords.map(function(c){return c.y + 19;})) * COORD_SCALE + 12;
+    patternHtml += '<rect class="pathway-pattern-rect" x="' + minX + '" y="' + minY + '" width="' + (maxX-minX) + '" height="' + (maxY-minY) +
+      '" rx="14" fill="rgba(230,0,172,0.12)" stroke="#e600ac" stroke-width="4" filter="url(#pathway-glow)" ' +
+      'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
   });
 
   svg.innerHTML = '<defs><filter id="pathway-glow" x="-50%" y="-50%" width="200%" height="200%">' +
