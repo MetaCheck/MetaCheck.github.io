@@ -1341,7 +1341,7 @@ function showPathwayPattern(idx) {
   panel.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
       '<h3 style="margin:0!important;color:#e600ac;font-size:16px!important;font-weight:700!important">' + p.title + ' [' + p.type + ']</h3>' +
-      '<button onclick="document.getElementById(\'pathway-detail-panel\').classList.add(\'hidden\')" style="background:none;border:none;font-size:20px!important;color:var(--ink4);cursor:pointer">✕</button>' +
+      '<button onclick="document.getElementById(\'pathway-detail-panel\').classList.add(\'hidden\');stopPathwayHighlight()" style="background:none;border:none;font-size:20px!important;color:var(--ink4);cursor:pointer">✕</button>' +
     '</div>' +
     '<p style="font-size:13px!important;line-height:1.6!important;color:#374151;margin:6px 0">' + p.text + '</p>' +
     '<div style="background:#fce7f3;padding:10px 12px;border-radius:8px;font-size:12px!important;line-height:1.6!important;margin-top:8px"><strong>臨床的示唆:</strong> ' + p.clinical + '</div>';
@@ -1403,7 +1403,7 @@ function showPathwayCompound(safeId) {
   panel.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
       '<h3 style="margin:0!important;color:var(--emerald);font-size:16px!important;font-weight:700!important;line-height:1.3!important">' + dbName + '</h3>' +
-      '<button onclick="document.getElementById(\'pathway-detail-panel\').classList.add(\'hidden\')" style="background:none;border:none;font-size:20px!important;color:var(--ink4);cursor:pointer">✕</button>' +
+      '<button onclick="document.getElementById(\'pathway-detail-panel\').classList.add(\'hidden\');stopPathwayHighlight()" style="background:none;border:none;font-size:20px!important;color:var(--ink4);cursor:pointer">✕</button>' +
     '</div>' +
     '<div style="background:var(--foam);padding:10px 12px;border-radius:8px;font-size:13px!important;line-height:1.6!important;color:var(--ink2);margin-bottom:10px">' + role + '</div>' +
     '<div style="display:flex;gap:10px;margin-bottom:10px">' +
@@ -1417,33 +1417,41 @@ function showPathwayCompound(safeId) {
       : '<div style="font-size:10px!important;color:var(--ink4);border-top:1px dashed var(--border);padding-top:6px;margin-top:6px">この化合物の血中変動と臨床病態を結びつける確立された知見は限定的です。</div>');
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-  // タップした化合物の位置をパスウェイ図上でパルス表示し、どこの情報か視覚的に分かるようにする
-  const svg = document.getElementById('pathway-svg');
-  const IMG_W = 4001, COORD_SCALE = IMG_W / 1280.0;
-  const svgns = 'http://www.w3.org/2000/svg';
+  // タップした化合物の位置を、パネルが開いてる間ずっとチカチカ光らせる
   const posEntry = _pathwayCoords.find(function(c) {
     let n = c.compound;
     Object.keys(PATHWAY_ALIAS).forEach(function(db) { if (PATHWAY_ALIAS[db] === c.compound) n = db; });
     return n === dbName;
   });
   if (posEntry) {
-    document.querySelectorAll('.pathway-tap-pulse').forEach(function(el) { el.remove(); });
-    for (let i = 0; i < 2; i++) {
-      setTimeout(function() {
-        const circle = document.createElementNS(svgns, 'circle');
-        circle.setAttribute('cx', (posEntry.x + 9.5) * COORD_SCALE);
-        circle.setAttribute('cy', (posEntry.y + 9.5) * COORD_SCALE);
-        circle.setAttribute('r', 8);
-        circle.setAttribute('fill', 'none');
-        circle.setAttribute('stroke', '#6366f1');
-        circle.setAttribute('stroke-width', '6');
-        circle.setAttribute('class', 'pathway-tap-pulse');
-        circle.style.animation = 'pathwayPulse 1.2s ease-out forwards';
-        svg.appendChild(circle);
-        setTimeout(function() { circle.remove(); }, 1300);
-      }, i * 700);
-    }
+    startPathwayHighlight(posEntry.x, posEntry.y, '#6366f1');
   }
+}
+
+// ── パネルが開いてる間、対象の化合物位置を継続的に点滅させる ──
+let _pathwayHighlightEl = null;
+function stopPathwayHighlight() {
+  if (_pathwayHighlightEl) { _pathwayHighlightEl.remove(); _pathwayHighlightEl = null; }
+}
+function startPathwayHighlight(rawX, rawY, color) {
+  stopPathwayHighlight();
+  const svg = document.getElementById('pathway-svg');
+  const IMG_W = 4001, COORD_SCALE = IMG_W / 1280.0;
+  const svgns = 'http://www.w3.org/2000/svg';
+  const rect = document.createElementNS(svgns, 'rect');
+  const size = 19 * COORD_SCALE;
+  rect.setAttribute('x', rawX * COORD_SCALE - 8);
+  rect.setAttribute('y', rawY * COORD_SCALE - 8);
+  rect.setAttribute('width', size + 16);
+  rect.setAttribute('height', size + 16);
+  rect.setAttribute('rx', 8);
+  rect.setAttribute('fill', 'none');
+  rect.setAttribute('stroke', color);
+  rect.setAttribute('stroke-width', 5);
+  rect.style.animation = 'pathwayBlink 0.9s ease-in-out infinite';
+  rect.style.pointerEvents = 'none';
+  svg.appendChild(rect);
+  _pathwayHighlightEl = rect;
 }
 
 let _pathwayZoomLevel = 1.0;
