@@ -1180,11 +1180,154 @@ function renderPathwayOverlay(factMap) {
       '" stroke="#333" stroke-width="1.5" style="cursor:pointer" onclick="showPathwayCompound(\'' + safeId + '\')"/>';
   });
 
+  // ── パターン検出(供給不足型・詰まり型) ──
+  const log2fcMap = {};
+  Object.keys(factMap).forEach(function(c) {
+    const f = factMap[c];
+    log2fcMap[c] = (f && f.sample_value > 0 && f.baseline > 0) ? f.log2fc : null;
+  });
+
+  const patterns = detectPathwayPatterns(log2fcMap);
+  window._pathwayPatterns = patterns;
+
+  let patternHtml = '';
+  patterns.forEach(function(p, idx) {
+    const coords = p.members.map(function(m) {
+      const s = _pathwayCoords.find(function(c) {
+        let dbName = c.compound;
+        Object.keys(PATHWAY_ALIAS).forEach(function(db) { if (PATHWAY_ALIAS[db] === c.compound) dbName = db; });
+        return dbName === m;
+      });
+      return s;
+    }).filter(Boolean);
+    if (!coords.length) return;
+    const minX = Math.min.apply(null, coords.map(function(c){return c.x*COORD_SCALE;})) - 18*COORD_SCALE/2;
+    const minY = Math.min.apply(null, coords.map(function(c){return c.y*COORD_SCALE;})) - 18*COORD_SCALE/2;
+    const maxX = Math.max.apply(null, coords.map(function(c){return c.x*COORD_SCALE + 19*COORD_SCALE;})) + 18*COORD_SCALE/2;
+    const maxY = Math.max.apply(null, coords.map(function(c){return c.y*COORD_SCALE + 19*COORD_SCALE;})) + 18*COORD_SCALE/2;
+    patternHtml += '<rect class="pathway-pattern-rect" x="' + minX + '" y="' + minY + '" width="' + (maxX-minX) + '" height="' + (maxY-minY) +
+      '" rx="14" fill="rgba(230,0,172,0.06)" stroke="#e600ac" stroke-width="6" filter="url(#pathway-glow)" ' +
+      'style="cursor:pointer" onclick="event.stopPropagation();showPathwayPattern(' + idx + ')"/>';
+  });
+
   svg.innerHTML = '<defs><filter id="pathway-glow" x="-50%" y="-50%" width="200%" height="200%">' +
     '<feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
-    '</filter></defs>' + rectsHtml;
+    '</filter></defs>' + rectsHtml + patternHtml;
 
   window._pathwayFactMap = factMap;
+}
+
+// ── パターン検出ロジック ──
+function detectPathwayPatterns(log2fcMap) {
+  const patterns = [];
+  const SIG_THRESHOLD = 1.0;   // 供給不足型: この値を超えたら有意とみなす
+  const BLOCK_THRESHOLD = 0.5; // 詰まり型: 上流・下流の逆転判定のしきい値
+
+  // ① 詰まり型: エッジA→Bで、Aが+方向・Bが-方向(またはその逆)に有意な場合
+  const blockages = [];
+  _pathwayEdges.forEach(function(edge) {
+    const a = edge[0], b = edge[1];
+    const fa = log2fcMap[a], fb = log2fcMap[b];
+    if (fa == null || fb == null) return;
+    if (fa > BLOCK_THRESHOLD && fb < -BLOCK_THRESHOLD) {
+      blockages.push({ members: [a, b], type: '詰まり型', upstream: a, downstream: b, upVal: fa, downVal: fb });
+    } else if (fa < -BLOCK_THRESHOLD && fb > BLOCK_THRESHOLD) {
+      blockages.push({ members: [a, b], type: '詰まり型', upstream: b, downstream: a, upVal: fb, downVal: fa });
+    }
+  });
+  blockages.forEach(function(bl) {
+    patterns.push({
+      members: bl.members,
+      type: '詰まり型',
+      title: '詰まり型パターン検出',
+      text: bl.upstream + 'が基準より上昇(' + bl.upVal.toFixed(2) + ')している一方、その先の' + bl.downstream + 'は低下(' + bl.downVal.toFixed(2) + ')しています。' + bl.upstream + 'から' + bl.downstream + 'への変換ステップで処理が追いついていない状態(詰まり)を示唆します。',
+      clinical: 'この変換ステップに関わる酵素・補酵素(ビタミン・ミネラル等)の充足状況を確認することが有用と考えられます。'
+    });
+  });
+
+  // ② 供給不足型: 隣接する有意な化合物(同方向)の連結成分をまとめる
+  const significant = {};
+  Object.keys(log2fcMap).forEach(function(c) {
+    if (log2fcMap[c] != null && Math.abs(log2fcMap[c]) > SIG_THRESHOLD) significant[c] = log2fcMap[c];
+  });
+  const adjacency = {};
+  _pathwayEdges.forEach(function(edge) {
+    adjacency[edge[0]] = adjacency[edge[0]] || [];
+    adjacency[edge[0]].push(edge[1]);
+    adjacency[edge[1]] = adjacency[edge[1]] || [];
+    adjacency[edge[1]].push(edge[0]);
+  });
+  const visited = {};
+  Object.keys(significant).forEach(function(start) {
+    if (visited[start]) return;
+    const cluster = [];
+    const stack = [start];
+    const dir = significant[start] > 0 ? 1 : -1;
+    while (stack.length) {
+      const node = stack.pop();
+      if (visited[node]) continue;
+      visited[node] = true;
+      cluster.push(node);
+      (adjacency[node] || []).forEach(function(nb) {
+        if (significant[nb] != null && !visited[nb] && (significant[nb] > 0 ? 1 : -1) === dir) {
+          stack.push(nb);
+        }
+      });
+    }
+    if (cluster.length >= 3) {
+      patterns.push({
+        members: cluster,
+        type: '供給不足型',
+        title: '供給不足型パターン検出',
+        text: cluster.join('・') + 'にわたって、隣接する複数の代謝物が同じ方向(' + (dir>0?'上昇':'低下') + ')に連鎖的に変動しています。',
+        clinical: '特定の酵素ではなく、経路全体を通る基質供給そのものが' + (dir>0?'過剰':'不足') + 'している可能性があります。関連する栄養摂取・全体的な代謝活動量の見直しが有用と考えられます。'
+      });
+    }
+  });
+
+  return patterns;
+}
+
+function showPathwayPattern(idx) {
+  const p = (window._pathwayPatterns || [])[idx];
+  if (!p) return;
+  const panel = document.getElementById('pathway-detail-panel');
+  panel.classList.remove('hidden');
+  panel.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+      '<h3 style="margin:0!important;color:#e600ac;font-size:16px!important;font-weight:700!important">' + p.title + ' [' + p.type + ']</h3>' +
+      '<button onclick="document.getElementById(\'pathway-detail-panel\').classList.add(\'hidden\')" style="background:none;border:none;font-size:20px!important;color:var(--ink4);cursor:pointer">✕</button>' +
+    '</div>' +
+    '<p style="font-size:13px!important;line-height:1.6!important;color:#374151;margin:6px 0">' + p.text + '</p>' +
+    '<div style="background:#fce7f3;padding:10px 12px;border-radius:8px;font-size:12px!important;line-height:1.6!important;margin-top:8px"><strong>臨床的示唆:</strong> ' + p.clinical + '</div>';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  animatePathwaySequence(p.members);
+}
+
+function animatePathwaySequence(members) {
+  const svg = document.getElementById('pathway-svg');
+  const svgns = 'http://www.w3.org/2000/svg';
+  const IMG_W = 4001, COORD_SCALE = IMG_W / 1280.0;
+  members.forEach(function(name, i) {
+    const s = _pathwayCoords.find(function(c) {
+      let dbName = c.compound;
+      Object.keys(PATHWAY_ALIAS).forEach(function(db) { if (PATHWAY_ALIAS[db] === c.compound) dbName = db; });
+      return dbName === name;
+    });
+    if (!s) return;
+    setTimeout(function() {
+      const circle = document.createElementNS(svgns, 'circle');
+      circle.setAttribute('cx', (s.x + 9.5) * COORD_SCALE);
+      circle.setAttribute('cy', (s.y + 9.5) * COORD_SCALE);
+      circle.setAttribute('r', 8);
+      circle.setAttribute('fill', 'none');
+      circle.setAttribute('stroke', '#fbbf24');
+      circle.setAttribute('stroke-width', '6');
+      circle.style.animation = 'pathwayPulse 1.2s ease-out forwards';
+      svg.appendChild(circle);
+      setTimeout(function() { circle.remove(); }, 1300);
+    }, i * 450);
+  });
 }
 
 function showPathwayCompound(safeId) {
