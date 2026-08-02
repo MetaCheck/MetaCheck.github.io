@@ -1134,6 +1134,7 @@ function pathwayColorForLog2fc(log2fc) {
 function renderPathwayOverlay(factMap) {
   const svg = document.getElementById('pathway-svg');
   const IMG_W = 4001, IMG_H = 2250; // ベース画像の実寸
+  const COORD_SCALE = IMG_W / 1280.0; // 座標データは1280px基準のため変換が必要
   svg.setAttribute('viewBox', '0 0 ' + IMG_W + ' ' + IMG_H);
 
   let rectsHtml = '';
@@ -1147,7 +1148,8 @@ function renderPathwayOverlay(factMap) {
     const log2fc = (f && f.sample_value > 0 && f.baseline > 0) ? f.log2fc : null;
     const color = pathwayColorForLog2fc(log2fc);
     const safeId = dbName.replace(/'/g, '').replace(/ /g, '_').replace(/\+/g, 'p');
-    rectsHtml += '<rect x="' + s.x + '" y="' + s.y + '" width="19" height="19" fill="' + color +
+    const px = s.x * COORD_SCALE, py = s.y * COORD_SCALE, psize = 19 * COORD_SCALE;
+    rectsHtml += '<rect x="' + px + '" y="' + py + '" width="' + psize + '" height="' + psize + '" fill="' + color +
       '" stroke="#333" stroke-width="1.5" style="cursor:pointer" onclick="showPathwayCompound(\'' + safeId + '\')"/>';
   });
 
