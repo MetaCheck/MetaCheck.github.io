@@ -1157,8 +1157,15 @@ function pathwayColorForLog2fc(log2fc) {
 
 function renderPathwayOverlay(factMap) {
   const svg = document.getElementById('pathway-svg');
+  const img = document.getElementById('pathway-img');
   const IMG_W = 4001, IMG_H = 2250; // ベース画像の実寸
   const COORD_SCALE = IMG_W / 1280.0; // 座標データは1280px基準のため変換が必要
+
+  // SVGのサイズを、親要素のパーセントではなく画像の実際の描画サイズに直接合わせる
+  const renderedW = img.offsetWidth || img.clientWidth;
+  const renderedH = renderedW * (IMG_H / IMG_W);
+  svg.style.width = renderedW + 'px';
+  svg.style.height = renderedH + 'px';
   svg.setAttribute('viewBox', '0 0 ' + IMG_W + ' ' + IMG_H);
 
   let rectsHtml = '';
@@ -1232,11 +1239,14 @@ function pathwayZoom(delta) {
   if (delta === 0) { _pathwayZoomLevel = 1.0; }
   else { _pathwayZoomLevel = Math.max(0.5, Math.min(3.0, _pathwayZoomLevel + delta)); }
   const img = document.getElementById('pathway-img');
-  const svg = document.getElementById('pathway-svg');
   const pct = (_pathwayZoomLevel * 100) + '%';
   img.style.width = pct;
-  svg.style.width = pct;
-  svg.style.height = 'auto';
+  // 画像サイズ変更後、レイアウト確定を待ってSVGを再計算
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      if (window._pathwayFactMap) renderPathwayOverlay(window._pathwayFactMap);
+    });
+  });
 }
 
 function togglePathwayPatterns() {
