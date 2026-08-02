@@ -1050,3 +1050,159 @@ async function saveClinicMemo() {
     }
   } catch(e) { console.error('メモ保存失敗', e); }
 }
+
+
+// ═══════════════════════════════════════════
+//  パスウェイモード
+// ═══════════════════════════════════════════
+
+let _pathwayCoords = null;
+let _pathwayClinicalDb = null;
+let _pathwayEdges = null;
+let _pathwayCurrentPatientId = null;
+let _pathwayCurrentDate = null;
+
+const PATHWAY_ALIAS = {
+  '2-Oxoglutarate': 'aKG',
+  'Succinyl CoA': 'SUC CoA',
+  'Citrate+Isocitrate': 'Citrate',
+  'cis-Aconitate': 'cis ACO',
+};
+
+async function loadPathwayAssets() {
+  if (_pathwayCoords && _pathwayClinicalDb && _pathwayEdges) return;
+  const [coords, clinicalDb, edges] = await Promise.all([
+    fetch('/pathway_coordinates.json').then(function(r) { return r.json(); }),
+    fetch('/pathway_clinical_db.json').then(function(r) { return r.json(); }),
+    fetch('/pathway_edges.json').then(function(r) { return r.json(); }),
+  ]);
+  _pathwayCoords = coords;
+  _pathwayClinicalDb = clinicalDb;
+  _pathwayEdges = edges;
+}
+
+function switchClinicView(view) {
+  document.getElementById('view-tab-score').classList.toggle('view-tab--active', view === 'score');
+  document.getElementById('view-tab-pathway').classList.toggle('view-tab--active', view === 'pathway');
+  document.getElementById('clinic-view-score').classList.toggle('hidden', view !== 'score');
+  document.getElementById('clinic-view-pathway').classList.toggle('hidden', view !== 'pathway');
+
+  if (view === 'pathway' && selectedPatientId) {
+    renderPathwayMode(selectedPatientId, selectedDate);
+  }
+}
+
+async function renderPathwayMode(patientId, date) {
+  _pathwayCurrentPatientId = patientId;
+  _pathwayCurrentDate = date;
+
+  await loadPathwayAssets();
+
+  const img = document.getElementById('pathway-img');
+  img.src = '/pathway_base.png';
+
+  // この患者のfactデータ(baseline・log2fc含む)を取得
+  let facts;
+  try {
+    facts = await dbSelect('fact',
+      'patient_id=eq.' + encodeURIComponent(patientId) +
+      (date ? '&measured_at=eq.' + date : '') +
+      '&select=compound,sample_value,baseline,log2fc');
+  } catch (e) {
+    console.error('パスウェイ用fact取得失敗', e);
+    facts = [];
+  }
+  const factMap = {};
+  facts.forEach(function(f) { factMap[f.compound] = f; });
+
+  renderPathwayOverlay(factMap);
+}
+
+function pathwayColorForLog2fc(log2fc) {
+  if (log2fc === null || log2fc === undefined) return '#d1d5db';
+  const intensity = Math.min(Math.abs(log2fc) / 3.0, 1.0);
+  if (log2fc > 0) {
+    const g = Math.round(255 - 200 * intensity);
+    return 'rgb(255,' + g + ',' + g + ')';
+  } else {
+    const r = Math.round(255 - 200 * intensity);
+    const g = Math.round(255 - 150 * intensity);
+    return 'rgb(' + r + ',' + g + ',255)';
+  }
+}
+
+function renderPathwayOverlay(factMap) {
+  const svg = document.getElementById('pathway-svg');
+  const IMG_W = 4001, IMG_H = 2250; // ベース画像の実寸
+  svg.setAttribute('viewBox', '0 0 ' + IMG_W + ' ' + IMG_H);
+
+  let rectsHtml = '';
+  _pathwayCoords.forEach(function(s) {
+    if (s.compound === '楕円 130') return;
+    let dbName = s.compound;
+    Object.keys(PATHWAY_ALIAS).forEach(function(db) {
+      if (PATHWAY_ALIAS[db] === s.compound) dbName = db;
+    });
+    const f = factMap[dbName];
+    const log2fc = (f && f.sample_value > 0 && f.baseline > 0) ? f.log2fc : null;
+    const color = pathwayColorForLog2fc(log2fc);
+    const safeId = dbName.replace(/'/g, '').replace(/ /g, '_').replace(/\+/g, 'p');
+    rectsHtml += '<rect x="' + s.x + '" y="' + s.y + '" width="19" height="19" fill="' + color +
+      '" stroke="#333" stroke-width="1.5" style="cursor:pointer" onclick="showPathwayCompound(\'' + safeId + '\')"/>';
+  });
+
+  svg.innerHTML = '<defs><filter id="pathway-glow" x="-50%" y="-50%" width="200%" height="200%">' +
+    '<feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+    '</filter></defs>' + rectsHtml;
+
+  window._pathwayFactMap = factMap;
+}
+
+function showPathwayCompound(safeId) {
+  const factMap = window._pathwayFactMap || {};
+  // safeIdから元の化合物名を逆引き
+  let dbName = null;
+  Object.keys(_pathwayClinicalDb).concat(Object.keys(factMap)).forEach(function(name) {
+    const sid = name.replace(/'/g, '').replace(/ /g, '_').replace(/\+/g, 'p');
+    if (sid === safeId) dbName = name;
+  });
+  if (!dbName) return;
+
+  const f = factMap[dbName];
+  const entry = _pathwayClinicalDb[dbName];
+  let role = '(生化学的な説明は準備中です)', high = null, low = null, hasClinical = false;
+  if (entry) {
+    if (typeof entry === 'string') { role = entry; }
+    else { role = entry.role; high = entry.high; low = entry.low; hasClinical = true; }
+  }
+
+  const sampleValue = (f && f.sample_value > 0) ? f.sample_value : null;
+  const baseline = f ? f.baseline : null;
+  const log2fc = (sampleValue !== null && baseline > 0) ? f.log2fc : null;
+  const fold = (log2fc !== null) ? Math.pow(2, log2fc).toFixed(2) : null;
+
+  const panel = document.getElementById('pathway-detail-panel');
+  panel.classList.remove('hidden');
+  panel.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+      '<h3 style="margin:0;color:var(--emerald);font-size:16px">' + dbName + '</h3>' +
+      '<button onclick="document.getElementById(\'pathway-detail-panel\').classList.add(\'hidden\')" style="background:none;border:none;font-size:20px;color:var(--ink4);cursor:pointer">✕</button>' +
+    '</div>' +
+    '<div style="background:var(--foam);padding:10px 12px;border-radius:8px;font-size:13px;color:var(--ink2);margin-bottom:10px">' + role + '</div>' +
+    '<div style="display:flex;gap:10px;margin-bottom:10px">' +
+      '<div style="background:#eef2ff;padding:8px 10px;border-radius:8px;text-align:center;flex:1"><div style="font-size:10px;color:var(--ink4)">実測値</div><div style="font-size:15px;font-weight:700">' + (sampleValue !== null ? sampleValue : '—') + '</div></div>' +
+      '<div style="background:#eef2ff;padding:8px 10px;border-radius:8px;text-align:center;flex:1"><div style="font-size:10px;color:var(--ink4)">基準値</div><div style="font-size:15px;font-weight:700">' + (baseline !== null ? Number(baseline).toFixed(2) : '—') + '</div></div>' +
+      '<div style="background:#eef2ff;padding:8px 10px;border-radius:8px;text-align:center;flex:1"><div style="font-size:10px;color:var(--ink4)">log2FC</div><div style="font-size:15px;font-weight:700">' + (log2fc !== null ? (log2fc>0?'+':'')+log2fc.toFixed(2) : '—') + '</div>' + (fold ? '<div style="font-size:10px;color:var(--ink4)">基準の' + fold + '倍</div>' : '') + '</div>' +
+    '</div>' +
+    (hasClinical ?
+      '<div style="background:#fee2e2;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:12px"><strong>↑高い場合:</strong> ' + high + '</div>' +
+      '<div style="background:#dbeafe;padding:8px 10px;border-radius:8px;font-size:12px"><strong>↓低い場合:</strong> ' + low + '</div>'
+      : '<div style="font-size:10px;color:var(--ink4);border-top:1px dashed var(--border);padding-top:6px;margin-top:6px">この化合物の血中変動と臨床病態を結びつける確立された知見は限定的です。</div>');
+}
+
+function togglePathwayPatterns() {
+  const checked = document.getElementById('pathway-pattern-toggle').checked;
+  document.querySelectorAll('.pathway-pattern-rect').forEach(function(r) {
+    r.style.display = checked ? 'block' : 'none';
+  });
+}

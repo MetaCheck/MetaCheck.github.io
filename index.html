@@ -309,6 +309,15 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 
 /* Cat detail panel */
 .clinic-cat-detail{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.view-tab{padding:10px 18px;font-size:13px;font-weight:600;color:var(--ink4);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif}
+.view-tab--active{color:var(--emerald);border-bottom-color:var(--emerald)}
+.pathway-switch{position:relative;display:inline-block;width:44px;height:24px}
+.pathway-switch input{opacity:0;width:0;height:0}
+.pathway-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e5e7eb;transition:.25s;border-radius:24px}
+.pathway-slider:before{position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background:white;transition:.25s;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.pathway-switch input:checked + .pathway-slider{background:var(--emerald)}
+.pathway-switch input:checked + .pathway-slider:before{transform:translateX(20px)}
+
 
 /* Score table */
 .score-table{width:100%;border-collapse:collapse}
@@ -886,10 +895,33 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
             <div style="display:flex;gap:6px;flex-wrap:wrap" id="clinic-detail-meta"></div>
           </div>
           <div class="date-tabs" id="clinic-date-tabs"></div>
-          <div id="clinic-score-overview"></div>
-          <div class="section-title" data-i18n="clinic.catSelect">カテゴリ別スコア</div>
-          <div class="cat-grid" id="clinic-cat-grid"></div>
-          <div class="clinic-cat-detail" id="clinic-cat-detail"></div>
+
+          <div class="clinic-view-tabs" style="display:flex;gap:8px;margin:14px 0;border-bottom:1px solid var(--border)">
+            <button class="view-tab view-tab--active" id="view-tab-score" onclick="switchClinicView('score')">健康スコアモード</button>
+            <button class="view-tab" id="view-tab-pathway" onclick="switchClinicView('pathway')">パスウェイモード</button>
+          </div>
+
+          <div id="clinic-view-score">
+            <div id="clinic-score-overview"></div>
+            <div class="section-title" data-i18n="clinic.catSelect">カテゴリ別スコア</div>
+            <div class="cat-grid" id="clinic-cat-grid"></div>
+            <div class="clinic-cat-detail" id="clinic-cat-detail"></div>
+          </div>
+
+          <div id="clinic-view-pathway" class="hidden">
+            <div style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+              <span style="font-size:13px;color:var(--ink2);font-weight:600">パターン表示</span>
+              <label class="pathway-switch">
+                <input type="checkbox" id="pathway-pattern-toggle" checked onchange="togglePathwayPatterns()">
+                <span class="pathway-slider"></span>
+              </label>
+            </div>
+            <div id="pathway-wrap" style="position:relative;width:100%;border:1px solid var(--border);border-radius:var(--r);overflow:auto;background:#fff">
+              <img id="pathway-img" style="display:block;width:100%">
+              <svg id="pathway-svg" style="position:absolute;top:0;left:0;width:100%;height:100%"></svg>
+            </div>
+            <div id="pathway-detail-panel" class="hidden" style="background:var(--white);border:1px solid var(--border);border-top:3px solid var(--emerald);border-radius:0 0 var(--r) var(--r);padding:16px 18px;margin-top:-1px"></div>
+          </div>
           <div class="memo-box">
             <div class="memo-title" data-i18n="clinic.memo">📝 メモ</div>
             <textarea class="memo-textarea" id="clinic-memo" data-i18n-placeholder="clinic.memoPlaceholder" placeholder="クリニックメモ..."></textarea>
