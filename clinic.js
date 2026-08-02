@@ -1126,12 +1126,8 @@ async function renderPathwayMode(patientId, date) {
   facts.forEach(function(f) { factMap[f.compound] = f; });
 
   function draw() { renderPathwayOverlay(factMap); }
-
-  // レイアウト確定を待ってから描画(rAFを2回挟んでブラウザの描画完了を確実に待つ)
   function drawAfterLayout() {
-    requestAnimationFrame(function() {
-      requestAnimationFrame(draw);
-    });
+    requestAnimationFrame(function() { requestAnimationFrame(draw); });
   }
 
   if (img.complete && img.naturalWidth > 0) {
@@ -1161,8 +1157,8 @@ function renderPathwayOverlay(factMap) {
   const IMG_W = 4001, IMG_H = 2250; // ベース画像の実寸
   const COORD_SCALE = IMG_W / 1280.0; // 座標データは1280px基準のため変換が必要
 
-  // SVGのサイズを、親要素のパーセントではなく画像の実際の描画サイズに直接合わせる
-  const renderedW = img.offsetWidth || img.clientWidth;
+  // SVGのサイズを、画像の実際の描画サイズ(offsetWidth)に直接合わせる(検証済みの方式)
+  const renderedW = img.offsetWidth || img.clientWidth || IMG_W;
   const renderedH = renderedW * (IMG_H / IMG_W);
   svg.style.width = renderedW + 'px';
   svg.style.height = renderedH + 'px';
@@ -1239,9 +1235,7 @@ function pathwayZoom(delta) {
   if (delta === 0) { _pathwayZoomLevel = 1.0; }
   else { _pathwayZoomLevel = Math.max(0.5, Math.min(3.0, _pathwayZoomLevel + delta)); }
   const img = document.getElementById('pathway-img');
-  const pct = (_pathwayZoomLevel * 100) + '%';
-  img.style.width = pct;
-  // 画像サイズ変更後、レイアウト確定を待ってSVGを再計算
+  img.style.width = (_pathwayZoomLevel * 100) + '%';
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {
       if (window._pathwayFactMap) renderPathwayOverlay(window._pathwayFactMap);
@@ -1259,13 +1253,28 @@ function togglePathwayPatterns() {
 // ウィンドウリサイズ時、パスウェイモード表示中なら再描画してズレを防ぐ
 (function() {
   let resizeTimer = null;
-  window.addEventListener('resize', function() {
+  function scheduleRedraw() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function() {
       const pathwayView = document.getElementById('clinic-view-pathway');
       if (pathwayView && !pathwayView.classList.contains('hidden') && window._pathwayFactMap) {
         renderPathwayOverlay(window._pathwayFactMap);
       }
-    }, 250);
-  });
+    }, 150);
+  }
+
+  // ウィンドウ自体のリサイズ(画面回転含む)
+  window.addEventListener('resize', scheduleRedraw);
+  window.addEventListener('orientationchange', scheduleRedraw);
+
+  // コンテナ要素自体のサイズ変化(サイドバー開閉・レイアウト変更等、windowのresizeが発火しないケースも検知)
+  if (typeof ResizeObserver !== 'undefined') {
+    const setupObserver = function() {
+      const wrap = document.getElementById('pathway-wrap');
+      if (!wrap) { setTimeout(setupObserver, 500); return; }
+      const ro = new ResizeObserver(scheduleRedraw);
+      ro.observe(wrap);
+    };
+    setupObserver();
+  }
 })();
