@@ -1076,7 +1076,6 @@ let _pathwayCurrentDate = null;
 const PATHWAY_ALIAS = {
   '2-Oxoglutarate': 'aKG',
   'Succinyl CoA': 'SUC CoA',
-  'Citrate+Isocitrate': 'Citrate',
   'cis-Aconitate': 'cis ACO',
 };
 
@@ -1262,13 +1261,30 @@ function detectPathwayPatterns(log2fcMap) {
       blockages.push({ members: [a, b], type: '詰まり型', upstream: b, downstream: a, upVal: fb, downVal: fa });
     }
   });
+  // 変換ステップごとの、確立されてる補因子・検査の対応表
+  const COFACTOR_MAP = {
+    'Arg|Ornithine': 'この反応(アルギナーゼ)にはマンガンが補因子として必要です。血中マンガン濃度の確認が有用と考えられます。',
+    'Ornithine|Arg': 'この反応(アルギナーゼ)にはマンガンが補因子として必要です。血中マンガン濃度の確認が有用と考えられます。',
+    'Pyruvate|Acetyl CoA': 'この反応(ピルビン酸脱水素酵素複合体)にはビタミンB1・B2・ナイアシン・パントテン酸・リポ酸が必要です。特にビタミンB1血中濃度の確認が有用です。',
+    'Acetyl CoA|Pyruvate': 'この反応(ピルビン酸脱水素酵素複合体)にはビタミンB1・B2・ナイアシン・パントテン酸・リポ酸が必要です。特にビタミンB1血中濃度の確認が有用です。',
+    'Succinate|Fumarate': 'この反応(コハク酸脱水素酵素)にはビタミンB2・鉄が必要です。血中鉄・フェリチン、ビタミンB2の確認が有用です。',
+    'Fumarate|Succinate': 'この反応(コハク酸脱水素酵素)にはビタミンB2・鉄が必要です。血中鉄・フェリチン、ビタミンB2の確認が有用です。',
+    '2-Oxoglutarate|Succinyl CoA': 'この反応(αケトグルタル酸脱水素酵素複合体)にはビタミンB1・リポ酸・B2・ナイアシンが必要です。ビタミンB1の確認が有用です。',
+    'Succinyl CoA|2-Oxoglutarate': 'この反応(αケトグルタル酸脱水素酵素複合体)にはビタミンB1・リポ酸・B2・ナイアシンが必要です。ビタミンB1の確認が有用です。',
+    'Hcy|Met': 'この反応(メチオニン再合成)にはビタミンB12・葉酸が必要です。血中ビタミンB12・葉酸・ホモシステインの確認が有用です。',
+    'Met|Hcy': 'この反応(メチオニン再合成)にはビタミンB12・葉酸が必要です。血中ビタミンB12・葉酸・ホモシステインの確認が有用です。',
+  };
+  function cofactorText(a, b) {
+    return COFACTOR_MAP[a + '|' + b] || 'この変換ステップに関わる酵素・補酵素(ビタミン・ミネラル等)の充足状況を確認することが有用と考えられます。';
+  }
+
   blockages.forEach(function(bl) {
     patterns.push({
       members: bl.members,
       type: '詰まり型',
       title: '詰まり型パターン検出',
       text: bl.upstream + 'が基準より上昇(' + bl.upVal.toFixed(2) + ')している一方、その先の' + bl.downstream + 'は低下(' + bl.downVal.toFixed(2) + ')しています。' + bl.upstream + 'から' + bl.downstream + 'への変換ステップで処理が追いついていない状態(詰まり)を示唆します。',
-      clinical: 'この変換ステップに関わる酵素・補酵素(ビタミン・ミネラル等)の充足状況を確認することが有用と考えられます。'
+      clinical: cofactorText(bl.upstream, bl.downstream)
     });
   });
 
@@ -1400,6 +1416,34 @@ function showPathwayCompound(safeId) {
       '<div style="background:#dbeafe;padding:8px 10px;border-radius:8px;font-size:12px!important;line-height:1.6!important"><strong>↓低い場合:</strong> ' + low + '</div>'
       : '<div style="font-size:10px!important;color:var(--ink4);border-top:1px dashed var(--border);padding-top:6px;margin-top:6px">この化合物の血中変動と臨床病態を結びつける確立された知見は限定的です。</div>');
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // タップした化合物の位置をパスウェイ図上でパルス表示し、どこの情報か視覚的に分かるようにする
+  const svg = document.getElementById('pathway-svg');
+  const IMG_W = 4001, COORD_SCALE = IMG_W / 1280.0;
+  const svgns = 'http://www.w3.org/2000/svg';
+  const posEntry = _pathwayCoords.find(function(c) {
+    let n = c.compound;
+    Object.keys(PATHWAY_ALIAS).forEach(function(db) { if (PATHWAY_ALIAS[db] === c.compound) n = db; });
+    return n === dbName;
+  });
+  if (posEntry) {
+    document.querySelectorAll('.pathway-tap-pulse').forEach(function(el) { el.remove(); });
+    for (let i = 0; i < 2; i++) {
+      setTimeout(function() {
+        const circle = document.createElementNS(svgns, 'circle');
+        circle.setAttribute('cx', (posEntry.x + 9.5) * COORD_SCALE);
+        circle.setAttribute('cy', (posEntry.y + 9.5) * COORD_SCALE);
+        circle.setAttribute('r', 8);
+        circle.setAttribute('fill', 'none');
+        circle.setAttribute('stroke', '#6366f1');
+        circle.setAttribute('stroke-width', '6');
+        circle.setAttribute('class', 'pathway-tap-pulse');
+        circle.style.animation = 'pathwayPulse 1.2s ease-out forwards';
+        svg.appendChild(circle);
+        setTimeout(function() { circle.remove(); }, 1300);
+      }, i * 700);
+    }
+  }
 }
 
 let _pathwayZoomLevel = 1.0;
