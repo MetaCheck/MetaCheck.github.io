@@ -1079,19 +1079,16 @@ const PATHWAY_ALIAS = {
   'cis-Aconitate': 'cis ACO',
 };
 
-let _pathwayCompoundCategories = null;
 async function loadPathwayAssets() {
-  if (_pathwayCoords && _pathwayClinicalDb && _pathwayEdges && _pathwayCompoundCategories) return;
-  const [coords, clinicalDb, edges, compoundCategories] = await Promise.all([
+  if (_pathwayCoords && _pathwayClinicalDb && _pathwayEdges) return;
+  const [coords, clinicalDb, edges] = await Promise.all([
     fetch('/pathway_coordinates.json').then(function(r) { return r.json(); }),
     fetch('/pathway_clinical_db.json').then(function(r) { return r.json(); }),
     fetch('/pathway_edges.json').then(function(r) { return r.json(); }),
-    fetch('/pathway_compound_categories.json').then(function(r) { return r.json(); }),
   ]);
   _pathwayCoords = coords;
   _pathwayClinicalDb = clinicalDb;
   _pathwayEdges = edges;
-  _pathwayCompoundCategories = compoundCategories;
 }
 
 function switchClinicView(view) {
@@ -1126,16 +1123,6 @@ async function renderPathwayMode(patientId, date) {
   }
   const factMap = {};
   facts.forEach(function(f) { factMap[f.compound] = f; });
-
-  // カテゴリ別のランク(D/E)を取得し、俯瞰した解釈(カテゴリ低下型)の材料にする
-  let categoryScores = [];
-  try {
-    categoryScores = await fetchScoresForPatient(patientId);
-    if (date) categoryScores = categoryScores.filter(function(s) { return dateFromPatientId(s.patient_id) === date; });
-  } catch (e) {
-    console.error('パスウェイ用スコア取得失敗', e);
-  }
-  window._pathwayCategoryScores = categoryScores;
 
   function draw() { renderPathwayOverlay(factMap); }
   function drawAfterLayout() {
@@ -1200,11 +1187,9 @@ function renderPathwayOverlay(factMap) {
   });
 
   let patterns = detectPathwayPatterns(log2fcMap);
-  patterns = patterns.concat(detectCategoryPatterns(log2fcMap, window._pathwayCategoryScores || []));
 
   // 化合物同士が離れすぎてるパターンは、この時点で対象から除外する(パターンとして扱わない)
   patterns = patterns.filter(function(p) {
-    if (p.type === 'カテゴリ低下型' || p.type === 'カテゴリ上昇型') return true; // カテゴリ全体を示すため、広さ制限の対象外
     const coords = p.members.map(function(m) {
       const s = _pathwayCoords.find(function(c) {
         let dbName = c.compound;
@@ -1213,7 +1198,8 @@ function renderPathwayOverlay(factMap) {
       });
       return s;
     }).filter(Boolean);
-    if (!coords.length) return false;
+    if (coords.length < p.members.length) return false; // 一部の化合物の座標が見つからない場合は表示しない(不完全なパターンを避けるため)
+    if (coords.length < 2) return false; // 単独の化合物だけになる場合も表示しない
     const rawMinX = Math.min.apply(null, coords.map(function(c){return c.x;}));
     const rawMaxX = Math.max.apply(null, coords.map(function(c){return c.x + 19;}));
     const rawMinY = Math.min.apply(null, coords.map(function(c){return c.y;}));
@@ -1234,7 +1220,8 @@ function renderPathwayOverlay(factMap) {
       });
       return s;
     }).filter(Boolean);
-    if (!coords.length) return;
+    if (coords.length < p.members.length) return; // 一部の化合物の座標が見つからない場合は描画しない
+    if (coords.length < 2) return;
 
     // 関係する化合物全部をまとめて1つの塗りつぶし枠で囲む(前後の動きをひとまとまりとして見せる)
     const rawMinX = Math.min.apply(null, coords.map(function(c){return c.x;}));
@@ -1259,54 +1246,6 @@ function renderPathwayOverlay(factMap) {
 }
 
 // ── パターン検出ロジック ──
-// パスウェイ図上の区画(楕円)と、綺麗に1対1で対応するカテゴリのみを対象にする
-// (それ以外のカテゴリは化合物が図全体に散らばっており、1つの区画として示せないため対象外)
-const CATEGORY_PATHWAY_MATCH = new Set([
-  'Glycolysis', 'TCA Cycle', 'Urea Cycle', 'Purine metabolism',
-  'Pyrimidine metabolism', 'Polyamine metabolism', 'Folate / Methionine–SAM cycle'
-]);
-
-// カテゴリ全体のランク(D/E)を使って、俯瞰した(マクロな)パターンを検出する
-// ※ calculate_scores()と同じく、化合物ごとのweight(重要度)を考慮して選定する
-function detectCategoryPatterns(log2fcMap, categoryScores) {
-  const patterns = [];
-  const MEMBER_THRESHOLD = 0.5;
-
-  categoryScores.forEach(function(cs) {
-    if (cs.rank !== 'D' && cs.rank !== 'E') return;
-    if (!CATEGORY_PATHWAY_MATCH.has(cs.category)) return; // 図の区画と対応しないカテゴリは対象外
-    const category = cs.category;
-
-    const members = [];
-    Object.keys(_pathwayCompoundCategories).forEach(function(compound) {
-      const info = _pathwayCompoundCategories[compound];
-      if (!info || info.category !== category) return;
-      const fc = log2fcMap[compound];
-      if (fc != null && Math.abs(fc) > MEMBER_THRESHOLD) {
-        members.push({ name: compound, fc: fc, weight: info.weight || 1 });
-      }
-    });
-    if (members.length < 2) return;
-
-    // weight × |log2fc| の寄与度(=実際のスコア計算式と同じ考え方)で並べ替え
-    members.sort(function(a, b) { return (b.weight*Math.abs(b.fc)) - (a.weight*Math.abs(a.fc)); });
-    const topNames = members.slice(0, 5).map(function(m) { return m.name + '(' + (m.fc>0?'+':'') + m.fc.toFixed(2) + ')'; }).join('・');
-    const weightedDown = members.reduce(function(s,m){ return s + (m.fc<0 ? m.weight : 0); }, 0);
-    const weightedUp = members.reduce(function(s,m){ return s + (m.fc>0 ? m.weight : 0); }, 0);
-    const overallDown = weightedDown >= weightedUp;
-
-    patterns.push({
-      members: members.map(function(m) { return m.name; }),
-      type: overallDown ? 'カテゴリ低下型' : 'カテゴリ上昇型',
-      title: category + ' 全体の' + (overallDown ? '低下' : '上昇') + '傾向 [' + cs.rank + 'ランク]',
-      text: category + 'は健康スコアで' + cs.rank + 'ランクと評価されています。スコアへの寄与度(重み)が大きい化合物のうち、特に' + topNames + 'が目立って' + (overallDown?'低下':'上昇') + 'しており、このカテゴリ全体として一貫した傾向が見られます。',
-      clinical: '個別の変換ステップではなく、' + category + 'という機能単位全体の評価として捉え、関連する生活習慣・栄養状態の見直しを検討することが有用です。'
-    });
-  });
-
-  return patterns;
-}
-
 function detectPathwayPatterns(log2fcMap) {
   const patterns = [];
   const SIG_THRESHOLD = 1.0;   // 供給不足型: この値を超えたら有意とみなす
