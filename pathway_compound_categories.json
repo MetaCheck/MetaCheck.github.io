@@ -1,0 +1,1342 @@
+{
+ "G1P": {
+  "category": "Lipid detail",
+  "weight": 3
+ },
+ "G6P": {
+  "category": "Glycolysis",
+  "weight": 3
+ },
+ "F6P": {
+  "category": "Glycolysis",
+  "weight": 3
+ },
+ "F1,6P": {
+  "category": "Glycolysis",
+  "weight": 3
+ },
+ "DHAP": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Glycerophosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "G3P": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 4
+ },
+ "2,3-DPG": {
+  "category": "Glycolysis",
+  "weight": 3
+ },
+ "3PG": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "2PG": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "PEP": {
+  "category": "TCA Cycle",
+  "weight": 3
+ },
+ "Pyruvate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 4
+ },
+ "Lactate": {
+  "category": "TCA Cycle",
+  "weight": 1
+ },
+ "Acetyl CoA": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Citrate+Isocitrate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "cis-Aconitate": {
+  "category": "TCA Cycle",
+  "weight": 3
+ },
+ "2-Oxoglutarate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Succinyl CoA": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Succinate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Fumarate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Malate": {
+  "category": "TCA Cycle",
+  "weight": 3
+ },
+ "6-Phosphogluconate": {
+  "category": "Glycolysis",
+  "weight": 1
+ },
+ "Ru5P": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "R5P": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "S7P": {
+  "category": "Glycolysis",
+  "weight": 1
+ },
+ "Asp": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 4
+ },
+ "Argininosuccinate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Arg": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Urea": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Ornithine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Citrulline": {
+  "category": "Urea Cycle",
+  "weight": 2
+ },
+ "Malonyl CoA": {
+  "category": "Lipid detail",
+  "weight": 1
+ },
+ "Nicotinamide": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Thiamine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Riboflavin": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Pantothenate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "3-Aminopropionitrile": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "1,3-Diaminopropane": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Gly": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 4
+ },
+ "Isopropanolamine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Trimethylamine N-oxide": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 1
+ },
+ "Hydroxyurea": {
+  "category": "Urea Cycle",
+  "weight": 2
+ },
+ "Putrescine(1,4-Butanediamine)": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Sarcosine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "beta-Ala": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Ala": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "1-Aminocyclopropane-1-carboxylate": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "Spermine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Cadaverine": {
+  "category": "Redox balance / Glutathione",
+  "weight": 3
+ },
+ "N,N-Dimethylglycine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "2AB": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "GABA": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Choline": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "2,3-Diaminopropionate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Ser": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "Diethanolamine": {
+  "category": "Lipid detail",
+  "weight": 3
+ },
+ "2-Aminophenol": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Cytosine": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "Histamine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Uracil": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Carnosine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Creatinine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Dihydrouracil": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Pro": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Guanidinoacetate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Val": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Betaine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "5-Aminovalerate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "2,4-Diaminobutyrate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Thr": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 4
+ },
+ "Homoserine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Purine": {
+  "category": "Purine metabolism",
+  "weight": 2
+ },
+ "Cys": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 4
+ },
+ "Phenethylamine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "5-Methylcytosine": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "1-Methylhistamine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Imidazole-4-acetate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Thymine": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "N-Acetylputrescine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Agmatine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "5-Aminolevulinate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Creatine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Ile": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 4
+ },
+ "Leu": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 4
+ },
+ "beta-Leucine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 2
+ },
+ "Bis(3-aminopropyl)amine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Asn": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Homocysteine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "Adenine": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Hypoxanthine": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "1-Methylnicotinamide": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Anthranilate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Tyramine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Urocanate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "6-Hydroxynicotinate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Histidinol": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Ectoine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "4-Methyl-5-thiazoleethanol": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "gamma-Guanidinobutyrate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Acetylcholine": {
+  "category": "Lipid detail",
+  "weight": 3
+ },
+ "Spermidine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Gln": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "5,6-Dimethylbenzimidazole": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Lys": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Glu": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 4
+ },
+ "O-Acetylserine": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "Met": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "6-Methylaminopurine": {
+  "category": "Purine metabolism",
+  "weight": 2
+ },
+ "3-Methyladenine": {
+  "category": "Purine metabolism",
+  "weight": 2
+ },
+ "Guanine": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Xanthine": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "3-Hydroxyanthranilate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Dopamine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "4-(beta-Acetylaminoethyl)imidazole": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "His": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "beta-Imidazolelactate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Allantoin": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Indole-3-acetaldehyde": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N-Acetylvaline": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 2
+ },
+ "Tryptamine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N-Methylglutamate": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 1
+ },
+ "Indole-3-ethanol": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Carnitine": {
+  "category": "Ketone body metabolism",
+  "weight": 2
+ },
+ "Nicotine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "S-Methylmethionine": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Methionine sulfoxide": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "3-Methylguanine": {
+  "category": "Purine metabolism",
+  "weight": 2
+ },
+ "7-Methylguanine": {
+  "category": "Purine metabolism",
+  "weight": 2
+ },
+ "Phe": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Pyridoxal": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Pyridoxamine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Noradrenaline": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Pyridoxine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "3-Methylhistidine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Indole-3-acetamide": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N-Acetylornithine": {
+  "category": "Urea Cycle",
+  "weight": 2
+ },
+ "N-omega-Methyltryptamine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Indole-3-acetate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Serotonin": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Cys-Gly": {
+  "category": "Redox balance / Glutathione",
+  "weight": 3
+ },
+ "Glucosamine": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 2
+ },
+ "Mannosamine": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 2
+ },
+ "Methionine sulfoximine": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Tyr": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Phosphorylcholine": {
+  "category": "Lipid detail",
+  "weight": 3
+ },
+ "Epinephrine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N8-Acetylspermidine": {
+  "category": "Polyamine metabolism",
+  "weight": 2
+ },
+ "Castanospermine": {
+  "category": "Polyamine metabolism",
+  "weight": 2
+ },
+ "5-Methoxytryptamine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "5-Hydroxyindoleacetate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "SAH": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "Glucosaminate": {
+  "category": "Glycolysis",
+  "weight": 1
+ },
+ "DOPA": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "SAM+": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "o-Acetylcarnitine": {
+  "category": "Ketone body metabolism",
+  "weight": 2
+ },
+ "Trp": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 4
+ },
+ "5-Methoxyindoleacetate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Kynurenine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Cysteine-glutathione disulphide": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Desthiobiotin": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "o-Succinylhomoserine": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "5-Hydroxytryptophan": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N-Acetylglucosamine": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 2
+ },
+ "Cystathionine": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "3-Hydroxykynurenine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "2'-Deoxycytidine": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "Melatonin": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Cystine": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "Homocarnosine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Anserine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "5-Methyl-2'-deoxycytidine": {
+  "category": "Pyrimidine metabolism",
+  "weight": 2
+ },
+ "Thymidine": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "Cytidine": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "Uridine": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "N1-Acetylspermine": {
+  "category": "Polyamine metabolism",
+  "weight": 2
+ },
+ "Octopine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 1
+ },
+ "Pyridoxamine 5'-phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "gamma-Glu-cys": {
+  "category": "Redox balance / Glutathione",
+  "weight": 3
+ },
+ "Purine riboside": {
+  "category": "Purine metabolism",
+  "weight": 2
+ },
+ "Glycerophosphorylcholine": {
+  "category": "Lipid detail",
+  "weight": 4
+ },
+ "Adenosine": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "2'-Deoxyguanosine": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Homocystine": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "Inosine": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Guanosine": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Xanthosine": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "5-Methylthioadenosine": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "Glutathione(ox)": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "3-Iodotyrosine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Glutathione(red)": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "AICAR": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Thiamine monophosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "S-Lactoylglutathione": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "3,5-Diiodo-tyrosine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "5-Methyltetrahydrofolate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 2
+ },
+ "3,3',5-Triiodothyronine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Betaine aldehyde": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "N1,N12-Diacetylspermine": {
+  "category": "Polyamine metabolism",
+  "weight": 2
+ },
+ "3-Methoxytyramine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N1-Acetylspermidine": {
+  "category": "Polyamine metabolism",
+  "weight": 2
+ },
+ "N1,N8-Diacetylspermidine": {
+  "category": "Polyamine metabolism",
+  "weight": 2
+ },
+ "2'-Deoxyinosine": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "NMN": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Glyoxylate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Propionate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "3-Hydroxypropionate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "2-Oxobutyrate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 4
+ },
+ "Malonate": {
+  "category": "Lipid detail",
+  "weight": 1
+ },
+ "3-Hydroxybutyrate": {
+  "category": "Ketone body metabolism",
+  "weight": 4
+ },
+ "Glycerate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Methyl sulfate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "2-Oxoisopentanoate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 4
+ },
+ "Nicotinate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Isethionate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Barbiturate": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "5-Oxoproline": {
+  "category": "Redox balance / Glutathione",
+  "weight": 3
+ },
+ "Citraconate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "4-Methyl-2-oxopentanoate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Glutarate": {
+  "category": "Lipid detail",
+  "weight": 1
+ },
+ "3-Ureidopropionate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Carbamoylphosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Ethanolamine phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Octanoate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "4-Methylthio-2-oxobutyrate": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "Citramalate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "trans-Cinnamate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Benzoylformate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "3-Phenylpropionate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "p-Hydroxyphenylacetate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 4
+ },
+ "Cysteine sulfinate": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "2,5-Dihydroxybenzoate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Orotate": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "2,4-Dihydroxypyrimidine-5-carboxylate": {
+  "category": "Pyrimidine metabolism",
+  "weight": 2
+ },
+ "Dihydroorotate": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "2-Oxoadipate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Pimelate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "N-Formylaspartate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "o-Coumarate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "p-Coumarate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Phenylpyruvate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "3-(2-Hydroxyphenyl)propionate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "3-(4-Hydroxyphenyl)propionate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "3-Phenyllactate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "2,3-Pyridinedicarboxylate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Urate": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Cysteate": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 3
+ },
+ "2-Amino-3-phosphonopropionate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Decanoate": {
+  "category": "Lipid detail",
+  "weight": 1
+ },
+ "N-Acetylleucine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 2
+ },
+ "Phenyl phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "N-Acetylaspartate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Carbamoylaspartate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Allantoate": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "2-Isopropylmalate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N-Formylmethionine": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Homovanillate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "4-Pyridoxate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Serine O-sulfate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "O-Phosphoserine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N-Carbamylglutamate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N-Acetylmethionine": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Phenaceturate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "Gluconate": {
+  "category": "Glycolysis",
+  "weight": 1
+ },
+ "4-Hydroxy-3-methoxymandelate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "E4P": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Dodecanoate": {
+  "category": "Lipid detail",
+  "weight": 1
+ },
+ "Cysteine S-sulfate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Xanthurenate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "N-Acetylphenylalanine": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "3-Indoxyl sulfate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "2-Deoxyribose 1-phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "2-Deoxyglucose 6-phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Biotin": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Glucosamine 6-phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Sorbitol 6-phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Galacturonate 1-phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "N-Acetylglucosamine 6-phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "N-Acetylglucosamine 1-phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "2',3'-cCMP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "dCMP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "dUMP": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "Ribulose 1,5-diphosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "dTMP": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "CMP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "UMP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "cAMP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "dAMP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "cGMP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "AMP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "3'-AMP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "IMP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "GMP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "XMP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Orotidine 5'-monophosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "NADPH": {
+  "category": "Redox balance / Glutathione",
+  "weight": 3
+ },
+ "CoA": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "dCDP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "dUDP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "PRPP": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "dTDP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "CDP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "UDP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "dADP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "P1, P4-Di(adenosine-5') tetraphosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Isobutyryl CoA": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "Trehalose 6-phosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Adenosine 5'-phosphosulfate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "Adenosine 3',5'-diphosphate": {
+  "category": "Electrolyte / Minerals",
+  "weight": 2
+ },
+ "ADP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "IDP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Folate": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 2
+ },
+ "GDP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "Adenylosuccinate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ },
+ "dCTP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "dUTP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "dTTP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "CTP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "UTP": {
+  "category": "Pyrimidine metabolism",
+  "weight": 3
+ },
+ "dATP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "dITP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "dGTP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "ATP": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 1
+ },
+ "ITP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "GTP": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "XTP": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "CDP-choline": {
+  "category": "Lipid detail",
+  "weight": 3
+ },
+ "ADP-ribose": {
+  "category": "Purine metabolism",
+  "weight": 3
+ },
+ "UDP-glucose": {
+  "category": "Lipid detail",
+  "weight": 3
+ },
+ "UDP-N-acetylglucosamine": {
+  "category": "Folate / Methionine–SAM cycle",
+  "weight": 2
+ },
+ "NAD+": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 4
+ },
+ "Deamido-NAD+": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "NADH": {
+  "category": "Energy currency / OXPHOS",
+  "weight": 3
+ },
+ "NADP+": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "FAD": {
+  "category": "Cofactors / Vitamin B",
+  "weight": 3
+ },
+ "2-Hydroxyphenylacetate": {
+  "category": "Amino acid / BCAA metabolism",
+  "weight": 3
+ }
+}
