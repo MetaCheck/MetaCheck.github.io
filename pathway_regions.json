@@ -1,0 +1,58 @@
+[
+ {
+  "name": "Glycolysis",
+  "x": 540,
+  "y": -31,
+  "w": 160,
+  "h": 375,
+  "color": "#B0C4DE"
+ },
+ {
+  "name": "TCA cycle",
+  "x": 606,
+  "y": 379,
+  "w": 197,
+  "h": 200,
+  "color": "#FFE4B5"
+ },
+ {
+  "name": "Urea cycle",
+  "x": 421,
+  "y": 360,
+  "w": 182,
+  "h": 201,
+  "color": "#C8E6C9"
+ },
+ {
+  "name": "Pyrimidine metabolism",
+  "x": 154,
+  "y": 98,
+  "w": 240,
+  "h": 323,
+  "color": "#FFCC99"
+ },
+ {
+  "name": "Folate cycle",
+  "x": 824,
+  "y": 2,
+  "w": 339,
+  "h": 229,
+  "color": "#FFCCFF"
+ },
+ {
+  "name": "Purine Synthesis",
+  "x": 864,
+  "y": 272,
+  "w": 248,
+  "h": 399,
+  "color": "#FFFF99"
+ },
+ {
+  "name": "Polyamine Metabolic pathway",
+  "x": 186,
+  "y": 514,
+  "w": 281,
+  "h": 205,
+  "color": "#BBDEFB"
+ }
+]

@@ -1079,16 +1079,19 @@ const PATHWAY_ALIAS = {
   'cis-Aconitate': 'cis ACO',
 };
 
+let _pathwayRegions = null;
 async function loadPathwayAssets() {
-  if (_pathwayCoords && _pathwayClinicalDb && _pathwayEdges) return;
-  const [coords, clinicalDb, edges] = await Promise.all([
+  if (_pathwayCoords && _pathwayClinicalDb && _pathwayEdges && _pathwayRegions) return;
+  const [coords, clinicalDb, edges, regions] = await Promise.all([
     fetch('/pathway_coordinates.json').then(function(r) { return r.json(); }),
     fetch('/pathway_clinical_db.json').then(function(r) { return r.json(); }),
     fetch('/pathway_edges.json').then(function(r) { return r.json(); }),
+    fetch('/pathway_regions.json').then(function(r) { return r.json(); }),
   ]);
   _pathwayCoords = coords;
   _pathwayClinicalDb = clinicalDb;
   _pathwayEdges = edges;
+  _pathwayRegions = regions;
 }
 
 function switchClinicView(view) {
@@ -1187,9 +1190,11 @@ function renderPathwayOverlay(factMap) {
   });
 
   let patterns = detectPathwayPatterns(log2fcMap);
+  patterns = patterns.concat(detectRegionTrendPatterns(log2fcMap));
 
   // 化合物同士が離れすぎてるパターンは、この時点で対象から除外する(パターンとして扱わない)
   patterns = patterns.filter(function(p) {
+    if (p.type === '区画傾向型') return true; // 区画全体を示すため、広さ制限の対象外
     const coords = p.members.map(function(m) {
       const s = _pathwayCoords.find(function(c) {
         let dbName = c.compound;
@@ -1246,6 +1251,52 @@ function renderPathwayOverlay(factMap) {
 }
 
 // ── パターン検出ロジック ──
+// パスウェイ図上の7区画(楕円)ごとに、その区画に描かれてる化合物全体の傾向(上昇/低下)を検出する
+// ※ 16カテゴリの健康スコアとは完全に独立した、図の区画だけを見るロジック
+function detectRegionTrendPatterns(log2fcMap) {
+  const patterns = [];
+  const TREND_THRESHOLD = 0.5; // 区画平均としてこれを超えたら「全体傾向あり」とみなす
+  const MIN_MEMBERS = 3;       // 最低3化合物のデータが無いと判定しない
+
+  function inEllipse(x, y, e) {
+    const cx = e.x + e.w/2, cy = e.y + e.h/2;
+    const rx = e.w/2, ry = e.h/2;
+    return Math.pow((x-cx)/rx, 2) + Math.pow((y-cy)/ry, 2) <= 1.3;
+  }
+
+  _pathwayRegions.forEach(function(region) {
+    const members = [];
+    _pathwayCoords.forEach(function(c) {
+      if (c.compound === '楕円 130') return;
+      let dbName = c.compound;
+      Object.keys(PATHWAY_ALIAS).forEach(function(db) { if (PATHWAY_ALIAS[db] === c.compound) dbName = db; });
+      const fc = log2fcMap[dbName];
+      if (fc == null) return;
+      if (inEllipse(c.x + 9.5, c.y + 9.5, region)) {
+        members.push({ name: dbName, fc: fc });
+      }
+    });
+    if (members.length < MIN_MEMBERS) return;
+
+    const avg = members.reduce(function(s,m){ return s + m.fc; }, 0) / members.length;
+    if (Math.abs(avg) < TREND_THRESHOLD) return;
+
+    members.sort(function(a,b){ return Math.abs(b.fc) - Math.abs(a.fc); });
+    const topNames = members.slice(0,5).map(function(m){ return m.name + '(' + (m.fc>0?'+':'') + m.fc.toFixed(2) + ')'; }).join('・');
+    const overallDown = avg < 0;
+
+    patterns.push({
+      members: members.map(function(m){ return m.name; }),
+      type: '区画傾向型',
+      title: region.name + ' 全体の' + (overallDown?'低下':'上昇') + '傾向',
+      text: region.name + '内の代謝物(' + members.length + '個中)が、平均して' + (overallDown?'低下':'上昇') + '傾向にあります。特に' + topNames + 'が目立っています。',
+      clinical: '個別の変換ステップではなく、' + region.name + 'という経路全体の流れとして捉え、関連する生活習慣・栄養状態の見直しを検討することが有用です。'
+    });
+  });
+
+  return patterns;
+}
+
 function detectPathwayPatterns(log2fcMap) {
   const patterns = [];
   const SIG_THRESHOLD = 1.0;   // 供給不足型: この値を超えたら有意とみなす
