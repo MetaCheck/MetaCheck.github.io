@@ -1259,6 +1259,13 @@ function renderPathwayOverlay(factMap) {
 }
 
 // ── パターン検出ロジック ──
+// パスウェイ図上の区画(楕円)と、綺麗に1対1で対応するカテゴリのみを対象にする
+// (それ以外のカテゴリは化合物が図全体に散らばっており、1つの区画として示せないため対象外)
+const CATEGORY_PATHWAY_MATCH = new Set([
+  'Glycolysis', 'TCA Cycle', 'Urea Cycle', 'Purine metabolism',
+  'Pyrimidine metabolism', 'Polyamine metabolism', 'Folate / Methionine–SAM cycle'
+]);
+
 // カテゴリ全体のランク(D/E)を使って、俯瞰した(マクロな)パターンを検出する
 // ※ calculate_scores()と同じく、化合物ごとのweight(重要度)を考慮して選定する
 function detectCategoryPatterns(log2fcMap, categoryScores) {
@@ -1267,6 +1274,7 @@ function detectCategoryPatterns(log2fcMap, categoryScores) {
 
   categoryScores.forEach(function(cs) {
     if (cs.rank !== 'D' && cs.rank !== 'E') return;
+    if (!CATEGORY_PATHWAY_MATCH.has(cs.category)) return; // 図の区画と対応しないカテゴリは対象外
     const category = cs.category;
 
     const members = [];
