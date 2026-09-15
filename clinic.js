@@ -56,6 +56,12 @@ async function renderClinicPage(clinicId, status) {
   document.getElementById('clinic-avatar').textContent = clinicId.slice(0, 2);
   document.getElementById('clinic-name-display').textContent = currentUser.name || clinicId;
 
+  // 事務局の承認が済んでいないクリニックには、患者データを一切見せない(二重の安全策)
+  if (status === 'pending') {
+    if (typeof showScreen === 'function') showScreen('screen-clinic-pending');
+    return;
+  }
+
   try {
     // 毎回 Supabase から最新データを取得
     if (clinicId === 'ADMIN' || status === 'admin') {

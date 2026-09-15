@@ -126,6 +126,13 @@ async function doLogin() {
       const clinic = clinics[0];
       if (!clinic) { showLoginError(true); return; }
 
+      // 事務局の承認が済むまでは、ログインさせずに審査中の案内だけ表示する
+      if (clinic.status === 'pending') {
+        showLoginError(false);
+        showScreen('screen-clinic-pending');
+        return;
+      }
+
       currentUser = { role: 'clinic', id: clinic.id, name: clinic.name, clinicId: clinic.id, status: clinic.status };
       showLoginError(false);
       // 古いセッションをクリアしてから保存（個人→法人の切り替え対応）
@@ -222,7 +229,7 @@ async function doClinicRegister() {
     });
     const clinicId = await idRes.json();
 
-    await dbInsert('clinics', { id: clinicId, name: name, email: email, status: 'trial' });
+    await dbInsert('clinics', { id: clinicId, name: name, email: email, status: 'pending' });
     if (userId) {
       await fetch(SUPABASE_URL + '/rest/v1/user_roles', {
         method: 'POST',
@@ -546,6 +553,10 @@ document.addEventListener('DOMContentLoaded', function() {
           if (clinics.length) {
             // クリニック登録確認
             const clinic = clinics[0];
+            if (clinic.status === 'pending') {
+              showScreen('screen-clinic-pending');
+              return;
+            }
             currentUser = { role: 'clinic', id: clinic.id, name: clinic.name, clinicId: clinic.id, status: clinic.status };
             showScreen('screen-clinic');
             renderClinicPage(clinic.id, clinic.status);
