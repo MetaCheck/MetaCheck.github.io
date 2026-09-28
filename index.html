@@ -471,9 +471,94 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 }
 #modal-body-info input:focus,
 #modal-body-info select:focus{border-color:var(--sage)}
+
+/* ===== 評価画面 v2 ===== */
+.ev-over{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
+.ev-over__head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:10px}
+.ev-over__title{font-size:13px;font-weight:700;color:var(--forest)}
+.ev-chip{font-size:11.5px;color:var(--ink3);background:var(--foam);border-radius:999px;padding:2px 10px}
+.ev-pri{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.ev-pri__item{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--paper);cursor:pointer;font-family:inherit;min-height:48px}
+.ev-pri__item:hover{border-color:var(--emerald)}
+.ev-pri__n{width:22px;height:22px;border-radius:50%;background:var(--forest);color:#fff;font-size:11px;display:grid;place-items:center;flex:none}
+.ev-pri__name{flex:1;font-size:12.5px;color:var(--ink2);line-height:1.4}
+.ev-muted{font-size:12.5px;color:var(--ink4);padding:6px 0}
+.ev-warn{margin-top:12px;background:var(--amber-l);color:#7a4a0c;border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.7}
+.ev-group{font-size:12.5px;font-weight:700;color:var(--ink2);margin:14px 2px 8px}
+.ev-group small{font-weight:400;color:var(--ink4);margin-left:8px;font-size:11px}
+.ev-hero{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.ev-hero__name{font-size:18px;font-weight:700;color:var(--forest);line-height:1.35}
+.ev-hero__desc{font-size:12px;color:var(--ink3)}
+.ev-hero__pos{font-size:11px;color:var(--rank-e);font-weight:600;margin-top:2px}
+.ev-basis{border:1px solid var(--border);border-radius:10px;padding:2px 12px 10px;margin-bottom:6px;background:var(--paper)}
+.ev-basis__row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:0;border-bottom:1px solid var(--border);padding:10px 2px;cursor:pointer;text-align:left;font-family:inherit}
+.ev-basis__lab{font-size:13px;font-weight:600;color:var(--ink2)}
+.ev-basis__lab small{display:block;font-weight:400;font-size:11.5px;color:var(--ink4)}
+.ev-basis__lab em{display:inline-block;font-style:normal;font-size:11px;color:#fff;background:var(--rank-e);border-radius:999px;padding:1px 8px;margin-top:4px}
+.ev-note{font-size:11.5px;color:var(--ink4);margin:8px 0 0;line-height:1.6}
+.ev-sec{border-top:1px solid var(--border);padding-top:14px;margin-top:16px;scroll-margin-top:12px}
+.ev-sec__t{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--forest);margin-bottom:8px}
+.ev-sec__t span{width:22px;height:22px;border-radius:50%;background:var(--emerald);color:#fff;font-size:12px;display:grid;place-items:center}
+.ev-h4{font-size:13.5px;font-weight:700;color:var(--ink2);margin:6px 0 4px}
+.ev-lead{font-size:12px;color:var(--ink3);line-height:1.7;margin:0 0 8px}
+.ev-figbox{position:relative;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ev-figbox svg.pw{display:block;width:100%;height:auto}
+.ev-zoom{position:absolute;right:8px;top:8px;border:1px solid var(--border);background:rgba(255,255,255,.92);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink2);min-height:34px}
+.ev-figbox--zoom{position:fixed;inset:0;z-index:9500;border-radius:0;overflow:auto}
+.ev-figbox--zoom svg.pw{width:max(900px,170vw);max-width:none}
+.ev-figbox--zoom .ev-zoom{position:fixed;top:12px;right:12px}
+.ev-legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin:8px 2px 0;font-size:11px;color:var(--ink3)}
+.ev-legend span{display:inline-flex;align-items:center;gap:4px}
+.ev-dot{width:11px;height:11px;border-radius:50%;display:inline-block;border:2px solid}
+svg.pw .ring{opacity:0;transition:opacity .2s}
+svg.pw .ring.on{opacity:1;animation:evring 1.2s ease-in-out infinite}
+@keyframes evring{50%{stroke-width:6}}
+.ev-finds{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ev-find{width:100%;text-align:left;border:1px solid var(--border);background:var(--white);border-radius:10px;padding:9px 12px;cursor:pointer;font-family:inherit}
+.ev-find[aria-pressed="true"]{border-color:#db2777;box-shadow:inset 0 0 0 1.5px #db2777}
+.ev-find b{display:block;font-size:12.5px;color:var(--ink2)}
+.ev-find span{font-size:12.5px;color:var(--ink2)}
+.ev-find em{display:block;font-style:normal;font-size:11px;color:#a15c07;margin-top:2px}
+.ev-cpd{margin-top:10px;border:1px solid var(--border);border-left:3px solid var(--emerald);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--ink2);background:var(--paper)}
+.ev-cpd p{margin:4px 0;line-height:1.7}
+.ev-cpd__head{display:flex;justify-content:space-between;align-items:center}
+.ev-cpd__head button{border:0;background:none;font-size:16px;cursor:pointer;color:var(--ink4);min-width:32px;min-height:32px}
+.ev-cpd__hi{background:var(--ruby-l);border-radius:6px;padding:6px 8px}
+.ev-cpd__lo{background:#e8f0fe;border-radius:6px;padding:6px 8px}
+.ev-warn-t{color:#a15c07}
+.ev-bars{display:grid;gap:6px}
+.ev-bar{display:grid;grid-template-columns:minmax(90px,150px) 1fr 52px;align-items:center;gap:8px;font-size:12.5px}
+.ev-bar__n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-bar__t{height:11px;background:var(--paper);border-radius:6px;position:relative}
+.ev-bar__t i{position:absolute;top:0;bottom:0;border-radius:6px}
+.ev-bar__t::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--ink4)}
+.ev-bar__v{text-align:right;color:var(--ink3)}
+.ev-ind{border-top:1px solid var(--border)}
+.ev-ind:first-of-type{border-top:0}
+.ev-ind__btn{width:100%;display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;text-align:left;background:none;border:0;padding:10px 2px;cursor:pointer;font-family:inherit}
+.ev-ind__btn .rank-badge,.ev-ind__btn .ev-none{grid-row:span 2}
+.ev-ind__n{font-size:13px;font-weight:600;color:var(--ink2)}
+.ev-ind__v{font-size:11.5px;color:var(--ink4)}
+.ev-ind__v i{font-style:normal;color:#a15c07}
+.ev-ind__x{padding:0 2px 12px;font-size:12px;color:var(--ink3);line-height:1.7}
+.ev-strip{display:block;width:100%;max-width:520px;height:auto;margin-top:6px}
+.ev-ref{margin-top:10px;border-top:1px dashed var(--border);padding-top:8px}
+.ev-ref summary{cursor:pointer;font-size:12px;color:var(--ink4);min-height:32px}
+.ev-none{font-size:11px;color:var(--ink4)}
+.ev-next{margin-top:20px;width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;border:1px solid var(--emerald);background:var(--foam);cursor:pointer;font-family:inherit;text-align:left;min-height:48px}
+.ev-next span{font-size:12px;color:var(--emerald)}
+.ev-next b{flex:1;font-size:13.5px;color:var(--forest)}
+@media (prefers-reduced-motion:reduce){svg.pw .ring.on{animation:none}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" refX="10" refY="5.5" orient="auto"><path d="M0,0 L11,5.5 L0,11 Z" fill="#94a3b8"/></marker>
+<marker id="ah_gray" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#9ca3af"/></marker>
+<filter id="soft" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="7"/></filter>
+<filter id="soft2" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.5"/></filter>
+</defs></svg>
+
 
 <!-- ══════════════ SCREEN: LOGIN ══════════════ -->
 <div id="screen-login" class="screen active">
@@ -899,13 +984,12 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
           <div class="date-tabs" id="clinic-date-tabs"></div>
 
           <div class="clinic-view-tabs" style="display:flex;gap:8px;margin:14px 0;border-bottom:1px solid var(--border)">
-            <button class="view-tab view-tab--active" id="view-tab-score" onclick="switchClinicView('score')">健康スコアモード</button>
-            <button class="view-tab" id="view-tab-pathway" onclick="switchClinicView('pathway')">パスウェイモード</button>
+            <button class="view-tab view-tab--active" id="view-tab-score" onclick="switchClinicView('score')">カテゴリ別の評価</button>
+            <button class="view-tab" id="view-tab-pathway" onclick="switchClinicView('pathway')">全体の代謝マップ</button>
           </div>
 
           <div id="clinic-view-score">
             <div id="clinic-score-overview"></div>
-            <div class="section-title" data-i18n="clinic.catSelect">カテゴリ別スコア</div>
             <div class="cat-grid" id="clinic-cat-grid"></div>
             <div class="clinic-cat-detail" id="clinic-cat-detail"></div>
           </div>
@@ -1355,7 +1439,7 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script src="patient.js"></script>
-<script src="clinic.js?v=20260802s"></script>
+<script src="clinic.js?v=20260928a"></script>
 <script src="app.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', async function() {

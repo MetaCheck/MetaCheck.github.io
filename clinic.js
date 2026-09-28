@@ -262,167 +262,7 @@ async function switchDate(date, patientId) {
   }
 }
 
-function renderScoreOverview(scores) {
-  const el = document.getElementById('clinic-score-overview');
-  if (!el) return;
-  const rankCounts = { A:0, B:0, C:0, D:0, E:0 };
-  scores.forEach(function(s) { if (s.rank) rankCounts[s.rank] = (rankCounts[s.rank]||0)+1; });
-  const sorted = scores.slice().sort(function(a,b) { return (b.wavg_absfc||0)-(a.wavg_absfc||0); });
-  const worst = sorted[0];
-
-  el.innerHTML =
-    '<div class="score-ov-card"><div class="score-ov-card__label">' + t('clinic.worst') + '</div><div style="font-size:14px;font-weight:600;color:var(--forest);margin-top:4px">' + (worst ? catJaName(worst.category) : '—') + '</div><div style="margin-top:6px"><span class="rank-badge rank-' + (worst ? worst.rank||'' : '') + '" style="width:32px;height:32px;font-size:16px">' + (worst ? worst.rank||'—' : '—') + '</span></div></div>';
-}
-
-function renderCatGrid(scores, patientId) {
-  const el = document.getElementById('clinic-cat-grid');
-  if (!el) return;
-
-  el.innerHTML = scores.map(function(s) {
-    const rank = s.rank || '—';
-    return '<div class="cat-grid-card cat-grid-card--' + rank + '" onclick="selectClinicCat(this,\'' + patientId + '\',\'' + s.category.replace(/'/g, "\\'") + '\')">' +
-      '<span class="cat-grid-card__name">' + (window.catJaName(s.category)) + '</span>' +
-      '<span class="rank-badge rank-' + rank + '" style="width:24px;height:24px;font-size:12px;flex-shrink:0">' + rank + '</span>' +
-    '</div>';
-  }).join('');
-
-  // 最初のカテゴリを自動選択
-  if (scores.length) {
-    const firstCard = el.querySelector('.cat-grid-card');
-    if (firstCard) selectClinicCat(firstCard, patientId, scores[0].category);
-  }
-}
-
-async function selectClinicCat(cardEl, patientId, category) {
-  window._clinicCurrentCat = { patientId: patientId, category: category, cardEl: cardEl };
-  document.querySelectorAll('.cat-grid-card').forEach(function(c) { c.classList.remove('active'); });
-  if (cardEl) cardEl.classList.add('active');
-
-  const detail = document.getElementById('clinic-cat-detail');
-  if (!detail) return;
-  detail.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:12px">' + t('clinic.loading') + '</div>';
-
-  try {
-    const scores = await fetchScores(patientId);
-    const s = scores.find(function(x) { return x.category === category && dateFromPatientId(x.patient_id) === selectedDate; })
-      || scores.find(function(x) { return x.category === category; });
-    if (!s) return;
-
-    const rank = s.rank || '—';
-    const catJa = (typeof catName === 'function') ? catName(category) : ((window.CAT_JA && CAT_JA[category]) ? CAT_JA[category] : category);
-
-    // category_resultsからmetabolitesタグ取得
-    const crRows = await (async function() {
-      try {
-        const encoded = category.split('').map(function(c) {
-          if (c === ' ') return '%20'; if (c === '/') return '%2F'; return c;
-        }).join('');
-        return await dbSelect('category_results', 'category=eq.' + encoded + '&select=id,metabolites&limit=1');
-      } catch(e) { return []; }
-    })();
-    const cr = crRows[0];
-    const metTags = cr && cr.metabolites ? cr.metabolites.split('、').map(function(m) {
-      const dir = m.includes('↓') ? 'down' : m.includes('↑') ? 'up' : 'neutral';
-      return '<span class="metabolite-tag ' + dir + '">' + m.trim() + '</span>';
-    }).join('') : '';
-
-    var catDescText = (typeof CAT_DESC !== 'undefined' && CAT_DESC[currentLang] && CAT_DESC[currentLang][category]) || '';
-
-    detail.innerHTML =
-      '<div style="font-size:18px;font-weight:700;color:var(--forest);margin-bottom:4px;display:flex;align-items:center;gap:10px">' +
-        '<span class="rank-badge rank-' + rank + '" style="width:36px;height:36px;font-size:18px">' + rank + '</span>' + catJa +
-      '</div>' +
-      (catDescText ? '<div style="margin:10px 0;padding:10px 14px;background:var(--foam);border-left:3px solid var(--sage);border-radius:0 8px 8px 0;font-size:12px;color:var(--ink2);line-height:1.7">' + catDescText + '</div>' : '') +
-      (metTags ? '<div style="margin:12px 0"><div style="font-size:11px;color:var(--ink4);margin-bottom:6px">' + t('clinic.mainChange') + '</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + metTags + '</div></div>' : '') +
-      '<div style="display:flex;border-bottom:1px solid var(--border);margin:14px 0 16px">' +
-        '<button class="pt-tab pt-tab--active" onclick="switchClinicTab(this,\'metabolite\')">' + t('clinic.tab.metabolite') + '</button>' +
-        '<button class="pt-tab" onclick="switchClinicTab(this,\'clinical\')">' + t('clinic.tab.clinical') + '</button>' +
-        '<button class="pt-tab" onclick="switchClinicTab(this,\'patient\')">' + t('clinic.tab.patient') + '</button>' +
-      '</div>' +
-      '<div id="clinic-tab-metabolite">' +
-        '<div id="clinic-trend-chart" style="margin-bottom:12px"></div>' +
-        '<div id="clinic-metabolite-table"><div style="color:var(--ink4);font-size:12px">読み込み中...</div></div>' +
-      '</div>' +
-      '<div id="clinic-tab-clinical" style="display:none"><div id="clinic-insights-clinical"></div></div>' +
-      '<div id="clinic-tab-patient" style="display:none"><div id="clinic-insights-patient"></div></div>';
-
-    // 代謝物テーブル・グラフ
-    loadClinicMetaboliteData(patientId, category);
-
-    // インサイト
-    fetchInsightsByCategory(patientId, category).then(async function(ins) {
-      const clinEl = document.getElementById('clinic-insights-clinical');
-      const patEl = document.getElementById('clinic-insights-patient');
-
-      if (clinEl) {
-        if (!ins) {
-          clinEl.innerHTML = '<div style="color:var(--ink4);font-size:13px;padding:12px">' + t('clinic.noData') + '</div>';
-        } else {
-          var parts = [];
-          if (insightField(ins, 'interpretation')) parts.push('<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--ink4);margin-bottom:6px">' + t('clinic.interpretation') + '</div><div style="font-size:13px;color:var(--ink2);line-height:1.9;white-space:pre-wrap">' + insightField(ins, 'interpretation') + '</div></div>');
-          if (insightField(ins, 'recommendation')) parts.push('<div><div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--ink4);margin-bottom:6px">' + t('clinic.intervention') + '</div><div style="font-size:13px;color:var(--ink2);line-height:1.9;white-space:pre-wrap">' + insightField(ins, 'recommendation') + '</div></div>');
-          clinEl.innerHTML =
-            '<div class="insight-box insight-box--blue">' +
-              '<div class="insight-label">' + t('clinic.insightLabel') + '</div>' +
-              (parts.length ? parts.join('') : '<div style="color:var(--ink4);font-size:13px">' + t('clinic.noData') + '</div>') +
-            '</div>';
-        }
-      }
-
-      if (patEl) {
-        if (!ins || !insightField(ins, 'patient_comment')) {
-          patEl.innerHTML = '<div style="color:var(--ink4);font-size:13px;padding:12px">' + t('clinic.noData') + '</div>';
-        } else {
-          patEl.innerHTML =
-            '<div class="insight-box insight-box--amber">' +
-              '<div class="insight-label">' + t('clinic.patientLabel') + '</div>' +
-              '<div style="font-size:13px;color:var(--ink2);line-height:1.9;white-space:pre-wrap">' + insightField(ins, 'patient_comment') + '</div>' +
-            '</div>';
-        }
-      }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    });
-
-  } catch(e) {
-    const detail2 = document.getElementById('clinic-cat-detail');
-    if (detail2) detail2.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:12px">' + t('clinic.error') + '</div>';
-  }
-}
+// renderScoreOverview / renderCatGrid / selectClinicCat は、末尾の「評価画面 v2」で定義しています。
 
 function showFullInsight(encodedText) {
   const text = decodeURIComponent(encodedText);
@@ -1561,3 +1401,399 @@ function togglePathwayPatterns() {
     setupObserver();
   }
 })();
+
+// ═══════════════════════════════════════════════════════════
+//  評価画面 v2(カテゴリ別の評価)
+//  総合評価 = 悪い方(経路図の評価 または 全体のずれ, 定量評価)。DBのscoresに保存済みの値を表示する
+// ═══════════════════════════════════════════════════════════
+var _ev = { assets: null, calib: {}, rows: {}, pid: null, patientId: null, order: [], cur: null };
+var EV_ORD = 'ABCDE';
+
+function evEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function evSgn(v) { return (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v).toFixed(2); }
+function evFmt(v) { var a = Math.abs(v); return a >= 100 ? v.toFixed(0) : a >= 10 ? v.toFixed(1) : a >= 1 ? v.toFixed(2) : v.toPrecision(2); }
+function evFcColor(fc) {
+  var i = Math.min(Math.abs(fc) / 3, 1);
+  if (fc > 0) { var g = Math.round(255 - 200 * i); return 'rgb(255,' + g + ',' + g + ')'; }
+  var r = Math.round(255 - 200 * i), g2 = Math.round(255 - 150 * i); return 'rgb(' + r + ',' + g2 + ',255)';
+}
+function evBadge(g, size) {
+  if (!g) return '<span class="ev-none">—</span>';
+  size = size || 24;
+  return '<span class="rank-badge rank-' + g + '" style="width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * 0.52) + 'px;flex-shrink:0">' + g + '</span>';
+}
+function evName(cat) { return (typeof window.catJaName === 'function') ? window.catJaName(cat) : cat; }
+function evMeta(cat) { return (_ev.assets.cats || []).find(function(c) { return c.en === cat; }) || { en: cat, fig: null, desc: '' }; }
+
+async function evLoadAssets() {
+  if (_ev.assets) return;
+  var res = await Promise.all([
+    fetch('/pathway_figures.json').then(function(r) { return r.json(); }),
+    dbSelect('eval_indicators', 'select=id,median_log2,mad_log2').catch(function() { return []; })
+  ]);
+  _ev.assets = res[0];
+  (res[1] || []).forEach(function(c) { _ev.calib[c.id] = c; });
+}
+
+// 測定日の患者ID(解析ID)ごとのscores行を取得
+async function evFetchRows(pid) {
+  var rows = await dbSelect('scores', 'patient_id=eq.' + encodeURIComponent(pid) + '&select=category,rank,comp_rank,comp_src,quant_rank,details');
+  var map = {};
+  (rows || []).forEach(function(r) { map[r.category] = r; });
+  return map;
+}
+
+// 「まず見るカテゴリ」の順番:D・E を悪い順、同じランクは表示順
+function evPriority() {
+  var cats = (_ev.assets.cats || []).map(function(c) { return c.en; });
+  return cats.filter(function(c) { var r = _ev.rows[c]; return r && (r.rank === 'D' || r.rank === 'E'); })
+    .sort(function(a, b) { return EV_ORD.indexOf(_ev.rows[b].rank) - EV_ORD.indexOf(_ev.rows[a].rank) || cats.indexOf(a) - cats.indexOf(b); });
+}
+
+// ---- 既存関数の置き換え:概要(「まず見るカテゴリ」と検体の注意) ----
+function renderScoreOverview(scores) {
+  var el = document.getElementById('clinic-score-overview');
+  if (el) el.innerHTML = '';   // 一覧側(renderCatGrid)でまとめて描画する
+}
+
+function evRenderOverview() {
+  var el = document.getElementById('clinic-score-overview');
+  if (!el) return;
+  var any = null;
+  Object.keys(_ev.rows).some(function(k) { if (_ev.rows[k].details) { any = _ev.rows[k].details; return true; } return false; });
+  var ci = any && any.ci != null ? Number(any.ci) : null;
+  var ciTxt = ci == null ? '' : Math.abs(ci) < 0.5 ? '標準的' : ci > 0 ? (ci >= 1 ? '濃い' : 'やや濃い') : (ci <= -1 ? '薄い' : 'やや薄い');
+  var flags = (any && any.flags) || [];
+  var pri = evPriority();
+  var html = '<div class="ev-over">';
+  html += '<div class="ev-over__head"><span class="ev-over__title">まず見るカテゴリ</span>' +
+          (ci != null ? '<span class="ev-chip">検体全体の濃さ:' + ciTxt + '(' + evSgn(ci) + ')・補正済み</span>' : '') + '</div>';
+  html += pri.length
+    ? '<div class="ev-pri">' + pri.map(function(c, i) {
+        return '<button type="button" class="ev-pri__item" onclick="evOpenCat(\'' + evEsc(c).replace(/\\/g, '\\\\') + '\')">' +
+               '<span class="ev-pri__n">' + (i + 1) + '</span><span class="ev-pri__name">' + evEsc(evName(c)) + '</span>' + evBadge(_ev.rows[c].rank, 26) + '</button>';
+      }).join('') + '</div>'
+    : '<div class="ev-muted">D・E評価のカテゴリはありません。</div>';
+  if (flags.length) {
+    var ex = flags.slice(0, 4).map(function(f) { return evEsc(f[0]) + '(' + (f[1] >= 1 ? f[1].toFixed(1) : f[1].toFixed(2)) + '倍)'; }).join('、');
+    html += '<div class="ev-warn"><b>この検体の測定バッチでは、' + flags.length + '個の化合物が集団からまとめてずれています。</b>' +
+            '例:' + ex + '。これらの値は測定条件の影響を含む可能性があるため「⚠」を付けています。</div>';
+  }
+  el.innerHTML = html + '</div>';
+}
+
+// ---- 既存関数の置き換え:カテゴリ一覧 ----
+async function renderCatGrid(scores, patientId) {
+  var el = document.getElementById('clinic-cat-grid');
+  if (!el) return;
+  el.classList.remove('cat-grid');
+  var pid = (scores && scores.length) ? scores[0].patient_id : patientId;
+  el.innerHTML = '<div class="ev-muted">' + t('clinic.loading') + '</div>';
+  try {
+    await evLoadAssets();
+    _ev.rows = await evFetchRows(pid);
+  } catch (e) {
+    console.error('評価データの取得に失敗', e);
+    el.innerHTML = '<div class="ev-muted">' + t('clinic.error') + '</div>';
+    return;
+  }
+  _ev.pid = pid; _ev.patientId = patientId;
+  evRenderOverview();
+  var card = function(c) {
+    var r = _ev.rows[c.en]; var rank = r ? r.rank : null;
+    return '<div class="cat-grid-card cat-grid-card--' + (rank || '') + '" data-cat="' + evEsc(c.en) + '" role="button" tabindex="0" ' +
+           'onclick="selectClinicCat(this,\'' + evEsc(patientId) + '\',\'' + evEsc(c.en).replace(/\\/g, '\\\\') + '\')" ' +
+           'onkeydown="if(event.key===\'Enter\')this.click()">' +
+           '<span class="cat-grid-card__name">' + evEsc(evName(c.en)) + '</span>' + evBadge(rank, 24) + '</div>';
+  };
+  var cats = _ev.assets.cats || [];
+  el.innerHTML =
+    '<div class="ev-group">経路図で見る<small>代謝の流れを図で説明できるカテゴリ</small></div>' +
+    '<div class="cat-grid">' + cats.filter(function(c) { return c.fig; }).map(card).join('') + '</div>' +
+    '<div class="ev-group">指標で見る<small>数値の指標で説明するカテゴリ</small></div>' +
+    '<div class="cat-grid">' + cats.filter(function(c) { return !c.fig; }).map(card).join('') + '</div>';
+  var pri = evPriority();
+  var first = pri[0] || (cats[0] && cats[0].en);
+  if (first) selectClinicCat(el.querySelector('.cat-grid-card[data-cat="' + CSS.escape(first) + '"]'), patientId, first, true);
+}
+
+function evOpenCat(cat) {
+  var card = document.querySelector('#clinic-cat-grid .cat-grid-card[data-cat="' + CSS.escape(cat) + '"]');
+  selectClinicCat(card, _ev.patientId, cat);
+}
+
+// ---- 経路図 ----
+function evFindPatterns(fig, fc) {
+  var val = function(k) { return (k && fc && fc[k] !== undefined) ? Number(fc[k]) : null; };
+  var out = [];
+  fig.graph.forEach(function(e) {
+    var va = val(e[1]), vb = val(e[3]);
+    if (va !== null && vb !== null && va > 0.5 && vb < -0.5)
+      out.push({ kind: '手前で多く、先で少ない箇所', nodes: [e[0], e[2]], keys: [e[1], e[3]],
+                 text: fig.names[e[0]] + '(' + evSgn(va) + ')が多く、次の' + fig.names[e[2]] + '(' + evSgn(vb) + ')が少ない' });
+  });
+  var nodeKey = {}, adj = {};
+  fig.graph.forEach(function(e) { nodeKey[e[0]] = e[1]; nodeKey[e[2]] = e[3];
+    (adj[e[0]] = adj[e[0]] || []).push(e[2]); (adj[e[2]] = adj[e[2]] || []).push(e[0]); });
+  var seen = {};
+  Object.keys(nodeKey).forEach(function(s) {
+    var v0 = val(nodeKey[s]);
+    if (seen[s] || v0 === null || Math.abs(v0) <= 1) return;
+    var d = Math.sign(v0), comp = [], st = [s];
+    while (st.length) {
+      var n = st.pop(); if (seen[n]) continue; seen[n] = true; comp.push(n);
+      (adj[n] || []).forEach(function(m) { var v = val(nodeKey[m]); if (!seen[m] && v !== null && Math.abs(v) > 1 && Math.sign(v) === d) st.push(m); });
+    }
+    if (comp.length >= 3) out.push({ kind: d > 0 ? '連続して高い区間' : '連続して低い区間', nodes: comp,
+      keys: comp.map(function(n) { return nodeKey[n]; }),
+      text: comp.map(function(n) { return fig.names[n]; }).join('・') + 'がそろって' + (d > 0 ? '高い' : '低い') });
+  });
+  return out;
+}
+
+function evFigureHtml(meta, det) {
+  var fig = _ev.assets.figs[meta.fig];
+  var flags = {}; ((det && det.flags) || []).forEach(function(f) { flags[f[0]] = f[1]; });
+  var unst = {}; (_ev.assets.unstable || []).forEach(function(k) { unst[k] = true; });
+  var fc = (det && det.fc) || {};
+  var pats = evFindPatterns(fig, fc);
+  _ev.pats = pats;
+  var roleLab = { entry: ['入口', '#059669'], mid: ['中間', '#334155'], exit: ['出口', '#dc2626'], branch: ['分岐先', '#d97706'], rate: ['律速段階', '#7c3aed'] };
+  var leg = ['entry', 'mid', 'exit', 'branch', 'rate'].filter(function(r) { return fig.roles.indexOf(r) >= 0; })
+    .map(function(r) { return '<span><i class="ev-dot" style="border-color:' + roleLab[r][1] + '"></i>' + roleLab[r][0] + '</span>'; }).join('') +
+    (fig.roles.indexOf('unmeasured') >= 0 ? '<span><i class="ev-dot" style="border-color:#9ca3af;border-style:dashed"></i>未測定</span>' : '') +
+    '<span><i class="ev-dot" style="border-color:#334155;background:#e5e7eb"></i>検出なし</span>' +
+    '<span><i class="ev-dot" style="border-color:#3769ff;background:#3769ff"></i>低い</span>' +
+    '<span><i class="ev-dot" style="border-color:#ff3737;background:#ff3737"></i>高い</span>';
+  var finds = pats.length
+    ? '<p class="ev-lead">タップすると、図の該当箇所に印が付きます。</p><ul class="ev-finds">' + pats.map(function(p, i) {
+        var notes = [];
+        if (p.keys.some(function(k) { return unst[k]; })) notes.push('採血後に変化しやすい物質を含む');
+        if (p.keys.some(function(k) { return flags[k] !== undefined; })) notes.push('⚠ 測定バッチの偏りがある物質を含む');
+        return '<li><button type="button" class="ev-find" aria-pressed="false" data-i="' + i + '"><b>' + p.kind + '</b><span>' + evEsc(p.text) + '</span>' +
+               (notes.length ? '<em>' + notes.join('/') + '</em>' : '') + '</button></li>';
+      }).join('') + '</ul>'
+    : '<p class="ev-muted">この患者では、図の流れに沿った目立つパターンは見つかりませんでした。</p>';
+  return '<h4 class="ev-h4">' + evEsc(fig.title) + '</h4><p class="ev-lead">' + fig.desc + '</p>' +
+    '<div class="ev-figbox" id="ev-figbox">' + fig.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button></div>' +
+    '<div class="ev-legend">' + leg + '</div>' +
+    '<div class="ev-cpd" id="ev-cpd" hidden></div>' +
+    '<h4 class="ev-h4" style="margin-top:16px">図から読み取れること</h4>' + finds;
+}
+
+function evBindFigure(meta, det) {
+  var box = document.getElementById('ev-figbox'); if (!box) return;
+  var svg = box.querySelector('svg'); var fc = (det && det.fc) || {};
+  var flags = {}; ((det && det.flags) || []).forEach(function(f) { flags[f[0]] = f[1]; });
+  svg.querySelectorAll('circle.nd').forEach(function(n) {
+    var v = fc[n.dataset.key]; n.setAttribute('fill', v === undefined ? '#e5e7eb' : evFcColor(Number(v)));
+    n.style.cursor = 'pointer';
+    n.addEventListener('click', function() { evShowCompound(n.dataset.key, v, flags[n.dataset.key]); });
+  });
+  svg.querySelectorAll('tspan.nv').forEach(function(tn) { var v = fc[tn.dataset.key]; tn.textContent = v === undefined ? ' 検出なし' : ' ' + evSgn(Number(v)); });
+  svg.querySelectorAll('tspan.fl').forEach(function(tn) { tn.textContent = flags[tn.dataset.key] !== undefined ? ' ⚠' : ''; });
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && svg.pauseAnimations) svg.pauseAnimations();
+  var zb = document.getElementById('ev-zoom');
+  zb.addEventListener('click', function() {
+    var z = box.classList.toggle('ev-figbox--zoom'); zb.textContent = z ? '閉じる' : '図を拡大';
+    if (z) requestAnimationFrame(function() { box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2; });
+  });
+  document.querySelectorAll('#clinic-cat-detail .ev-find').forEach(function(b) {
+    b.addEventListener('click', function() {
+      var on = b.getAttribute('aria-pressed') !== 'true';
+      document.querySelectorAll('#clinic-cat-detail .ev-find').forEach(function(x) { x.setAttribute('aria-pressed', 'false'); });
+      svg.querySelectorAll('.ring').forEach(function(r) { r.classList.remove('on'); });
+      if (on) {
+        b.setAttribute('aria-pressed', 'true');
+        _ev.pats[+b.dataset.i].nodes.forEach(function(n) { var r = svg.querySelector('#ev' + meta.fig + '_r_' + n); if (r) r.classList.add('on'); });
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+}
+
+// 化合物をタップしたときの説明(既存の臨床データベースを使用)
+async function evShowCompound(key, fc, flag) {
+  var el = document.getElementById('ev-cpd'); if (!el) return;
+  try { if (typeof loadPathwayAssets === 'function') await loadPathwayAssets(); } catch (e) {}
+  var db = (typeof _pathwayClinicalDb !== 'undefined' && _pathwayClinicalDb) ? _pathwayClinicalDb[key] : null;
+  var role = db ? (typeof db === 'string' ? db : db.role) : '';
+  var hi = db && typeof db === 'object' ? db.high : null, lo = db && typeof db === 'object' ? db.low : null;
+  var v = fc === undefined ? null : Number(fc);
+  el.hidden = false;
+  el.innerHTML = '<div class="ev-cpd__head"><b>' + evEsc(key) + '</b><button type="button" onclick="document.getElementById(\'ev-cpd\').hidden=true" aria-label="閉じる">✕</button></div>' +
+    (role ? '<p>' + evEsc(role) + '</p>' : '') +
+    '<p class="ev-cpd__v">' + (v === null ? 'この患者では検出されていません。' :
+      '基準(集団の平均)からのずれ:<b>' + evSgn(v) + '</b>(基準の' + Math.pow(2, v).toFixed(2) + '倍・濃度補正後)') +
+    (flag !== undefined ? '<br><span class="ev-warn-t">⚠ この測定バッチでは、この化合物が集団からまとめてずれています(' + Number(flag).toFixed(2) + '倍)。</span>' : '') + '</p>' +
+    (hi ? '<p class="ev-cpd__hi"><b>高い場合:</b>' + evEsc(hi) + '</p>' : '') +
+    (lo ? '<p class="ev-cpd__lo"><b>低い場合:</b>' + evEsc(lo) + '</p>' : '');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ---- 全体のずれ(9カテゴリ):寄与の大きい化合物 ----
+function evContribHtml(det) {
+  var rows = (det && det.top) || [];
+  var flags = {}; ((det && det.flags) || []).forEach(function(f) { flags[f[0]] = true; });
+  if (!rows.length) return '<p class="ev-muted">検出された化合物がありません。</p>';
+  var max = Math.max.apply(null, rows.map(function(r) { return Math.abs(r[1]); }).concat([1]));
+  return '<h4 class="ev-h4">ずれへの寄与が大きい化合物</h4>' +
+    '<p class="ev-lead">「全体のずれ」は、このカテゴリに属する化合物のずれを重要度で重み付けして平均したものです。寄与の大きい順に表示しています。</p>' +
+    '<div class="ev-bars">' + rows.map(function(r) {
+      var v = Number(r[1]), w = Math.abs(v) / max * 50;
+      return '<div class="ev-bar"><span class="ev-bar__n" title="' + evEsc(r[0]) + '">' + evEsc(r[0]) + (flags[r[0]] ? ' ⚠' : '') + '</span>' +
+        '<span class="ev-bar__t"><i style="' + (v >= 0 ? 'left:50%;width:' + w + '%' : 'right:50%;width:' + w + '%') + ';background:' + evFcColor(v > 0 ? 2.2 : -2.2) + '"></i></span>' +
+        '<span class="ev-bar__v">' + evSgn(v) + '</span></div>';
+    }).join('') + '</div><p class="ev-note">棒は基準(集団の平均)からのずれ(log2・濃度補正後)。左が低い、右が高い。</p>';
+}
+
+// ---- 定量評価 ----
+function evZoneStrip(meta, cal, value) {
+  if (!cal || cal.median_log2 == null || !cal.mad_log2) return '';
+  var med = Number(cal.median_log2), mad = Number(cal.mad_log2), W = 340, H = 64;
+  var lo = med - 3.2 * mad, hi = med + 3.2 * mad;
+  var lv = Math.log2(value), lvc = Math.max(lo, Math.min(hi, lv));
+  var x = function(l) { return 12 + (l - lo) / (hi - lo) * (W - 24); };
+  var zones = [[0, 1, 'A'], [1, 1.5, 'B'], [1.5, 2, 'C'], [2, 2.5, 'D'], [2.5, 3.2, 'E']];
+  var s = '<svg class="ev-strip" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + evEsc(meta.name) + 'の集団内の位置">';
+  [-1, 1].forEach(function(side) {
+    zones.forEach(function(z) {
+      var bad = meta.dir === 'both' || (meta.dir === 'low' && side < 0) || (meta.dir === 'high' && side > 0);
+      var g = bad ? z[2] : 'A';
+      var a = x(med + side * z[0] * mad), b = x(med + side * z[1] * mad);
+      s += '<rect x="' + Math.min(a, b).toFixed(1) + '" y="26" width="' + Math.abs(b - a).toFixed(1) + '" height="12" fill="var(--rank-' + g.toLowerCase() + '-bg)"/>';
+      if (bad && z[2] !== 'A' && Math.abs(b - a) > 12) s += '<text x="' + ((a + b) / 2).toFixed(1) + '" y="50" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--rank-' + g.toLowerCase() + ')">' + g + '</text>';
+    });
+  });
+  s += '<line x1="' + x(med) + '" y1="20" x2="' + x(med) + '" y2="44" stroke="var(--ink3)" stroke-width="1.5"/>' +
+       '<text x="' + x(med) + '" y="14" text-anchor="middle" font-size="10.5" fill="var(--ink3)">集団の中央値</text>';
+  if (meta.clin) ['D', 'E'].forEach(function(k) {
+    var l = Math.log2(meta.clin[k]); if (l > lo && l < hi)
+      s += '<line x1="' + x(l) + '" y1="22" x2="' + x(l) + '" y2="42" stroke="var(--rank-' + k.toLowerCase() + ')" stroke-width="2" stroke-dasharray="3,2"/>';
+  });
+  var near = Math.abs(x(lvc) - x(med)) < 64;
+  s += '<circle cx="' + x(lvc) + '" cy="32" r="7" fill="#db2777" stroke="#fff" stroke-width="2.5"/>' +
+       '<text x="' + x(lvc) + '" y="' + (near ? 58 : 14) + '" text-anchor="' + (x(lvc) < 50 ? 'start' : x(lvc) > W - 50 ? 'end' : 'middle') + '" font-size="10.5" font-weight="700" fill="#db2777">この患者' + (lv !== lvc ? '(範囲外)' : '') + '</text>';
+  return s + '</svg>';
+}
+
+function evIndicatorsHtml(cat, det) {
+  var list = (det && det.indicators) || [];
+  var flags = {}; ((det && det.flags) || []).forEach(function(f) { flags[f[0]] = true; });
+  var unst = {}; (_ev.assets.unstable || []).forEach(function(k) { unst[k] = true; });
+  var defs = _ev.assets.ind;
+  var mineIds = Object.keys(defs).filter(function(id) { return defs[id].cat === cat || (defs[id].also || []).indexOf(cat) >= 0; });
+  var byId = {}; list.forEach(function(r) { byId[r.id] = r; });
+  var row = function(id) {
+    var m = defs[id], r = byId[id];
+    var flagged = m.keys.some(function(k) { return flags[k]; }), un = m.keys.some(function(k) { return unst[k]; });
+    return '<div class="ev-ind"><button type="button" class="ev-ind__btn" aria-expanded="false">' +
+      '<span class="ev-ind__n">' + evEsc(m.name) + '</span>' + (r ? evBadge(r.grade, 28) : '<span class="ev-none">データなし</span>') +
+      '<span class="ev-ind__v">' + (r ? 'この患者 ' + evFmt(Number(r.value)) + (_ev.calib[id] && _ev.calib[id].median_log2 != null ? '　/　集団の中央値 ' + evFmt(Math.pow(2, Number(_ev.calib[id].median_log2))) : '') : 'この患者では計算できません') +
+      (flagged ? ' <i>⚠ 測定バッチの偏りあり</i>' : '') + '</span></button>' +
+      '<div class="ev-ind__x" hidden><div>' + evEsc(m.mean) + (m.clin ? '(臨床基準 D:' + m.clin.D + ' / E:' + m.clin.E + ')' : '') +
+      (un ? '<br>※採血後に変化しやすい物質を含みます。' : '') + '</div>' + (r ? evZoneStrip(m, _ev.calib[id], Number(r.value)) : '') + '</div></div>';
+  };
+  var main = mineIds.filter(function(id) { return defs[id].conf === '高' || defs[id].conf === '中'; });
+  var ref = mineIds.filter(function(id) { return !(defs[id].conf === '高' || defs[id].conf === '中'); });
+  var h = main.length ? '<p class="ev-lead">タップすると、集団の中での位置(色の帯はA〜Eの範囲)を表示します。</p>' + main.map(row).join('')
+                      : '<p class="ev-muted">このカテゴリで使える定量指標は、まだありません。</p>';
+  if (ref.length) h += '<details class="ev-ref"><summary>参考表示の指標(' + ref.length + '件・ランクに反映していません)</summary>' +
+    '<p class="ev-note">測定バッチへの偏りが見つかった指標、または確立度が低い指標です。</p>' + ref.map(row).join('') + '</details>';
+  return h;
+}
+
+// ---- 既存関数の置き換え:カテゴリ詳細 ----
+async function selectClinicCat(cardEl, patientId, category, noScroll) {
+  window._clinicCurrentCat = { patientId: patientId, category: category, cardEl: cardEl };
+  document.querySelectorAll('.cat-grid-card').forEach(function(c) { c.classList.remove('active'); });
+  if (cardEl) cardEl.classList.add('active');
+  var detail = document.getElementById('clinic-cat-detail');
+  if (!detail) return;
+  try { await evLoadAssets(); } catch (e) { detail.innerHTML = '<div class="ev-muted">' + t('clinic.error') + '</div>'; return; }
+  var r = _ev.rows[category];
+  if (!r) { detail.innerHTML = '<div class="ev-muted">' + t('clinic.noData') + '</div>'; return; }
+  _ev.cur = category;
+  var meta = evMeta(category), det = r.details || {};
+  var legacyTabs =
+    '<div style="display:flex;border-bottom:1px solid var(--border);margin:4px 0 16px">' +
+      '<button class="pt-tab pt-tab--active" onclick="switchClinicTab(this,\'metabolite\')">' + t('clinic.tab.metabolite') + '</button>' +
+      '<button class="pt-tab" onclick="switchClinicTab(this,\'clinical\')">' + t('clinic.interpretation') + '</button>' +
+      '<button class="pt-tab" onclick="switchClinicTab(this,\'patient\')">' + t('clinic.tab.patient') + '</button>' +
+    '</div>' +
+    '<div id="clinic-tab-metabolite"><div id="clinic-trend-chart" style="margin-bottom:12px"></div>' +
+      '<div id="clinic-metabolite-table"><div style="color:var(--ink4);font-size:12px">' + t('clinic.loading') + '</div></div></div>' +
+    '<div id="clinic-tab-clinical" style="display:none"><div id="clinic-insights-clinical"></div></div>' +
+    '<div id="clinic-tab-patient" style="display:none"><div id="clinic-insights-patient"></div></div>';
+  // 公開済み(凍結)で、旧方式の評価のまま確定している場合は、内訳を出さない
+  if (!r.details) {
+    detail.innerHTML =
+      '<div class="ev-hero">' + evBadge(r.rank, 56) + '<div><div class="ev-hero__name">' + evEsc(evName(category)) + '</div>' +
+        '<div class="ev-hero__desc">' + evEsc(meta.desc) + '</div></div></div>' +
+      '<div class="ev-basis"><p class="ev-note" style="margin:10px 0 0">この評価は、結果を公開した時点の方式で確定しています。評価の内訳(経路図・定量評価)は表示できません。</p></div>' +
+      '<section class="ev-sec"><div class="ev-sec__t"><span>1</span>個別の代謝物・コメント</div>' + legacyTabs + '</section>';
+    if (!noScroll) detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    evLoadLegacy(patientId, category);
+    return;
+  }
+  var compLab = r.comp_src === 'pathway' ? ['経路図の評価', '図に描かれた化合物のずれ(入口・出口・律速を重視)'] :
+                r.comp_src === 'overall_fallback' ? ['全体のずれ', '図の化合物の検出が少ないため、カテゴリ全体のずれで代替'] :
+                ['全体のずれ', 'カテゴリに属する化合物全体のずれ'];
+  var hasQ = !!r.quant_rank;
+  var decides = function(g) { return g && g === r.rank && r.rank !== 'A'; };
+  var basisRow = function(label, sub, g, target) {
+    return '<button type="button" class="ev-basis__row' + (decides(g) ? ' ev-basis__row--key' : '') + '" onclick="evJump(\'' + target + '\')">' +
+      '<span class="ev-basis__lab">' + label + '<small>' + sub + '</small>' + (decides(g) ? '<em>この評価が総合評価を決めています</em>' : '') + '</span>' + evBadge(g, 32) + '</button>';
+  };
+  var pri = evPriority(), idx = pri.indexOf(category);
+  var next = idx >= 0 ? pri[idx + 1] : pri[0];
+  var catDescText = (typeof CAT_DESC !== 'undefined' && CAT_DESC[currentLang] && CAT_DESC[currentLang][category]) || meta.desc;
+
+  detail.innerHTML =
+    '<div class="ev-hero">' + evBadge(r.rank, 56) + '<div><div class="ev-hero__name">' + evEsc(evName(category)) + '</div>' +
+      '<div class="ev-hero__desc">' + evEsc(catDescText) + '</div>' +
+      (idx >= 0 ? '<div class="ev-hero__pos">要注意 ' + (idx + 1) + ' / ' + pri.length + '</div>' : '') + '</div></div>' +
+    '<div class="ev-basis">' +
+      basisRow(compLab[0], compLab[1], r.comp_rank, 'ev-sec-comp') +
+      basisRow('定量評価', hasQ ? 'このカテゴリの指標のうち最も悪いもの' : '使える指標がないため評価なし', r.quant_rank, 'ev-sec-quant') +
+      '<p class="ev-note">総合評価は、この2つのうち悪い方です。いずれも集団の中での相対的な位置で評価しています(臨床基準がある指標は基準値で判定)。</p>' +
+    '</div>' +
+    '<section class="ev-sec" id="ev-sec-comp"><div class="ev-sec__t"><span>1</span>' + (meta.fig ? '経路図で流れを見る' : 'ずれの内訳を見る') + '</div>' +
+      (meta.fig ? evFigureHtml(meta, det) : evContribHtml(det)) + '</section>' +
+    '<section class="ev-sec" id="ev-sec-quant"><div class="ev-sec__t"><span>2</span>数値の指標で確かめる</div>' + evIndicatorsHtml(category, det) + '</section>' +
+    '<section class="ev-sec"><div class="ev-sec__t"><span>3</span>個別の代謝物・コメント</div>' + legacyTabs + '</section>' +
+    (next && next !== category ? '<button type="button" class="ev-next" onclick="evOpenCat(\'' + evEsc(next).replace(/\\/g, '\\\\') + '\')">' +
+      '<span>次の要注意カテゴリへ</span><b>' + evEsc(evName(next)) + '</b>' + evBadge(_ev.rows[next].rank, 26) + '</button>' : '');
+
+  if (meta.fig) evBindFigure(meta, det);
+  detail.querySelectorAll('.ev-ind__btn').forEach(function(b) {
+    b.addEventListener('click', function() { var x = b.nextElementSibling, o = b.getAttribute('aria-expanded') === 'true';
+      b.setAttribute('aria-expanded', String(!o)); x.hidden = o; });
+  });
+  if (!noScroll) detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  evLoadLegacy(patientId, category);
+}
+
+// 既存:個別代謝物の推移・解釈・患者向けコメント(介入は表示しない)
+function evLoadLegacy(patientId, category) {
+  loadClinicMetaboliteData(patientId, category);
+  fetchInsightsByCategory(patientId, category).then(function(ins) {
+    var clinEl = document.getElementById('clinic-insights-clinical'), patEl = document.getElementById('clinic-insights-patient');
+    var none = '<div style="color:var(--ink4);font-size:13px;padding:12px">' + t('clinic.noData') + '</div>';
+    if (clinEl) clinEl.innerHTML = (ins && insightField(ins, 'interpretation'))
+      ? '<div class="insight-box insight-box--blue"><div class="insight-label">' + t('clinic.interpretation') + '</div><div style="font-size:13px;color:var(--ink2);line-height:1.9;white-space:pre-wrap">' + insightField(ins, 'interpretation') + '</div></div>'
+      : none;
+    if (patEl) patEl.innerHTML = (ins && insightField(ins, 'patient_comment'))
+      ? '<div class="insight-box insight-box--amber"><div class="insight-label">' + t('clinic.patientLabel') + '</div><div style="font-size:13px;color:var(--ink2);line-height:1.9;white-space:pre-wrap">' + insightField(ins, 'patient_comment') + '</div></div>'
+      : none;
+  }).catch(function() {});
+}
+
+function evJump(id) { var el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape') return;
+  var z = document.querySelector('.ev-figbox--zoom');
+  if (z) { z.classList.remove('ev-figbox--zoom'); var b = document.getElementById('ev-zoom'); if (b) b.textContent = '図を拡大'; }
+});
