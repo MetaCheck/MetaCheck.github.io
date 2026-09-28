@@ -168,7 +168,7 @@ async function selectClinicPatient(patientId) {
       '<button onclick="showKitSentModal(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)">' + t('clinic.kitSent') + '</button>' +
       '<button onclick="releaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--emerald);color:#fff;border:none">' + t('clinic.releaseScores') + '</button>' +
       '<button onclick="unreleaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--ink3);border:1px solid var(--border)">' + t('clinic.unrelease') + '</button>' +
-      '<button onclick="confirmDeletePatient(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:#fdecea;color:#B03A2E;border:1px solid #f4c7c3">' + t('clinic.delete') + '</button>' +
+      '<button onclick="confirmDeletePatient(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:#fdecea;color:#B03A2E;border:1px solid #f4c7c3">' + (t('clinic.delete') === 'clinic.delete' ? '削除' : t('clinic.delete')) + '</button>' +
     '</div>';
 
   try {
@@ -200,7 +200,7 @@ async function selectClinicPatient(patientId) {
           '<button onclick="showKitSentModal(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--emerald);border:1px solid var(--sage)">' + t('clinic.kitSent') + '</button>' +
           '<button onclick="releaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--emerald);color:#fff;border:none">' + t('clinic.releaseScores') + '</button>' +
           '<button onclick="unreleaseScores(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:var(--foam);color:var(--ink3);border:1px solid var(--border)">' + t('clinic.unrelease') + '</button>' +
-          '<button onclick="confirmDeletePatient(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:#fdecea;color:#B03A2E;border:1px solid #f4c7c3">' + t('clinic.delete') + '</button>' +
+          '<button onclick="confirmDeletePatient(\'' + patientId + '\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:#fdecea;color:#B03A2E;border:1px solid #f4c7c3">' + (t('clinic.delete') === 'clinic.delete' ? '削除' : t('clinic.delete')) + '</button>' +
         '</div>';
     } else {
       scores = await fetchScores(patientId);
@@ -1428,7 +1428,10 @@ function evMeta(cat) { return (_ev.assets.cats || []).find(function(c) { return 
 async function evLoadAssets() {
   if (_ev.assets) return;
   var res = await Promise.all([
-    fetch('/pathway_figures.json').then(function(r) { return r.json(); }),
+    fetch('/pathway_figures.json').then(function(r) {
+      if (!r.ok) throw new Error('図の定義ファイル(pathway_figures.json)が見つかりません(' + r.status + ')。サイトの一番上の階層に置かれているか確認してください。');
+      return r.json().catch(function() { throw new Error('図の定義ファイル(pathway_figures.json)の中身を読み込めません。'); });
+    }),
     dbSelect('eval_indicators', 'select=id,median_log2,mad_log2').catch(function() { return []; })
   ]);
   _ev.assets = res[0];
@@ -1491,10 +1494,20 @@ async function renderCatGrid(scores, patientId) {
   el.innerHTML = '<div class="ev-muted">' + t('clinic.loading') + '</div>';
   try {
     await evLoadAssets();
+  } catch (e) {
+    console.error(e);
+    el.innerHTML = '<div class="ev-warn">評価画面を表示できません。' + evEsc(e.message || e) + '</div>';
+    return;
+  }
+  try {
     _ev.rows = await evFetchRows(pid);
   } catch (e) {
-    console.error('評価データの取得に失敗', e);
-    el.innerHTML = '<div class="ev-muted">' + t('clinic.error') + '</div>';
+    console.error(e);
+    el.innerHTML = '<div class="ev-warn">評価データ(scores)を読み込めません。DBの手順1・2が完了しているか確認してください。<br>詳細:' + evEsc(e.message || e) + '</div>';
+    return;
+  }
+  if (!Object.keys(_ev.rows).length) {
+    el.innerHTML = '<div class="ev-muted">この測定日の評価データがありません(' + evEsc(pid) + ')。</div>';
     return;
   }
   _ev.pid = pid; _ev.patientId = patientId;
