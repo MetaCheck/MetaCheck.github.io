@@ -1418,7 +1418,7 @@ function evFcColor(fc) {
   var r = Math.round(255 - 200 * i), g2 = Math.round(255 - 150 * i); return 'rgb(' + r + ',' + g2 + ',255)';
 }
 function evBadge(g, size) {
-  if (!g) return '<span class="ev-none">—</span>';
+  if (!g) return '<span class="ev-none" title="評価なし">評価なし</span>';
   size = size || 24;
   return '<span class="rank-badge rank-' + g + '" style="width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * 0.52) + 'px;flex-shrink:0">' + g + '</span>';
 }
@@ -1462,26 +1462,14 @@ function renderScoreOverview(scores) {
 function evRenderOverview() {
   var el = document.getElementById('clinic-score-overview');
   if (!el) return;
-  var any = null;
-  Object.keys(_ev.rows).some(function(k) { if (_ev.rows[k].details) { any = _ev.rows[k].details; return true; } return false; });
-  var ci = any && any.ci != null ? Number(any.ci) : null;
-  var ciTxt = ci == null ? '' : Math.abs(ci) < 0.5 ? '標準的' : ci > 0 ? (ci >= 1 ? '濃い' : 'やや濃い') : (ci <= -1 ? '薄い' : 'やや薄い');
-  var flags = (any && any.flags) || [];
   var pri = evPriority();
-  var html = '<div class="ev-over">';
-  html += '<div class="ev-over__head"><span class="ev-over__title">まず見るカテゴリ</span>' +
-          (ci != null ? '<span class="ev-chip">検体全体の濃さ:' + ciTxt + '(' + evSgn(ci) + ')・補正済み</span>' : '') + '</div>';
+  var html = '<div class="ev-over"><div class="ev-over__head"><span class="ev-over__title">まず見るカテゴリ</span></div>';
   html += pri.length
     ? '<div class="ev-pri">' + pri.map(function(c, i) {
         return '<button type="button" class="ev-pri__item" onclick="evOpenCat(\'' + evEsc(c).replace(/\\/g, '\\\\') + '\')">' +
                '<span class="ev-pri__n">' + (i + 1) + '</span><span class="ev-pri__name">' + evEsc(evName(c)) + '</span>' + evBadge(_ev.rows[c].rank, 26) + '</button>';
       }).join('') + '</div>'
     : '<div class="ev-muted">D・E評価のカテゴリはありません。</div>';
-  if (flags.length) {
-    var ex = flags.slice(0, 4).map(function(f) { return evEsc(f[0]) + '(' + (f[1] >= 1 ? f[1].toFixed(1) : f[1].toFixed(2)) + '倍)'; }).join('、');
-    html += '<div class="ev-warn"><b>この検体の測定バッチでは、' + flags.length + '個の化合物が集団からまとめてずれています。</b>' +
-            '例:' + ex + '。これらの値は測定条件の影響を含む可能性があるため「⚠」を付けています。</div>';
-  }
   el.innerHTML = html + '</div>';
 }
 
@@ -1580,11 +1568,7 @@ function evFigureHtml(meta, det) {
     '<span><i class="ev-dot" style="border-color:#ff3737;background:#ff3737"></i>高い</span>';
   var finds = pats.length
     ? '<p class="ev-lead">タップすると、図の該当箇所に印が付きます。</p><ul class="ev-finds">' + pats.map(function(p, i) {
-        var notes = [];
-        if (p.keys.some(function(k) { return unst[k]; })) notes.push('採血後に変化しやすい物質を含む');
-        if (p.keys.some(function(k) { return flags[k] !== undefined; })) notes.push('⚠ 測定バッチの偏りがある物質を含む');
-        return '<li><button type="button" class="ev-find" aria-pressed="false" data-i="' + i + '"><b>' + p.kind + '</b><span>' + evEsc(p.text) + '</span>' +
-               (notes.length ? '<em>' + notes.join('/') + '</em>' : '') + '</button></li>';
+        return '<li><button type="button" class="ev-find" aria-pressed="false" data-i="' + i + '"><b>' + p.kind + '</b><span>' + evEsc(p.text) + '</span></button></li>';
       }).join('') + '</ul>'
     : '<p class="ev-muted">この患者では、図の流れに沿った目立つパターンは見つかりませんでした。</p>';
   return '<h4 class="ev-h4">' + evEsc(fig.title) + '</h4><p class="ev-lead">' + fig.desc + '</p>' +
@@ -1601,10 +1585,10 @@ function evBindFigure(meta, det) {
   svg.querySelectorAll('circle.nd').forEach(function(n) {
     var v = fc[n.dataset.key]; n.setAttribute('fill', v === undefined ? '#e5e7eb' : evFcColor(Number(v)));
     n.style.cursor = 'pointer';
-    n.addEventListener('click', function() { evShowCompound(n.dataset.key, v, flags[n.dataset.key]); });
+    n.addEventListener('click', function() { evShowCompound(n.dataset.key, v); });
   });
   svg.querySelectorAll('tspan.nv').forEach(function(tn) { var v = fc[tn.dataset.key]; tn.textContent = v === undefined ? ' 検出なし' : ' ' + evSgn(Number(v)); });
-  svg.querySelectorAll('tspan.fl').forEach(function(tn) { tn.textContent = flags[tn.dataset.key] !== undefined ? ' ⚠' : ''; });
+  svg.querySelectorAll('tspan.fl').forEach(function(tn) { tn.textContent = ''; });
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && svg.pauseAnimations) svg.pauseAnimations();
   var zb = document.getElementById('ev-zoom');
   zb.addEventListener('click', function() {
@@ -1626,7 +1610,7 @@ function evBindFigure(meta, det) {
 }
 
 // 化合物をタップしたときの説明(既存の臨床データベースを使用)
-async function evShowCompound(key, fc, flag) {
+async function evShowCompound(key, fc) {
   var el = document.getElementById('ev-cpd'); if (!el) return;
   try { if (typeof loadPathwayAssets === 'function') await loadPathwayAssets(); } catch (e) {}
   var db = (typeof _pathwayClinicalDb !== 'undefined' && _pathwayClinicalDb) ? _pathwayClinicalDb[key] : null;
@@ -1637,27 +1621,11 @@ async function evShowCompound(key, fc, flag) {
   el.innerHTML = '<div class="ev-cpd__head"><b>' + evEsc(key) + '</b><button type="button" onclick="document.getElementById(\'ev-cpd\').hidden=true" aria-label="閉じる">✕</button></div>' +
     (role ? '<p>' + evEsc(role) + '</p>' : '') +
     '<p class="ev-cpd__v">' + (v === null ? 'この患者では検出されていません。' :
-      '基準(集団の平均)からのずれ:<b>' + evSgn(v) + '</b>(基準の' + Math.pow(2, v).toFixed(2) + '倍・濃度補正後)') +
-    (flag !== undefined ? '<br><span class="ev-warn-t">⚠ この測定バッチでは、この化合物が集団からまとめてずれています(' + Number(flag).toFixed(2) + '倍)。</span>' : '') + '</p>' +
+      '基準(集団の平均)からのずれ:<b>' + evSgn(v) + '</b>(基準の' + Math.pow(2, v).toFixed(2) + '倍)') +
+    '</p>' +
     (hi ? '<p class="ev-cpd__hi"><b>高い場合:</b>' + evEsc(hi) + '</p>' : '') +
     (lo ? '<p class="ev-cpd__lo"><b>低い場合:</b>' + evEsc(lo) + '</p>' : '');
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-// ---- 全体のずれ(9カテゴリ):寄与の大きい化合物 ----
-function evContribHtml(det) {
-  var rows = (det && det.top) || [];
-  var flags = {}; ((det && det.flags) || []).forEach(function(f) { flags[f[0]] = true; });
-  if (!rows.length) return '<p class="ev-muted">検出された化合物がありません。</p>';
-  var max = Math.max.apply(null, rows.map(function(r) { return Math.abs(r[1]); }).concat([1]));
-  return '<h4 class="ev-h4">ずれへの寄与が大きい化合物</h4>' +
-    '<p class="ev-lead">「全体のずれ」は、このカテゴリに属する化合物のずれを重要度で重み付けして平均したものです。寄与の大きい順に表示しています。</p>' +
-    '<div class="ev-bars">' + rows.map(function(r) {
-      var v = Number(r[1]), w = Math.abs(v) / max * 50;
-      return '<div class="ev-bar"><span class="ev-bar__n" title="' + evEsc(r[0]) + '">' + evEsc(r[0]) + (flags[r[0]] ? ' ⚠' : '') + '</span>' +
-        '<span class="ev-bar__t"><i style="' + (v >= 0 ? 'left:50%;width:' + w + '%' : 'right:50%;width:' + w + '%') + ';background:' + evFcColor(v > 0 ? 2.2 : -2.2) + '"></i></span>' +
-        '<span class="ev-bar__v">' + evSgn(v) + '</span></div>';
-    }).join('') + '</div><p class="ev-note">棒は基準(集団の平均)からのずれ(log2・濃度補正後)。左が低い、右が高い。</p>';
 }
 
 // ---- 定量評価 ----
@@ -1692,28 +1660,22 @@ function evZoneStrip(meta, cal, value) {
 
 function evIndicatorsHtml(cat, det) {
   var list = (det && det.indicators) || [];
-  var flags = {}; ((det && det.flags) || []).forEach(function(f) { flags[f[0]] = true; });
-  var unst = {}; (_ev.assets.unstable || []).forEach(function(k) { unst[k] = true; });
   var defs = _ev.assets.ind;
-  var mineIds = Object.keys(defs).filter(function(id) { return defs[id].cat === cat || (defs[id].also || []).indexOf(cat) >= 0; });
+  var ids = Object.keys(defs).filter(function(id) {
+    var m = defs[id];
+    return (m.cat === cat || (m.also || []).indexOf(cat) >= 0) && (m.conf === '高' || m.conf === '中');
+  });
   var byId = {}; list.forEach(function(r) { byId[r.id] = r; });
-  var row = function(id) {
+  if (!ids.length) return '<p class="ev-muted">このカテゴリで使える定量指標は、まだありません。</p>';
+  return '<p class="ev-lead">タップすると、集団の中での位置(色の帯はA〜Eの範囲)を表示します。</p>' + ids.map(function(id) {
     var m = defs[id], r = byId[id];
-    var flagged = m.keys.some(function(k) { return flags[k]; }), un = m.keys.some(function(k) { return unst[k]; });
+    var med = _ev.calib[id] && _ev.calib[id].median_log2 != null ? Math.pow(2, Number(_ev.calib[id].median_log2)) : null;
     return '<div class="ev-ind"><button type="button" class="ev-ind__btn" aria-expanded="false">' +
       '<span class="ev-ind__n">' + evEsc(m.name) + '</span>' + (r ? evBadge(r.grade, 28) : '<span class="ev-none">データなし</span>') +
-      '<span class="ev-ind__v">' + (r ? 'この患者 ' + evFmt(Number(r.value)) + (_ev.calib[id] && _ev.calib[id].median_log2 != null ? '　/　集団の中央値 ' + evFmt(Math.pow(2, Number(_ev.calib[id].median_log2))) : '') : 'この患者では計算できません') +
-      (flagged ? ' <i>⚠ 測定バッチの偏りあり</i>' : '') + '</span></button>' +
-      '<div class="ev-ind__x" hidden><div>' + evEsc(m.mean) + (m.clin ? '(臨床基準 D:' + m.clin.D + ' / E:' + m.clin.E + ')' : '') +
-      (un ? '<br>※採血後に変化しやすい物質を含みます。' : '') + '</div>' + (r ? evZoneStrip(m, _ev.calib[id], Number(r.value)) : '') + '</div></div>';
-  };
-  var main = mineIds.filter(function(id) { return defs[id].conf === '高' || defs[id].conf === '中'; });
-  var ref = mineIds.filter(function(id) { return !(defs[id].conf === '高' || defs[id].conf === '中'); });
-  var h = main.length ? '<p class="ev-lead">タップすると、集団の中での位置(色の帯はA〜Eの範囲)を表示します。</p>' + main.map(row).join('')
-                      : '<p class="ev-muted">このカテゴリで使える定量指標は、まだありません。</p>';
-  if (ref.length) h += '<details class="ev-ref"><summary>参考表示の指標(' + ref.length + '件・ランクに反映していません)</summary>' +
-    '<p class="ev-note">測定バッチへの偏りが見つかった指標、または確立度が低い指標です。</p>' + ref.map(row).join('') + '</details>';
-  return h;
+      '<span class="ev-ind__v">' + (r ? 'この患者 ' + evFmt(Number(r.value)) + (med != null ? '　/　集団の中央値 ' + evFmt(med) : '') : 'この患者では検出されず、計算できません') + '</span></button>' +
+      '<div class="ev-ind__x" hidden><div>' + evEsc(m.mean) + (m.clin ? '(臨床基準 D:' + m.clin.D + ' / E:' + m.clin.E + ')' : '') + '</div>' +
+      (r ? evZoneStrip(m, _ev.calib[id], Number(r.value)) : '') + '</div></div>';
+  }).join('');
 }
 
 // ---- 既存関数の置き換え:カテゴリ詳細 ----
@@ -1723,58 +1685,54 @@ async function selectClinicCat(cardEl, patientId, category, noScroll) {
   if (cardEl) cardEl.classList.add('active');
   var detail = document.getElementById('clinic-cat-detail');
   if (!detail) return;
-  try { await evLoadAssets(); } catch (e) { detail.innerHTML = '<div class="ev-muted">' + t('clinic.error') + '</div>'; return; }
+  try { await evLoadAssets(); } catch (e) { detail.innerHTML = '<div class="ev-warn">' + evEsc(e.message || e) + '</div>'; return; }
   var r = _ev.rows[category];
   if (!r) { detail.innerHTML = '<div class="ev-muted">' + t('clinic.noData') + '</div>'; return; }
   _ev.cur = category;
   var meta = evMeta(category), det = r.details || {};
-  var legacyTabs =
-    '<div style="display:flex;border-bottom:1px solid var(--border);margin:4px 0 16px">' +
-      '<button class="pt-tab pt-tab--active" onclick="switchClinicTab(this,\'metabolite\')">' + t('clinic.tab.metabolite') + '</button>' +
-      '<button class="pt-tab" onclick="switchClinicTab(this,\'clinical\')">' + t('clinic.interpretation') + '</button>' +
-      '<button class="pt-tab" onclick="switchClinicTab(this,\'patient\')">' + t('clinic.tab.patient') + '</button>' +
-    '</div>' +
-    '<div id="clinic-tab-metabolite"><div id="clinic-trend-chart" style="margin-bottom:12px"></div>' +
-      '<div id="clinic-metabolite-table"><div style="color:var(--ink4);font-size:12px">' + t('clinic.loading') + '</div></div></div>' +
-    '<div id="clinic-tab-clinical" style="display:none"><div id="clinic-insights-clinical"></div></div>' +
-    '<div id="clinic-tab-patient" style="display:none"><div id="clinic-insights-patient"></div></div>';
+  var catDescText = (typeof CAT_DESC !== 'undefined' && CAT_DESC[currentLang] && CAT_DESC[currentLang][category]) || meta.desc;
+  var metab = '<div id="clinic-trend-chart" style="margin-bottom:12px"></div>' +
+    '<div id="clinic-metabolite-table"><div style="color:var(--ink4);font-size:12px">' + t('clinic.loading') + '</div></div>';
+  var hero = function(extra) {
+    return '<div class="ev-hero">' + (r.rank ? evBadge(r.rank, 56) : '<span class="ev-hero__none">評価<br>なし</span>') +
+      '<div><div class="ev-hero__name">' + evEsc(evName(category)) + '</div><div class="ev-hero__desc">' + evEsc(catDescText) + '</div>' + (extra || '') + '</div></div>';
+  };
+  var sec = function(n, title, body, id) {
+    return '<section class="ev-sec"' + (id ? ' id="' + id + '"' : '') + '><div class="ev-sec__t"><span>' + n + '</span>' + title + '</div>' + body + '</section>';
+  };
+
   // 公開済み(凍結)で、旧方式の評価のまま確定している場合は、内訳を出さない
   if (!r.details) {
-    detail.innerHTML =
-      '<div class="ev-hero">' + evBadge(r.rank, 56) + '<div><div class="ev-hero__name">' + evEsc(evName(category)) + '</div>' +
-        '<div class="ev-hero__desc">' + evEsc(meta.desc) + '</div></div></div>' +
+    detail.innerHTML = hero('') +
       '<div class="ev-basis"><p class="ev-note" style="margin:10px 0 0">この評価は、結果を公開した時点の方式で確定しています。評価の内訳(経路図・定量評価)は表示できません。</p></div>' +
-      '<section class="ev-sec"><div class="ev-sec__t"><span>1</span>個別の代謝物・コメント</div>' + legacyTabs + '</section>';
+      sec(1, '個別の代謝物', metab);
     if (!noScroll) detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
     evLoadLegacy(patientId, category);
     return;
   }
-  var compLab = r.comp_src === 'pathway' ? ['経路図の評価', '図に描かれた化合物のずれ(入口・出口・律速を重視)'] :
-                r.comp_src === 'overall_fallback' ? ['全体のずれ', '図の化合物の検出が少ないため、カテゴリ全体のずれで代替'] :
-                ['全体のずれ', 'カテゴリに属する化合物全体のずれ'];
-  var hasQ = !!r.quant_rank;
-  var decides = function(g) { return g && g === r.rank && r.rank !== 'A'; };
-  var basisRow = function(label, sub, g, target) {
-    return '<button type="button" class="ev-basis__row' + (decides(g) ? ' ev-basis__row--key' : '') + '" onclick="evJump(\'' + target + '\')">' +
-      '<span class="ev-basis__lab">' + label + '<small>' + sub + '</small>' + (decides(g) ? '<em>この評価が総合評価を決めています</em>' : '') + '</span>' + evBadge(g, 32) + '</button>';
-  };
+
   var pri = evPriority(), idx = pri.indexOf(category);
   var next = idx >= 0 ? pri[idx + 1] : pri[0];
-  var catDescText = (typeof CAT_DESC !== 'undefined' && CAT_DESC[currentLang] && CAT_DESC[currentLang][category]) || meta.desc;
+  var row = function(label, sub, g, target) {
+    return '<button type="button" class="ev-basis__row" onclick="evJump(\'' + target + '\')">' +
+      '<span class="ev-basis__lab">' + label + '<small>' + sub + '</small></span>' + evBadge(g, 32) + '</button>';
+  };
+  var basis;
+  if (meta.fig) {
+    basis = row('経路図の評価', r.comp_rank ? '図に描かれた化合物のずれ(入口・出口・律速を重視)' : '図の化合物の検出が少ないため、評価していません', r.comp_rank, 'ev-sec-comp') +
+            row('定量評価', r.quant_rank ? 'このカテゴリの指標のうち最も悪いもの' : '計算できる指標がありません', r.quant_rank, 'ev-sec-quant') +
+            '<p class="ev-note">総合評価は、この2つのうち悪い方です。いずれも集団の中での相対的な位置で評価しています(臨床基準がある指標は基準値で判定)。</p>';
+  } else {
+    basis = row('定量評価', r.quant_rank ? 'このカテゴリの指標のうち最も悪いもの' : '計算できる指標がありません', r.quant_rank, 'ev-sec-quant') +
+            '<p class="ev-note">このカテゴリは、数値の指標で評価しています。集団の中での相対的な位置で評価しています(臨床基準がある指標は基準値で判定)。</p>';
+  }
+  var n = 1, body = '';
+  if (meta.fig) body += sec(n++, '経路図で流れを見る', evFigureHtml(meta, det), 'ev-sec-comp');
+  body += sec(n++, '数値の指標で確かめる', evIndicatorsHtml(category, det), 'ev-sec-quant');
+  body += sec(n++, '個別の代謝物', metab);
 
-  detail.innerHTML =
-    '<div class="ev-hero">' + evBadge(r.rank, 56) + '<div><div class="ev-hero__name">' + evEsc(evName(category)) + '</div>' +
-      '<div class="ev-hero__desc">' + evEsc(catDescText) + '</div>' +
-      (idx >= 0 ? '<div class="ev-hero__pos">要注意 ' + (idx + 1) + ' / ' + pri.length + '</div>' : '') + '</div></div>' +
-    '<div class="ev-basis">' +
-      basisRow(compLab[0], compLab[1], r.comp_rank, 'ev-sec-comp') +
-      basisRow('定量評価', hasQ ? 'このカテゴリの指標のうち最も悪いもの' : '使える指標がないため評価なし', r.quant_rank, 'ev-sec-quant') +
-      '<p class="ev-note">総合評価は、この2つのうち悪い方です。いずれも集団の中での相対的な位置で評価しています(臨床基準がある指標は基準値で判定)。</p>' +
-    '</div>' +
-    '<section class="ev-sec" id="ev-sec-comp"><div class="ev-sec__t"><span>1</span>' + (meta.fig ? '経路図で流れを見る' : 'ずれの内訳を見る') + '</div>' +
-      (meta.fig ? evFigureHtml(meta, det) : evContribHtml(det)) + '</section>' +
-    '<section class="ev-sec" id="ev-sec-quant"><div class="ev-sec__t"><span>2</span>数値の指標で確かめる</div>' + evIndicatorsHtml(category, det) + '</section>' +
-    '<section class="ev-sec"><div class="ev-sec__t"><span>3</span>個別の代謝物・コメント</div>' + legacyTabs + '</section>' +
+  detail.innerHTML = hero(idx >= 0 ? '<div class="ev-hero__pos">要注意 ' + (idx + 1) + ' / ' + pri.length + '</div>' : '') +
+    '<div class="ev-basis">' + basis + '</div>' + body +
     (next && next !== category ? '<button type="button" class="ev-next" onclick="evOpenCat(\'' + evEsc(next).replace(/\\/g, '\\\\') + '\')">' +
       '<span>次の要注意カテゴリへ</span><b>' + evEsc(evName(next)) + '</b>' + evBadge(_ev.rows[next].rank, 26) + '</button>' : '');
 
@@ -1784,23 +1742,12 @@ async function selectClinicCat(cardEl, patientId, category, noScroll) {
       b.setAttribute('aria-expanded', String(!o)); x.hidden = o; });
   });
   if (!noScroll) detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
   evLoadLegacy(patientId, category);
 }
 
-// 既存:個別代謝物の推移・解釈・患者向けコメント(介入は表示しない)
+// 既存:個別代謝物の推移と表
 function evLoadLegacy(patientId, category) {
   loadClinicMetaboliteData(patientId, category);
-  fetchInsightsByCategory(patientId, category).then(function(ins) {
-    var clinEl = document.getElementById('clinic-insights-clinical'), patEl = document.getElementById('clinic-insights-patient');
-    var none = '<div style="color:var(--ink4);font-size:13px;padding:12px">' + t('clinic.noData') + '</div>';
-    if (clinEl) clinEl.innerHTML = (ins && insightField(ins, 'interpretation'))
-      ? '<div class="insight-box insight-box--blue"><div class="insight-label">' + t('clinic.interpretation') + '</div><div style="font-size:13px;color:var(--ink2);line-height:1.9;white-space:pre-wrap">' + insightField(ins, 'interpretation') + '</div></div>'
-      : none;
-    if (patEl) patEl.innerHTML = (ins && insightField(ins, 'patient_comment'))
-      ? '<div class="insight-box insight-box--amber"><div class="insight-label">' + t('clinic.patientLabel') + '</div><div style="font-size:13px;color:var(--ink2);line-height:1.9;white-space:pre-wrap">' + insightField(ins, 'patient_comment') + '</div></div>'
-      : none;
-  }).catch(function() {});
 }
 
 function evJump(id) { var el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }

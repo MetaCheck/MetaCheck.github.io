@@ -501,10 +501,11 @@ html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--for
 .ev-sec__t span{width:22px;height:22px;border-radius:50%;background:var(--emerald);color:#fff;font-size:12px;display:grid;place-items:center}
 .ev-h4{font-size:13.5px;font-weight:700;color:var(--ink2);margin:6px 0 4px}
 .ev-lead{font-size:12px;color:var(--ink3);line-height:1.7;margin:0 0 8px}
-.ev-figbox{position:relative;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ev-figbox{position:relative;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;max-width:560px;margin:0 auto}
+.ev-hero__none{width:56px;height:56px;border-radius:14px;background:var(--paper);border:1px dashed var(--border);color:var(--ink4);font-size:11px;line-height:1.3;display:grid;place-items:center;text-align:center;flex-shrink:0}
 .ev-figbox svg.pw{display:block;width:100%;height:auto}
 .ev-zoom{position:absolute;right:8px;top:8px;border:1px solid var(--border);background:rgba(255,255,255,.92);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink2);min-height:34px}
-.ev-figbox--zoom{position:fixed;inset:0;z-index:9500;border-radius:0;overflow:auto}
+.ev-figbox--zoom{position:fixed;inset:0;z-index:9500;border-radius:0;overflow:auto;max-width:none;margin:0}
 .ev-figbox--zoom svg.pw{width:max(900px,170vw);max-width:none}
 .ev-figbox--zoom .ev-zoom{position:fixed;top:12px;right:12px}
 .ev-legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin:8px 2px 0;font-size:11px;color:var(--ink3)}
@@ -1439,7 +1440,7 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script src="patient.js"></script>
-<script src="clinic.js?v=20260928b"></script>
+<script src="clinic.js?v=20260929a"></script>
 <script src="app.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', async function() {
