@@ -1519,41 +1519,36 @@ function evRender() {
 
 // ═══ 全体サマリ ═══
 function evSummaryHtml() {
-  var cats = _ev.assets.cats;
+  var cats = _ev.assets.cats, order = cats.map(function(c) { return c.en; });
   var cnt = { A: 0, B: 0, C: 0, D: 0, E: 0, N: 0 };
   cats.forEach(function(c) { var r = _ev.rows[c.en]; cnt[(r && r.rank) || 'N']++; });
-  var bar = '<div class="ev-dist" role="img" aria-label="16カテゴリの評価の内訳">' + ['A', 'B', 'C', 'D', 'E'].map(function(g) {
+  var bar = '<div class="ev-dist" role="img" aria-label="16カテゴリの総合評価の内訳">' + ['A', 'B', 'C', 'D', 'E'].map(function(g) {
       return cnt[g] ? '<span class="ev-dist__seg rank-' + g + '" style="flex:' + cnt[g] + '"><b>' + g + '</b>' + cnt[g] + '</span>' : '';
     }).join('') + (cnt.N ? '<span class="ev-dist__seg ev-dist__seg--n" style="flex:' + cnt.N + '">評価なし ' + cnt.N + '</span>' : '') + '</div>';
-
-  var pri = evPriority();
-  var reason = function(c) {
-    var r = _ev.rows[c], out = [];
-    if (evMeta(c).fig && r.comp_rank) out.push('<span class="ev-why">経路図 ' + evBadge(r.comp_rank, 18) + '</span>');
-    evIndsOf(c).forEach(function(id) {
-      var x = evIndResult(c, id);
-      if (x && (x.grade === 'D' || x.grade === 'E')) out.push('<span class="ev-why">' + evEsc(_ev.assets.ind[id].label || _ev.assets.ind[id].name) + ' ' + evBadge(x.grade, 18) + '</span>');
-    });
-    return out.slice(0, 3).join('');
+  var rk = function(c) { var r = _ev.rows[c]; return r && r.rank ? EV_ORD.indexOf(r.rank) : -1; };
+  var sorted = order.slice().sort(function(a, b) { return rk(b) - rk(a) || order.indexOf(a) - order.indexOf(b); });
+  var cell = function(g, cat, tab, label) {
+    if (g === undefined) return '<td class="ev-mx__c ev-mx__c--na"><span>図なし</span></td>';
+    return '<td class="ev-mx__c"><button type="button" class="ev-mx__b ' + (g ? 'ev-mx__b--' + g : 'ev-mx__b--n') + '" onclick="evOpenCat(\'' + evJs(cat) + '\',\'' + tab + '\')" aria-label="' + evEsc(evName(cat)) + ' ' + label + ' ' + (g || '評価なし') + '">' + (g || '—') + '</button></td>';
   };
-  var priHtml = pri.length ? '<div class="ev-pcards">' + pri.map(function(c, i) {
-      var r = _ev.rows[c];
-      return '<button type="button" class="ev-pcard ev-pcard--' + r.rank + '" onclick="evOpenCat(\'' + evJs(c) + '\')">' +
-        '<span class="ev-pcard__g">' + r.rank + '</span><span class="ev-pcard__b"><span class="ev-pcard__n">' + (i + 1) + '. ' + evEsc(evName(c)) + '</span>' +
-        '<span class="ev-pcard__why">' + reason(c) + '</span></span></button>';
-    }).join('') + '</div>'
-    : '<div class="ev-muted">D・E評価のカテゴリはありません。</div>';
-
-  var tile = function(c) {
-    var r = _ev.rows[c.en], g = r && r.rank;
-    return '<button type="button" class="ev-tile ' + (g ? 'ev-tile--' + g : 'ev-tile--n') + '" onclick="evOpenCat(\'' + evJs(c.en) + '\')">' +
-      '<span class="ev-tile__g">' + (g || '—') + '</span><span class="ev-tile__n">' + evEsc(evName(c.en)) + '</span></button>';
-  };
+  var rows = sorted.map(function(c) {
+    var r = _ev.rows[c] || {}, fig = !!evMeta(c).fig, bad = r.rank === 'D' || r.rank === 'E';
+    var why = [];
+    if (bad) {
+      if (fig && (r.comp_rank === 'D' || r.comp_rank === 'E')) why.push('経路図の流れ');
+      evIndsOf(c).forEach(function(id) { var x = evIndResult(c, id); if (x && (x.grade === 'D' || x.grade === 'E')) why.push(_ev.assets.ind[id].label || _ev.assets.ind[id].name); });
+    }
+    return '<tr class="' + (bad ? 'ev-mx__r--bad' : '') + '"><th scope="row"><button type="button" class="ev-mx__name" onclick="evOpenCat(\'' + evJs(c) + '\')">' + evEsc(evName(c)) + '</button>' +
+      (why.length ? '<div class="ev-mx__why">' + evEsc(why.slice(0, 2).join('・')) + (why.length > 2 ? ' ほか' : '') + '</div>' : '') + '</th>' +
+      cell(r.rank || null, c, fig ? 'pathway' : 'indicator', '総合') +
+      (fig ? cell(r.comp_rank || null, c, 'pathway', '経路図') : cell(undefined)) +
+      cell(r.quant_rank || null, c, 'indicator', '指標') + '</tr>';
+  }).join('');
   return '<div class="ev-sum">' +
-    '<div class="ev-sum__block"><div class="ev-sum__t">16カテゴリの評価の内訳</div>' + bar + '</div>' +
-    '<div class="ev-sum__block"><div class="ev-sum__t">まず見るカテゴリ<small>D・Eを悪い順に。タップすると詳しい評価を開きます</small></div>' + priHtml + '</div>' +
-    '<div class="ev-sum__block"><div class="ev-sum__t">経路図で評価するカテゴリ</div><div class="ev-tiles">' + cats.filter(function(c) { return c.fig; }).map(tile).join('') + '</div>' +
-      '<div class="ev-sum__t" style="margin-top:14px">指標で評価するカテゴリ</div><div class="ev-tiles">' + cats.filter(function(c) { return !c.fig; }).map(tile).join('') + '</div></div>' +
+    '<div class="ev-sum__block"><div class="ev-sum__t">16カテゴリの総合評価の内訳</div>' + bar + '</div>' +
+    '<div class="ev-sum__block"><div class="ev-sum__t">カテゴリ別の評価<small>悪い順。マスをタップすると、その評価の詳細を開きます</small></div>' +
+      '<div class="ev-mx-wrap"><table class="ev-mx"><thead><tr><th scope="col">カテゴリ</th><th scope="col">総合</th><th scope="col">経路図</th><th scope="col">指標</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<p class="ev-note">総合 = 経路図と指標のうち悪い方。経路図の評価は、代謝の流れを図で示せる7カテゴリのみです。</p></div>' +
     '</div>';
 }
 

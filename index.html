@@ -597,11 +597,28 @@ svg.pw .ring.on{opacity:1;animation:evring 1.2s ease-in-out infinite}
 .ev-pw__fig{margin-bottom:12px}
 .ev-pw .ev-figbox{max-width:none}
 @media(min-width:900px){
-  .ev-pw{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
-  .ev-pw__fig{position:sticky;top:12px;margin-bottom:0}
-  .ev-pw .ev-figbox svg.pw{max-height:calc(100vh - 230px)}
+  .ev-pw{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:24px;align-items:start}
+  .ev-pw__fig{margin-bottom:0}
+  .ev-pw__side{position:sticky;top:12px}
   .ev-pw__side .ev-h4{margin-top:16px}
 }
+.ev-mx-wrap{overflow-x:auto;max-width:640px}
+.ev-mx{width:100%;border-collapse:separate;border-spacing:0 4px}
+.ev-mx thead th{font-size:11px;font-weight:600;color:var(--ink4);text-align:center;padding:0 4px 2px}
+.ev-mx thead th:first-child{text-align:left}
+.ev-mx tbody th{text-align:left;font-weight:400;padding:6px 8px 6px 10px;background:var(--paper);border-radius:8px 0 0 8px;border-left:4px solid transparent}
+.ev-mx tbody tr.ev-mx__r--bad th{border-left-color:var(--rank-e)}
+.ev-mx__name{border:0;background:none;padding:0;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;text-align:left}
+.ev-mx__why{font-size:11px;color:var(--rank-e);margin-top:2px;line-height:1.4}
+.ev-mx__c{width:64px;padding:0 3px;background:var(--paper);text-align:center}
+.ev-mx__c:last-child{border-radius:0 8px 8px 0}
+.ev-mx__c--na span{font-size:10px;color:var(--ink4)}
+.ev-mx__b{width:100%;min-width:44px;height:40px;border:0;border-radius:8px;font-family:inherit;font-size:18px;font-weight:700;cursor:pointer}
+.ev-mx__b--A{background:var(--rank-a-bg);color:var(--rank-a)}.ev-mx__b--B{background:var(--rank-b-bg);color:var(--rank-b)}
+.ev-mx__b--C{background:var(--rank-c-bg);color:var(--rank-c)}.ev-mx__b--D{background:var(--rank-d-bg);color:var(--rank-d)}
+.ev-mx__b--E{background:var(--rank-e-bg);color:var(--rank-e)}.ev-mx__b--n{background:var(--white);color:var(--ink4);border:1px dashed var(--border);font-size:13px}
+.ev-mx__b:hover{outline:2px solid var(--emerald)}
+@media(max-width:480px){.ev-mx__c{width:50px}.ev-mx__b{height:36px;font-size:16px;min-width:38px}}
 .ev-cpd .ev-on{outline:2px solid currentColor}
 .ev-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .ev-card{border:1px solid var(--border);border-radius:12px;background:var(--white);padding:14px 14px 12px;border-top:4px solid var(--border)}
@@ -1511,7 +1528,7 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script src="patient.js"></script>
-<script src="clinic.js?v=20260929c"></script>
+<script src="clinic.js?v=20260929d"></script>
 <script src="app.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', async function() {
