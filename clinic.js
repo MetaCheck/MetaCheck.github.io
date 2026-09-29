@@ -1394,8 +1394,8 @@ function togglePathwayPatterns() {
 })();
 
 // ═══════════════════════════════════════════════════════════
-//  評価画面 v2(全体サマリ / 経路図での評価 / 指標評価)
-//  総合評価 = 悪い方(経路図の評価, 定量評価)。DBのscoresに保存済みの値を表示する
+//  評価画面 v2(全体サマリ / 経路図評価 / 指標評価)
+//  総合評価 = 悪い方(経路図評価, 指標評価)。DBのscoresに保存済みの値を表示する
 // ═══════════════════════════════════════════════════════════
 var _ev = { assets: null, calib: {}, rows: {}, pid: null, patientId: null, tab: 'summary', cur: null, pats: [] };
 var EV_ORD = 'ABCDE';
@@ -1426,10 +1426,15 @@ async function evLoadAssets() {
       if (!r.ok) throw new Error('図の定義ファイル(pathway_figures.json)が見つかりません(' + r.status + ')。');
       return r.json();
     }),
-    dbSelect('eval_indicators', 'select=id,median_log2,mad_log2,hist').catch(function() { return []; })
+    dbSelect('eval_indicators', 'select=*').catch(function(e) { _ev.calibErr = String((e && e.message) || e); return []; })
   ]);
   _ev.assets = res[0];
   (res[1] || []).forEach(function(c) { _ev.calib[c.id] = c; });
+  if (!_ev.calibErr) {
+    var n = Object.keys(_ev.calib).length, nm = Object.keys(_ev.calib).filter(function(k) { return _ev.calib[k].median_log2 != null; }).length;
+    if (!n) _ev.calibErr = 'eval_indicatorsの行が読めません(0行)。アクセス設定(手順3)が未実行の可能性があります。';
+    else if (!nm) _ev.calibErr = 'eval_indicatorsに集団の中央値がありません。手順2(基準値の計算)が未実行の可能性があります。';
+  }
 }
 
 async function evFetchRows(pid) {
@@ -1526,29 +1531,34 @@ function evSummaryHtml() {
       return cnt[g] ? '<span class="ev-dist__seg rank-' + g + '" style="flex:' + cnt[g] + '"><b>' + g + '</b>' + cnt[g] + '</span>' : '';
     }).join('') + (cnt.N ? '<span class="ev-dist__seg ev-dist__seg--n" style="flex:' + cnt.N + '">評価なし ' + cnt.N + '</span>' : '') + '</div>';
   var rk = function(c) { var r = _ev.rows[c]; return r && r.rank ? EV_ORD.indexOf(r.rank) : -1; };
-  var sorted = order.slice().sort(function(a, b) { return rk(b) - rk(a) || order.indexOf(a) - order.indexOf(b); });
+  var sortBad = function(list) { return list.slice().sort(function(a, b) { return rk(b) - rk(a) || order.indexOf(a) - order.indexOf(b); }); };
   var cell = function(g, cat, tab, label) {
-    if (g === undefined) return '<td class="ev-mx__c ev-mx__c--na"><span>図なし</span></td>';
     return '<td class="ev-mx__c"><button type="button" class="ev-mx__b ' + (g ? 'ev-mx__b--' + g : 'ev-mx__b--n') + '" onclick="evOpenCat(\'' + evJs(cat) + '\',\'' + tab + '\')" aria-label="' + evEsc(evName(cat)) + ' ' + label + ' ' + (g || '評価なし') + '">' + (g || '—') + '</button></td>';
   };
-  var rows = sorted.map(function(c) {
-    var r = _ev.rows[c] || {}, fig = !!evMeta(c).fig, bad = r.rank === 'D' || r.rank === 'E';
-    var why = [];
-    if (bad) {
-      if (fig && (r.comp_rank === 'D' || r.comp_rank === 'E')) why.push('経路図の流れ');
-      evIndsOf(c).forEach(function(id) { var x = evIndResult(c, id); if (x && (x.grade === 'D' || x.grade === 'E')) why.push(_ev.assets.ind[id].label || _ev.assets.ind[id].name); });
-    }
-    return '<tr class="' + (bad ? 'ev-mx__r--bad' : '') + '"><th scope="row"><button type="button" class="ev-mx__name" onclick="evOpenCat(\'' + evJs(c) + '\')">' + evEsc(evName(c)) + '</button>' +
-      (why.length ? '<div class="ev-mx__why">' + evEsc(why.slice(0, 2).join('・')) + (why.length > 2 ? ' ほか' : '') + '</div>' : '') + '</th>' +
-      cell(r.rank || null, c, fig ? 'pathway' : 'indicator', '総合') +
-      (fig ? cell(r.comp_rank || null, c, 'pathway', '経路図') : cell(undefined)) +
-      cell(r.quant_rank || null, c, 'indicator', '指標') + '</tr>';
-  }).join('');
+  var nameCell = function(c, tab) {
+    var r = _ev.rows[c] || {};
+    return '<th scope="row"><button type="button" class="ev-mx__name" onclick="evOpenCat(\'' + evJs(c) + '\',\'' + tab + '\')">' + evEsc(evName(c)) + '</button></th>';
+  };
+  var rowCls = function(c) { var r = _ev.rows[c] || {}; return (r.rank === 'D' || r.rank === 'E') ? ' class="ev-mx__r--bad"' : ''; };
+  var figCats = sortBad(order.filter(function(c) { return evMeta(c).fig; }));
+  var indCats = sortBad(order.filter(function(c) { return !evMeta(c).fig; }));
+  var left = '<table class="ev-mx"><thead><tr><th scope="col">カテゴリ</th><th scope="col">総合</th><th scope="col">経路図</th><th scope="col">指標</th></tr></thead><tbody>' +
+    figCats.map(function(c) { var r = _ev.rows[c] || {};
+      return '<tr' + rowCls(c) + '>' + nameCell(c, 'pathway') + cell(r.rank, c, 'pathway', '総合') + cell(r.comp_rank, c, 'pathway', '経路図') + cell(r.quant_rank, c, 'indicator', '指標') + '</tr>';
+    }).join('') + '</tbody></table>';
+  var right = '<table class="ev-mx"><thead><tr><th scope="col">カテゴリ</th><th scope="col">評価</th></tr></thead><tbody>' +
+    indCats.map(function(c) { var r = _ev.rows[c] || {};
+      return '<tr' + rowCls(c) + '>' + nameCell(c, 'indicator') + cell(r.rank, c, 'indicator', '評価') + '</tr>';
+    }).join('') + '</tbody></table>';
   return '<div class="ev-sum">' +
     '<div class="ev-sum__block"><div class="ev-sum__t">16カテゴリの総合評価の内訳</div>' + bar + '</div>' +
-    '<div class="ev-sum__block"><div class="ev-sum__t">カテゴリ別の評価<small>悪い順。マスをタップすると、その評価の詳細を開きます</small></div>' +
-      '<div class="ev-mx-wrap"><table class="ev-mx"><thead><tr><th scope="col">カテゴリ</th><th scope="col">総合</th><th scope="col">経路図</th><th scope="col">指標</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-      '<p class="ev-note">総合 = 経路図と指標のうち悪い方。経路図の評価は、代謝の流れを図で示せる7カテゴリのみです。</p></div>' +
+    '<div class="ev-sum2">' +
+      '<div class="ev-sum__block"><div class="ev-sum__t">経路図と指標で評価(7カテゴリ)</div>' + left +
+        '<p class="ev-note">総合 = 経路図と指標のうち悪い方。悪い順に並んでいます。</p></div>' +
+      '<div class="ev-sum__block"><div class="ev-sum__t">指標で評価(9カテゴリ)</div>' + right +
+        '<p class="ev-note">悪い順に並んでいます。</p></div>' +
+    '</div>' +
+    '<p class="ev-note" style="margin:0 2px">左の赤い線はD・E評価のカテゴリです。マスをタップすると、その評価の詳細を開きます。</p>' +
     '</div>';
 }
 
@@ -1567,7 +1577,7 @@ function evNextBtn(cat, tab) {
     evEsc(evName(next)) + '</b>' + evBadge(_ev.rows[next].rank, 26) + '</button>';
 }
 
-// ═══ 経路図での評価 ═══
+// ═══ 経路図評価 ═══
 function evFindPatterns(fig, fc) {
   var val = function(k) { return (k && fc && fc[k] !== undefined) ? Number(fc[k]) : null; };
   var out = [];
@@ -1600,7 +1610,7 @@ function evPathwayHtml(cat) {
   var chips = evChips(_ev.assets.cats.filter(function(c) { return c.fig; }), 'pathway');
   var head = '<div class="ev-head">' + evBadge(r.rank, 48) + '<div><div class="ev-head__n">' + evEsc(evName(cat)) + '</div><div class="ev-head__d">' + evEsc(evDesc(cat)) + '</div></div></div>';
   if (!r.details) {
-    return chips + head + '<div class="ev-panel"><p class="ev-note">この評価は、結果を公開した時点の方式で確定しています。経路図・定量評価の内訳は表示できません。</p></div>';
+    return chips + head + '<div class="ev-panel"><p class="ev-note">この評価は、結果を公開した時点の方式で確定しています。経路図・指標評価の内訳は表示できません。</p></div>';
   }
   var pats = evFindPatterns(fig, det.fc || {}); _ev.pats = pats;
   var roleLab = { entry: ['入口', '#059669'], mid: ['中間', '#334155'], exit: ['出口', '#dc2626'], branch: ['分岐先', '#d97706'], rate: ['律速段階', '#7c3aed'] };
@@ -1616,9 +1626,9 @@ function evPathwayHtml(cat) {
       }).join('') + '</ul>'
     : '<p class="ev-muted">この患者では、図の流れに沿った目立つパターンは見つかりませんでした。</p>';
   var basis = '<div class="ev-basis2">' +
-    '<div><span>経路図の評価</span>' + evBadge(r.comp_rank, 28) + '</div>' +
-    '<div><span>定量評価</span>' + evBadge(r.quant_rank, 28) + '<button type="button" class="ev-link" onclick="evTab(\'indicator\',\'' + evJs(cat) + '\')">指標を見る ›</button></div>' +
-    '<p class="ev-note">総合評価は2つのうち悪い方です。' + (r.comp_rank ? '経路図の評価は、図の化合物のずれ(入口・出口・律速を重視)を、集団の中での位置で評価しています。' : '図の化合物の検出が少ないため、経路図の評価はしていません。') + '</p></div>';
+    '<div><span>経路図評価</span>' + evBadge(r.comp_rank, 28) + '</div>' +
+    '<div><span>指標評価</span>' + evBadge(r.quant_rank, 28) + '<button type="button" class="ev-link" onclick="evTab(\'indicator\',\'' + evJs(cat) + '\')">指標を見る ›</button></div>' +
+    '<p class="ev-note">総合評価は2つのうち悪い方です。' + (r.comp_rank ? '経路図評価は、図の化合物のずれ(入口・出口・律速を重視)を、集団の中での位置で評価しています。' : '図の化合物の検出が少ないため、経路図評価はしていません。') + '</p></div>';
   return chips + '<div class="ev-pw">' +
     '<div class="ev-pw__fig"><div class="ev-figbox" id="ev-figbox">' + fig.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button></div>' +
       '<div class="ev-legend">' + leg + '</div></div>' +
@@ -1741,7 +1751,7 @@ function evIndicatorTabHtml(cat) {
   var metab = '<section class="ev-sec"><div class="ev-sec__t">個別の代謝物</div><div id="clinic-trend-chart" style="margin-bottom:12px"></div>' +
     '<div id="clinic-metabolite-table"><div style="color:var(--ink4);font-size:12px">' + t('clinic.loading') + '</div></div></section>';
   if (!r.details) {
-    return chips + head + '<div class="ev-panel"><p class="ev-note">この評価は、結果を公開した時点の方式で確定しています。定量評価の内訳は表示できません。</p></div>' + metab;
+    return chips + head + '<div class="ev-panel"><p class="ev-note">この評価は、結果を公開した時点の方式で確定しています。指標評価の内訳は表示できません。</p></div>' + metab;
   }
   var ids = evIndsOf(cat);
   ids.sort(function(a, b) {
@@ -1749,14 +1759,15 @@ function evIndicatorTabHtml(cat) {
     return (gb ? EV_ORD.indexOf(gb.grade) : -1) - (ga ? EV_ORD.indexOf(ga.grade) : -1);
   });
   var basis = '<div class="ev-basis2">' +
-    (meta.fig ? '<div><span>経路図の評価</span>' + evBadge(r.comp_rank, 28) + '<button type="button" class="ev-link" onclick="evTab(\'pathway\',\'' + evJs(cat) + '\')">経路図を見る ›</button></div>' : '') +
-    '<div><span>定量評価</span>' + evBadge(r.quant_rank, 28) + '</div>' +
-    '<p class="ev-note">' + (meta.fig ? '総合評価は、経路図の評価と定量評価のうち悪い方です。' : 'このカテゴリは、下の指標のうち最も悪いもので評価しています。') +
+    (meta.fig ? '<div><span>経路図評価</span>' + evBadge(r.comp_rank, 28) + '<button type="button" class="ev-link" onclick="evTab(\'pathway\',\'' + evJs(cat) + '\')">経路図を見る ›</button></div>' : '') +
+    '<div><span>指標評価</span>' + evBadge(r.quant_rank, 28) + '</div>' +
+    '<p class="ev-note">' + (meta.fig ? '総合評価は、経路図評価と指標評価のうち悪い方です。' : 'このカテゴリは、下の指標のうち最も悪いもので評価しています。') +
     '各指標は、集団の中での位置で評価しています(臨床基準がある指標は基準値で判定)。</p></div>';
   var cards = ids.length ? '<div class="ev-cards">' + ids.map(function(id) { return evIndCard(cat, id); }).join('') + '</div>'
-    : '<p class="ev-muted">このカテゴリで使える定量指標は、まだありません。</p>';
+    : '<p class="ev-muted">このカテゴリで使える指標は、まだありません。</p>';
   return chips + head + basis +
-    '<p class="ev-lead" style="margin-top:14px">帯の濃さは、集団の中でその値の人がどれだけ多いかを表します。▼がこの患者の位置、下の色の線はA〜Eの範囲です。</p>' +
+    (_ev.calibErr ? '<div class="ev-warn" style="margin-top:14px">集団の分布グラフを表示できません。' + evEsc(_ev.calibErr) + '</div>'
+      : '<p class="ev-lead" style="margin-top:14px">帯の濃さは、集団の中でその値の人がどれだけ多いかを表します。▼がこの患者の位置、下の色の線はA〜Eの範囲です。</p>') +
     cards + metab + evNextBtn(cat, 'indicator');
 }
 

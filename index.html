@@ -602,7 +602,9 @@ svg.pw .ring.on{opacity:1;animation:evring 1.2s ease-in-out infinite}
   .ev-pw__side{position:sticky;top:12px}
   .ev-pw__side .ev-h4{margin-top:16px}
 }
-.ev-mx-wrap{overflow-x:auto;max-width:640px}
+.ev-mx-wrap{overflow-x:auto}
+.ev-sum2{display:grid;gap:14px;align-items:start}
+@media(min-width:900px){.ev-sum2{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
 .ev-mx{width:100%;border-collapse:separate;border-spacing:0 4px}
 .ev-mx thead th{font-size:11px;font-weight:600;color:var(--ink4);text-align:center;padding:0 4px 2px}
 .ev-mx thead th:first-child{text-align:left}
@@ -1073,7 +1075,7 @@ svg.pw .ring.on{opacity:1;animation:evring 1.2s ease-in-out infinite}
 
           <div class="clinic-view-tabs" style="display:flex;gap:8px;margin:14px 0;border-bottom:1px solid var(--border)">
             <button class="view-tab view-tab--active" id="view-tab-score" onclick="evTab('summary')">全体サマリ</button>
-            <button class="view-tab" id="view-tab-pathway" onclick="evTab('pathway')">経路図での評価</button>
+            <button class="view-tab" id="view-tab-pathway" onclick="evTab('pathway')">経路図評価</button>
             <button class="view-tab" id="view-tab-indicator" onclick="evTab('indicator')">指標評価</button>
           </div>
 
@@ -1528,7 +1530,7 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script src="patient.js"></script>
-<script src="clinic.js?v=20260929d"></script>
+<script src="clinic.js?v=20260929f"></script>
 <script src="app.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', async function() {
