@@ -1422,7 +1422,7 @@ function evWorse(a, b) { if (!a) return b; if (!b) return a; return EV_ORD.index
 async function evLoadAssets() {
   if (_ev.assets) return;
   var res = await Promise.all([
-    fetch('/pathway_figures.json').then(function(r) {
+    fetch('/pathway_figures.json?v=20260930b', { cache: 'no-cache' }).then(function(r) {
       if (!r.ok) throw new Error('図の定義ファイル(pathway_figures.json)が見つかりません(' + r.status + ')。');
       return r.json();
     }),

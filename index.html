@@ -663,7 +663,9 @@ svg.pw .ring.on{opacity:1;animation:evring 1.2s ease-in-out infinite}
 .ev-card--link{cursor:pointer}
 .ev-card--link:hover{box-shadow:0 0 0 2px #f5c2d9}
 .ev-card--sel{box-shadow:0 0 0 3px #db2777}
-.ev-card__fig{display:inline-block;margin-left:8px;font-size:10.5px;color:#db2777;border:1px solid #f5c2d9;border-radius:999px;padding:0 7px;vertical-align:1px}
+.ev-card__fig{display:inline-flex;align-items:center;gap:4px;margin:6px 0 0;font-size:12px;font-weight:700;color:#fff;background:#db2777;border-radius:999px;padding:3px 10px}
+.ev-card__fig::before{content:'';width:8px;height:8px;border-radius:50%;border:2px solid #fff}
+.ev-card__tech{display:flex;flex-direction:column;align-items:flex-start}
 svg.pw path.eg-on{stroke:#db2777;stroke-width:5}
 .ev-figcap{font-size:12.5px;color:var(--ink3);margin:0 0 6px;min-height:20px}
 .ev-figcap b{color:#db2777}
@@ -1560,7 +1562,7 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script src="patient.js"></script>
-<script src="clinic.js?v=20260930a"></script>
+<script src="clinic.js?v=20260930b"></script>
 <script src="app.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', async function() {
