@@ -672,6 +672,18 @@ svg.pw path.eg-on{stroke:#db2777;stroke-width:5}
 .ev-figcap span{color:var(--ink4);margin-left:6px;font-size:11.5px}
 .ev-figdesc summary{cursor:pointer;font-size:12px;color:var(--ink3);margin-top:8px;min-height:32px}
 .ev-panel--muted{color:var(--ink3);font-size:12.5px;margin:10px 0}
+
+/* ===== 評価画面 v2:経路図一覧 ===== */
+.ev-pmgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.ev-pmcard{border:1px solid var(--border);border-radius:12px;background:var(--white);padding:10px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:6px}
+.ev-pmcard:hover{border-color:var(--emerald);box-shadow:0 0 0 2px var(--foam)}
+.ev-pmcard__svg{background:#fff;border-radius:8px;border:1px solid #eef2f0;height:190px;overflow:hidden}
+.ev-pmcard__svg svg{width:100%;height:100%;display:block;pointer-events:none}
+.ev-pmcard__t{font-weight:700;font-size:13.5px;color:var(--forest)}
+.ev-pmcard__m{display:flex;gap:6px;align-items:center;font-size:11.5px;color:var(--ink3)}
+.ev-pmcard__m span{margin-left:auto}
+.ev-back{border:0;background:none;color:var(--emerald);font-weight:700;cursor:pointer;padding:6px 0 10px;font-family:inherit;font-size:13px;min-height:36px}
+.ev-card__cat{font-size:11px;color:var(--ink4);margin:4px 2px -4px}
 </style>
 </head>
 <body>
@@ -1109,6 +1121,7 @@ svg.pw path.eg-on{stroke:#db2777;stroke-width:5}
           <div class="clinic-view-tabs" style="display:flex;gap:8px;margin:14px 0;border-bottom:1px solid var(--border)">
             <button class="view-tab view-tab--active" id="view-tab-score" onclick="evTab('summary')">全体サマリ</button>
             <button class="view-tab" id="view-tab-pathway" onclick="evTab('category')">カテゴリ評価</button>
+            <button class="view-tab" id="view-tab-pathmap" onclick="evOpenFig(null)">経路図一覧</button>
           </div>
 
           <div id="clinic-view-score">
@@ -1562,7 +1575,7 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script src="patient.js"></script>
-<script src="clinic.js?v=20260930b"></script>
+<script src="clinic.js?v=20260930c"></script>
 <script src="app.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', async function() {

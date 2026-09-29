@@ -1470,7 +1470,8 @@ function evTab(tab, cat) {
   if (tab === 'pathway' || tab === 'indicator') tab = 'category';
   _ev.tab = tab;
   if (cat) { _ev.cur = cat; _ev.sel = null; }
-  var map = { summary: 'view-tab-score', category: 'view-tab-pathway' };
+  if (tab !== 'pathmap') _ev.fig = null;
+  var map = { summary: 'view-tab-score', category: 'view-tab-pathway', pathmap: 'view-tab-pathmap' };
   Object.keys(map).forEach(function(k) { var b = document.getElementById(map[k]); if (b) b.classList.toggle('view-tab--active', k === tab); });
   var vs = document.getElementById('clinic-view-score'), vp = document.getElementById('clinic-view-pathway');
   if (vs) vs.classList.remove('hidden');
@@ -1510,6 +1511,7 @@ function evOpenCat(cat) {
 function evRender() {
   var el = document.getElementById('clinic-cat-grid'); if (!el) return;
   if (_ev.tab === 'category') { el.innerHTML = evCategoryHtml(_ev.cur); evBindCategory(_ev.cur); }
+  else if (_ev.tab === 'pathmap') { el.innerHTML = evPathmapHtml(); evBindPathmap(); }
   else el.innerHTML = evSummaryHtml();
 }
 
@@ -1607,19 +1609,21 @@ function evCategoryHtml(cat) {
     '<div class="ev-cat__side">' + right + '</div></div>' + metab + evNextBtn(cat);
 }
 
-// 図に患者の値を塗り、選んだ指標の位置に印を付ける
-function evPaintFigure(figId) {
-  var box = document.getElementById('ev-figbox'); if (!box) return;
-  var svg = box.querySelector('svg');
+// 図に患者の値を塗る(svg要素を指定)
+function evPaintSvg(svg, figId, clickable) {
   var figCat = (_ev.assets.cats.find(function(c) { return c.fig === figId; }) || {}).en;
   var det = (_ev.rows[figCat] && _ev.rows[figCat].details) || {}, fc = det.fc || {};
   svg.querySelectorAll('circle.nd').forEach(function(n) {
     var v = fc[n.dataset.key]; n.setAttribute('fill', v === undefined ? '#e5e7eb' : evFcColor(Number(v)));
-    n.style.cursor = 'pointer';
-    n.addEventListener('click', function() { evShowCompound(n.dataset.key, v); });
+    if (clickable) { n.style.cursor = 'pointer'; n.addEventListener('click', function() { evShowCompound(n.dataset.key, v); }); }
   });
   svg.querySelectorAll('tspan.nv').forEach(function(tn) { var v = fc[tn.dataset.key]; tn.textContent = v === undefined ? ' 検出なし' : ' ' + evSgn(Number(v)); });
   svg.querySelectorAll('tspan.fl').forEach(function(tn) { tn.textContent = ''; });
+}
+function evPaintFigure(figId) {
+  var box = document.getElementById('ev-figbox'); if (!box) return;
+  var svg = box.querySelector('svg');
+  evPaintSvg(svg, figId, true);
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && svg.pauseAnimations) svg.pauseAnimations();
 }
 function evHighlight(id, scroll) {
@@ -1658,6 +1662,76 @@ function evBindCategory(cat) {
     });
   });
   if (typeof loadClinicMetaboliteData === 'function') loadClinicMetaboliteData(_ev.patientId, cat);
+}
+
+// ═══ 経路図一覧 ═══
+function evFigShort(fid) { var t0 = _ev.assets.figs[fid].title; return t0.split(':')[0]; }
+function evFigInds(fid) {
+  var defs = _ev.assets.ind;
+  return Object.keys(defs).filter(function(id) { return defs[id].fig === fid && (defs[id].conf === '高' || defs[id].conf === '中'); });
+}
+function evFigWorst(fid) {
+  var w = null;
+  evFigInds(fid).forEach(function(id) { var x = evIndResult(_ev.assets.ind[id].cat, id); if (x) w = evWorse(w, x.grade); });
+  return w;
+}
+function evPathmapHtml() {
+  var figs = _ev.assets.cats.filter(function(c) { return c.fig; }).map(function(c) { return c.fig; });
+  if (!_ev.fig) {
+    return '<div class="ev-sum__block"><div class="ev-sum__t">経路図一覧<small>この患者の値で色を付けています。図を押すと、大きな図と、その図に位置を示せる指標を開きます</small></div>' +
+      '<div class="ev-pmgrid">' + figs.map(function(fid) {
+        var n = evFigInds(fid).length, w = evFigWorst(fid);
+        return '<button type="button" class="ev-pmcard" onclick="evOpenFig(\'' + fid + '\')"><div class="ev-pmcard__svg" data-fig="' + fid + '">' + _ev.assets.figs[fid].svg + '</div>' +
+          '<div class="ev-pmcard__t">' + evEsc(evFigShort(fid)) + '</div>' +
+          '<div class="ev-pmcard__m">指標 ' + n + '個' + (w ? '<span>最も悪い評価</span>' + evBadge(w, 20) : '') + '</div></button>';
+      }).join('') + '</div></div>';
+  }
+  var fid = _ev.fig, fig = _ev.assets.figs[fid], ids = evFigInds(fid);
+  ids.sort(function(a, b) {
+    var ga = evIndResult(_ev.assets.ind[a].cat, a), gb = evIndResult(_ev.assets.ind[b].cat, b);
+    return (gb ? EV_ORD.indexOf(gb.grade) : -1) - (ga ? EV_ORD.indexOf(ga.grade) : -1);
+  });
+  if (!_ev.sel || ids.indexOf(_ev.sel) < 0) _ev.sel = ids.filter(function(id) { return evIndResult(_ev.assets.ind[id].cat, id); })[0] || null;
+  var chips = '<div class="ev-chips">' + figs.map(function(f) {
+    return '<button type="button" class="ev-chipbtn' + (f === fid ? ' ev-chipbtn--on' : '') + '" onclick="evOpenFig(\'' + f + '\')"><span>' + evEsc(evFigShort(f)) + '</span>' + evBadge(evFigWorst(f), 20) + '</button>';
+  }).join('') + '</div>';
+  var cards = ids.map(function(id) {
+    var m = _ev.assets.ind[id];
+    return '<div class="ev-card__cat">' + evEsc(evName(m.cat)) + '</div>' + evIndCard(m.cat, id);
+  }).join('');
+  return '<button type="button" class="ev-back" onclick="evOpenFig(null)">‹ 経路図一覧に戻る</button>' + chips +
+    '<div class="ev-head"><div><div class="ev-head__n">' + evEsc(fig.title) + '</div><div class="ev-head__d">この図に位置を示せる指標:' + ids.length + '個</div></div></div>' +
+    '<div class="ev-cat"><div class="ev-cat__fig"><div class="ev-figcap" id="ev-figcap"></div>' +
+      '<div class="ev-figbox" id="ev-figbox" data-fig="' + fid + '">' + fig.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button></div>' +
+      '<div class="ev-legend">' + evFigLegend(fig) + '</div>' +
+      '<details class="ev-figdesc"><summary>図の説明</summary><p class="ev-lead">' + fig.desc + '</p></details>' +
+      '<div class="ev-cpd" id="ev-cpd" hidden></div></div>' +
+    '<div class="ev-cat__side">' + (ids.length ? '<p class="ev-lead">指標を押すと、図の該当箇所に印が付きます。</p><div class="ev-cards ev-cards--col">' + cards + '</div>'
+      : '<p class="ev-muted">この図に位置を示せる指標はありません。</p>') + '</div></div>';
+}
+function evOpenFig(fid) {
+  _ev.sel = null; _ev.tab = 'pathmap'; _ev.fig = fid; evTab('pathmap');
+  var el = document.getElementById('clinic-cat-grid'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function evBindPathmap() {
+  if (!_ev.fig) {
+    document.querySelectorAll('#clinic-cat-grid .ev-pmcard__svg').forEach(function(d) {
+      var svg = d.querySelector('svg'); evPaintSvg(svg, d.dataset.fig, false);
+      if (svg.pauseAnimations) svg.pauseAnimations();
+    });
+    return;
+  }
+  var box = document.getElementById('ev-figbox');
+  evPaintFigure(_ev.fig);
+  var zb = document.getElementById('ev-zoom');
+  zb.addEventListener('click', function() {
+    var z = box.classList.toggle('ev-figbox--zoom'); zb.textContent = z ? '閉じる' : '図を拡大';
+    if (z) requestAnimationFrame(function() { box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2; });
+  });
+  evHighlight(_ev.sel);
+  document.querySelectorAll('#clinic-cat-grid .ev-card[data-fig]').forEach(function(c) {
+    c.addEventListener('click', function() { _ev.sel = c.dataset.id; evHighlight(c.dataset.id, true); });
+  });
 }
 
 async function evShowCompound(key, fc) {
