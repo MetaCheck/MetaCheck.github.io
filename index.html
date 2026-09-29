@@ -639,6 +639,37 @@ svg.pw .ring.on{opacity:1;animation:evring 1.2s ease-in-out infinite}
 .ev-hl b{display:inline-block;margin-right:6px;font-size:11px}
 .ev-hl--hi b{color:var(--ruby)}.ev-hl--lo b{color:#2563eb}
 .ev-hl.ev-on{color:var(--ink2);background:var(--amber-l);box-shadow:inset 3px 0 0 var(--amber)}
+
+/* ===== 評価画面 v2:指標+経路図 ===== */
+.ev-srows{display:grid;gap:6px 16px}
+@media(min-width:760px){.ev-srows{grid-template-columns:1fr 1fr}}
+.ev-srows>div{display:grid;gap:6px;align-content:start}
+.ev-srow{display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;border-left:4px solid transparent;background:var(--paper);border-radius:8px;padding:5px 5px 5px 12px;cursor:pointer;font-family:inherit;text-align:left;min-height:46px}
+.ev-srow:hover{outline:2px solid var(--emerald)}
+.ev-srow--bad{border-left-color:var(--rank-e)}
+.ev-srow__n{font-size:13px;font-weight:600;color:var(--ink2)}
+.ev-srow .ev-mx__b{width:46px;height:36px;display:grid;place-items:center;flex:none;cursor:pointer}
+.ev-cat{display:block}
+.ev-cat__fig{margin-bottom:14px}
+@media(min-width:900px){
+  .ev-cat{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px;align-items:start}
+  .ev-cat__fig{margin-bottom:0}
+  .ev-cat__side{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;padding-right:6px}
+}
+.ev-cat .ev-figbox{max-width:none}
+.ev-cat.ev-cat--nofig{display:block}
+.ev-cat--nofig .ev-cards{margin-top:10px}
+.ev-cards--col{grid-template-columns:1fr}
+.ev-card--link{cursor:pointer}
+.ev-card--link:hover{box-shadow:0 0 0 2px #f5c2d9}
+.ev-card--sel{box-shadow:0 0 0 3px #db2777}
+.ev-card__fig{display:inline-block;margin-left:8px;font-size:10.5px;color:#db2777;border:1px solid #f5c2d9;border-radius:999px;padding:0 7px;vertical-align:1px}
+svg.pw path.eg-on{stroke:#db2777;stroke-width:5}
+.ev-figcap{font-size:12.5px;color:var(--ink3);margin:0 0 6px;min-height:20px}
+.ev-figcap b{color:#db2777}
+.ev-figcap span{color:var(--ink4);margin-left:6px;font-size:11.5px}
+.ev-figdesc summary{cursor:pointer;font-size:12px;color:var(--ink3);margin-top:8px;min-height:32px}
+.ev-panel--muted{color:var(--ink3);font-size:12.5px;margin:10px 0}
 </style>
 </head>
 <body>
@@ -1075,8 +1106,7 @@ svg.pw .ring.on{opacity:1;animation:evring 1.2s ease-in-out infinite}
 
           <div class="clinic-view-tabs" style="display:flex;gap:8px;margin:14px 0;border-bottom:1px solid var(--border)">
             <button class="view-tab view-tab--active" id="view-tab-score" onclick="evTab('summary')">全体サマリ</button>
-            <button class="view-tab" id="view-tab-pathway" onclick="evTab('pathway')">経路図評価</button>
-            <button class="view-tab" id="view-tab-indicator" onclick="evTab('indicator')">指標評価</button>
+            <button class="view-tab" id="view-tab-pathway" onclick="evTab('category')">カテゴリ評価</button>
           </div>
 
           <div id="clinic-view-score">
@@ -1530,7 +1560,7 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script src="patient.js"></script>
-<script src="clinic.js?v=20260929f"></script>
+<script src="clinic.js?v=20260930a"></script>
 <script src="app.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', async function() {
