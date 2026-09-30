@@ -703,7 +703,7 @@ function pvCategoryHtml(cat) {
   var cards = ids.length ? ids.map(function(id) { return pvIndCard(cat, id); }).join('') : '<p class="ev-muted">このカテゴリで評価できる項目はありません。</p>';
   return head + '<p class="ev-lead">このカテゴリは、下の項目のうち最も気になるもので評価しています。項目を押すと、図の該当する場所に印が付きます。</p>' +
     '<div class="ev-cat"><div class="ev-cat__fig"><div class="ev-figcap" id="ev-figcap"></div>' +
-      '<div class="ev-figbox' + (figId === 'whole' ? ' ev-figbox--crop' : '') + '" id="ev-figbox" data-fig="' + figId + '">' + fig.svg + '</div>' +
+      '<div class="ev-figbox' + (figId === 'whole' ? ' ev-figbox--crop' : '') + '" id="ev-figbox" data-fig="' + figId + '">' + fig.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button></div>' +
       '<div class="ev-legend">' + evFigLegend(fig) + '</div></div>' +
     '<div class="ev-cat__side"><div class="ev-cards ev-cards--col">' + cards + '</div></div></div>' + pvMetabHtml() + PV_NOTE;
 }
@@ -725,7 +725,9 @@ function pvShow(cat, id, scroll) {
   var box = document.getElementById('ev-figbox'); if (!box) return;
   var m = _ev.assets.ind[id], keys = evKeysFor(m, box.dataset.fig);
   if (!keys.length && box.dataset.fig !== 'whole') {
-    box.dataset.fig = 'whole'; box.classList.add('ev-figbox--crop'); box.innerHTML = _ev.assets.figs.whole.svg;
+    box.dataset.fig = 'whole'; box.classList.add('ev-figbox--crop'); box.innerHTML = _ev.assets.figs.whole.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button>';
+    var zb2 = document.getElementById('ev-zoom');
+    zb2.addEventListener('click', function() { var z = box.classList.toggle('ev-figbox--zoom'); zb2.textContent = z ? '閉じる' : '図を拡大'; });
     evPaintSvg(box.querySelector('svg'), 'whole', false);
   }
   if (box.classList.contains('ev-figbox--crop')) { var save = _ev.sel; _ev.sel = id; evCropToCategory(box.querySelector('svg'), cat); _ev.sel = save; }
@@ -744,6 +746,11 @@ function pvBindCategory(cat) {
   var box = document.getElementById('ev-figbox'); if (!box) return;
   evPaintSvg(box.querySelector('svg'), box.dataset.fig, false);
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && box.querySelector('svg').pauseAnimations) box.querySelector('svg').pauseAnimations();
+  var zb = document.getElementById('ev-zoom');
+  if (zb) zb.addEventListener('click', function() {
+    var z = box.classList.toggle('ev-figbox--zoom'); zb.textContent = z ? '閉じる' : '図を拡大';
+    if (z) { var r = box.querySelector('.ring.on'); requestAnimationFrame(function() { if (r) evScrollTo(r, box); else box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2; }); }
+  });
   if (_pv.sel) pvShow(cat, _pv.sel, false);
   document.querySelectorAll('#patient-score-grid .pv-card').forEach(function(c) {
     c.addEventListener('click', function() { _pv.sel = c.dataset.id; pvShow(cat, c.dataset.id, true); });
