@@ -709,6 +709,7 @@ svg.pw path.eg-on{stroke:#db2777;stroke-width:5}
 .ev-figbox--inpanel{overflow:auto;max-height:78vh}
 .ev-figbox--inpanel svg.pw{width:1300px;max-width:none}
 .ev-figbox--inpanel>.ev-zoom{display:none}
+.ev-figbox--crop svg.pw{width:100%;height:auto}
 @media(max-width:899px){.ev-figbox--inpanel svg.pw{width:900px}}
 .ev-info{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:60;max-width:560px;margin:0 auto;background:var(--white);border:1px solid var(--border);border-top:4px solid #db2777;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);max-height:52vh;overflow:auto;transform:translateY(120%);transition:transform .25s ease;visibility:hidden}
 .ev-info.on{transform:none;visibility:visible}
@@ -1611,7 +1612,7 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script src="patient.js"></script>
-<script src="clinic.js?v=20260930f"></script>
+<script src="clinic.js?v=20260930g"></script>
 <script src="app.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', async function() {

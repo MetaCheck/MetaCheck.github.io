@@ -1469,7 +1469,7 @@ function switchClinicView(view) { evTab(view === 'pathway' ? 'category' : (_ev.t
 function evTab(tab, cat) {
   if (tab === 'pathway' || tab === 'indicator') tab = 'category';
   _ev.tab = tab;
-  if (cat) { _ev.cur = cat; _ev.sel = null; _ev.catFig = null; }
+  if (cat) { _ev.cur = cat; _ev.sel = null; _ev.catFig = null; _ev.catCrop = null; }
   if (tab !== 'pathmap') _ev.fig = null;
   var map = { summary: 'view-tab-score', category: 'view-tab-pathway', pathmap: 'view-tab-pathmap' };
   Object.keys(map).forEach(function(k) { var b = document.getElementById(map[k]); if (b) b.classList.toggle('view-tab--active', k === tab); });
@@ -1590,25 +1590,44 @@ function evCategoryHtml(cat) {
     return (gb ? EV_ORD.indexOf(gb.grade) : -1) - (ga ? EV_ORD.indexOf(ga.grade) : -1);
   });
   if (!_ev.sel || ids.indexOf(_ev.sel) < 0) _ev.sel = ids.filter(function(id) { return evIndResult(cat, id); })[0] || ids[0] || null;
-  if (!_ev.catFig) _ev.catFig = meta.fig || (_ev.sel ? evFigOf(_ev.sel) : 'whole');
-  var figId = _ev.catFig, fig = _ev.assets.figs[figId];
+  if (!_ev.catFig) { _ev.catFig = meta.fig || 'whole'; _ev.catCrop = !meta.fig; }
+  var figId = _ev.catFig, fig = _ev.assets.figs[figId], crop = figId === 'whole' && _ev.catCrop;
   var toggle = '<div class="ev-figtoggle" role="tablist">' +
-    (meta.fig ? '<button type="button" class="' + (figId === meta.fig ? 'on' : '') + '" onclick="evCatFig(\'' + meta.fig + '\')">この経路の図</button>' : '') +
+    (meta.fig ? '<button type="button" class="' + (figId === meta.fig ? 'on' : '') + '" onclick="evCatFig(\'' + meta.fig + '\')">この経路の図</button>'
+              : '<button type="button" class="' + (crop ? 'on' : '') + '" onclick="evCatCrop()">このカテゴリの部分</button>') +
     (figId !== meta.fig && figId !== 'whole' ? '<button type="button" class="on">' + evEsc(evFigShort(figId)) + 'の図</button>' : '') +
-    '<button type="button" class="' + (figId === 'whole' ? 'on' : '') + '" onclick="evCatFig(\'whole\')">全体マップ</button></div>';
+    '<button type="button" class="' + (figId === 'whole' && !crop ? 'on' : '') + '" onclick="evCatFig(\'whole\')">全体マップ</button></div>';
   var note = '<p class="ev-note">このカテゴリは、下の指標のうち最も悪いもので評価しています。各指標は集団の中での位置で評価しています(臨床基準がある指標は基準値で判定)。</p>';
   var hint = _ev.calibErr ? '<div class="ev-warn">集団の分布グラフを表示できません。' + evEsc(_ev.calibErr) + '</div>'
     : '<p class="ev-lead">帯の濃さは集団の中でその値の人の多さ、▼がこの患者の位置、下の色の線はA〜Eの範囲です。指標を押すと、図の該当箇所に印が付きます。</p>';
   var cards = ids.length ? ids.map(function(id) { return evIndCard(cat, id); }).join('') : '<p class="ev-muted">このカテゴリで使える指標は、まだありません。</p>';
   return chips + head + '<div class="ev-cat">' +
     '<div class="ev-cat__fig">' + toggle + '<div class="ev-figcap" id="ev-figcap"></div>' +
-      '<div class="ev-figbox' + (figId === 'whole' ? ' ev-figbox--whole ev-figbox--inpanel' : '') + '" id="ev-figbox" data-fig="' + figId + '">' + fig.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button></div>' +
+      '<div class="ev-figbox' + (figId === 'whole' ? (crop ? ' ev-figbox--crop' : ' ev-figbox--whole ev-figbox--inpanel') : '') + '" id="ev-figbox" data-fig="' + figId + '">' + fig.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button></div>' +
       '<div class="ev-legend">' + evFigLegend(fig) + '</div>' +
       '<details class="ev-figdesc"><summary>図の説明</summary><p class="ev-lead">' + fig.desc + '</p></details>' +
       '<div class="ev-cpd" id="ev-cpd" hidden></div></div>' +
     '<div class="ev-cat__side">' + note + hint + '<div class="ev-cards ev-cards--col">' + cards + '</div></div></div>' + metab + evNextBtn(cat);
 }
-function evCatFig(fid) { _ev.catFig = fid; evRender(); if (_ev.sel) evHighlight(_ev.sel, true); }
+function evCatFig(fid) { _ev.catFig = fid; _ev.catCrop = false; evRender(); if (_ev.sel) evHighlight(_ev.sel, true); }
+function evCatCrop() { _ev.catFig = 'whole'; _ev.catCrop = true; evRender(); if (_ev.sel) evHighlight(_ev.sel, true); }
+// 全体マップを、選んでいる指標の物質がある範囲だけに拡大する(未選択ならカテゴリの全指標)
+function evCropToCategory(svg, cat) {
+  var keys = {};
+  var ids = _ev.sel ? [_ev.sel] : evIndsOf(cat);
+  ids.forEach(function(id) { (_ev.assets.ind[id].wkeys || []).forEach(function(k) { keys[k] = true; }); });
+  var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  svg.querySelectorAll('circle.nd').forEach(function(c) {
+    if (!keys[c.dataset.key]) return;
+    var x = +c.getAttribute('cx'), y = +c.getAttribute('cy');
+    x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+  });
+  if (!isFinite(x0)) return;
+  x0 -= 130; x1 += 150; y0 -= 70; y1 += 70;
+  var w = Math.max(x1 - x0, 560), h = Math.max(y1 - y0, 380);
+  var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  svg.setAttribute('viewBox', (cx - w / 2).toFixed(0) + ' ' + (cy - h / 2).toFixed(0) + ' ' + w.toFixed(0) + ' ' + h.toFixed(0));
+}
 
 // 図に患者の値を塗る(svg要素を指定)
 function evPaintSvg(svg, figId, clickable) {
@@ -1677,6 +1696,7 @@ function evBindCategory(cat) {
   var box = document.getElementById('ev-figbox');
   if (box) {
     evPaintFigure(box.dataset.fig);
+    if (box.classList.contains('ev-figbox--crop')) evCropToCategory(box.querySelector('svg'), cat);
     var zb = document.getElementById('ev-zoom');
     zb.addEventListener('click', function() {
       var z = box.classList.toggle('ev-figbox--zoom'); zb.textContent = z ? '閉じる' : '図を拡大';
@@ -1691,6 +1711,7 @@ function evBindCategory(cat) {
       _ev.sel = id;
       var ok = curFig && evKeysFor(m, curFig).length;
       if (!ok) { _ev.catFig = evFigOf(id); evRender(); }
+      else if (cur.classList.contains('ev-figbox--crop')) evCropToCategory(cur.querySelector('svg'), cat);
       evHighlight(id, true); if (window.innerWidth < 900) evInfo(id, cat);
     });
   });
