@@ -693,7 +693,7 @@ function pvCategoryHtml(cat) {
   var r = _ev.rows[cat] || {}, meta = evMeta(cat);
   var head = '<button type="button" class="ev-back" onclick="pvOpen(\'summary\')">‹ 一覧に戻る</button>' +
     '<div class="ev-head">' + evBadge(r.rank, 48) + '<div><div class="ev-head__n">' + evEsc(evName(cat)) + '</div><div class="ev-head__d">' + evEsc(evDesc(cat)) + '</div></div></div>';
-  if (!r.details) return head + '<div class="ev-panel"><p class="ev-note">この結果は以前の方式で評価されているため、項目ごとの内訳は表示できません。詳しくは担当の医師にご確認ください。</p></div>';
+  if (!r.details) return head + '<div class="ev-panel"><p class="ev-note">この結果は以前の方式で評価されているため、項目ごとの内訳は表示できません。詳しくは担当の医師にご確認ください。</p></div>' + pvMetabHtml() + PV_NOTE;
   var ids = evIndsOf(cat).sort(function(a, b) {
     var ga = evIndResult(cat, a), gb = evIndResult(cat, b);
     return (gb ? EV_ORD.indexOf(gb.grade) : -1) - (ga ? EV_ORD.indexOf(ga.grade) : -1);
@@ -705,7 +705,19 @@ function pvCategoryHtml(cat) {
     '<div class="ev-cat"><div class="ev-cat__fig"><div class="ev-figcap" id="ev-figcap"></div>' +
       '<div class="ev-figbox' + (figId === 'whole' ? ' ev-figbox--crop' : '') + '" id="ev-figbox" data-fig="' + figId + '">' + fig.svg + '</div>' +
       '<div class="ev-legend">' + evFigLegend(fig) + '</div></div>' +
-    '<div class="ev-cat__side"><div class="ev-cards ev-cards--col">' + cards + '</div></div></div>' + PV_NOTE;
+    '<div class="ev-cat__side"><div class="ev-cards ev-cards--col">' + cards + '</div></div></div>' + pvMetabHtml() + PV_NOTE;
+}
+// 個別の代謝物(推移のグラフと、物質ごとの表)
+function pvMetabHtml() {
+  return '<section class="ev-sec"><div class="ev-sec__t">個別の代謝物</div>' +
+    '<p class="ev-lead">このカテゴリに関わる物質ごとの値です。</p>' +
+    '<div id="patient-trend-chart" style="margin-bottom:16px"></div>' +
+    '<div id="patient-metabolite-table"><div style="color:var(--ink4);font-size:12px;padding:8px">' + t('patient.loading') + '</div></div></section>';
+}
+function pvLoadMetab(cat) {
+  var ids = window._patientAllIds || [_pv.pid];
+  try { renderTrendChart(ids, cat); } catch (e) { console.error(e); }
+  try { loadMetaboliteTable(ids, cat); } catch (e) { console.error(e); }
 }
 
 // 図の上に、選んだ項目の位置を示す(個別の図に無い項目は全体マップを拡大して示す)
@@ -728,6 +740,7 @@ function pvShow(cat, id, scroll) {
   if (scroll) { var first = svg.querySelector('.ring.on'); if (first) evScrollTo(first, box); }
 }
 function pvBindCategory(cat) {
+  pvLoadMetab(cat);
   var box = document.getElementById('ev-figbox'); if (!box) return;
   evPaintSvg(box.querySelector('svg'), box.dataset.fig, false);
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && box.querySelector('svg').pauseAnimations) box.querySelector('svg').pauseAnimations();
