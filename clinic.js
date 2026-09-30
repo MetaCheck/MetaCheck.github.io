@@ -1422,7 +1422,7 @@ function evWorse(a, b) { if (!a) return b; if (!b) return a; return EV_ORD.index
 async function evLoadAssets() {
   if (_ev.assets) return;
   var res = await Promise.all([
-    fetch('/pathway_figures.json?v=20260930c', { cache: 'no-cache' }).then(function(r) {
+    fetch('/pathway_figures.json?v=20260930d', { cache: 'no-cache' }).then(function(r) {
       if (!r.ok) throw new Error('図の定義ファイル(pathway_figures.json)が見つかりません(' + r.status + ')。');
       return r.json();
     }),
@@ -1469,7 +1469,7 @@ function switchClinicView(view) { evTab(view === 'pathway' ? 'category' : (_ev.t
 function evTab(tab, cat) {
   if (tab === 'pathway' || tab === 'indicator') tab = 'category';
   _ev.tab = tab;
-  if (cat) { _ev.cur = cat; _ev.sel = null; }
+  if (cat) { _ev.cur = cat; _ev.sel = null; _ev.catFig = null; }
   if (tab !== 'pathmap') _ev.fig = null;
   var map = { summary: 'view-tab-score', category: 'view-tab-pathway', pathmap: 'view-tab-pathmap' };
   Object.keys(map).forEach(function(k) { var b = document.getElementById(map[k]); if (b) b.classList.toggle('view-tab--active', k === tab); });
@@ -1510,6 +1510,7 @@ function evOpenCat(cat) {
 
 function evRender() {
   var el = document.getElementById('clinic-cat-grid'); if (!el) return;
+  var info = document.getElementById('ev-info'); if (info) info.classList.remove('on');
   if (_ev.tab === 'category') { el.innerHTML = evCategoryHtml(_ev.cur); evBindCategory(_ev.cur); }
   else if (_ev.tab === 'pathmap') { el.innerHTML = evPathmapHtml(); evBindPathmap(); }
   else el.innerHTML = evSummaryHtml();
@@ -1531,7 +1532,8 @@ function evSummaryHtml() {
       '<span class="ev-srow__n">' + evEsc(evName(c)) + '</span><span class="ev-mx__b ' + (g ? 'ev-mx__b--' + g : 'ev-mx__b--n') + '">' + (g || '—') + '</span></button>';
   };
   var half = Math.ceil(sorted.length / 2);
-  return '<div class="ev-sum">' +
+  var guide = '<div class="ev-guide"><span><b>1</b>サマリで悪いカテゴリを確認</span><i>›</i><span><b>2</b>カテゴリ評価で、指標から理由を見る</span><i>›</i><span><b>3</b>図で、体のどこの話かを確認</span></div>';
+  return '<div class="ev-sum">' + guide +
     '<div class="ev-sum__block"><div class="ev-sum__t">16カテゴリの評価の内訳</div>' + bar + '</div>' +
     '<div class="ev-sum__block"><div class="ev-sum__t">カテゴリ別の評価<small>悪い順。タップすると、指標と経路図を開きます</small></div>' +
       '<div class="ev-srows"><div>' + sorted.slice(0, half).map(row).join('') + '</div><div>' + sorted.slice(half).map(row).join('') + '</div></div>' +
@@ -1539,9 +1541,14 @@ function evSummaryHtml() {
     '</div>';
 }
 
-// カテゴリ切り替えのチップ
+function evSortBad(list) {
+  var order = _ev.assets.cats.map(function(c) { return c.en; });
+  var rk = function(c) { var r = _ev.rows[c.en || c]; return r && r.rank ? EV_ORD.indexOf(r.rank) : -1; };
+  return list.slice().sort(function(a, b) { return rk(b) - rk(a) || order.indexOf(a.en || a) - order.indexOf(b.en || b); });
+}
+// カテゴリ切り替えのチップ(悪い順)
 function evChips(list) {
-  return '<div class="ev-chips" role="tablist">' + list.map(function(c) {
+  return '<div class="ev-chips" role="tablist">' + evSortBad(list).map(function(c) {
     var r = _ev.rows[c.en];
     return '<button type="button" role="tab" class="ev-chipbtn' + (c.en === _ev.cur ? ' ev-chipbtn--on' : '') + '" aria-selected="' + (c.en === _ev.cur) + '" onclick="evTab(\'category\',\'' + evJs(c.en) + '\')">' +
       '<span>' + evEsc(evName(c.en)) + '</span>' + evBadge(r && r.rank, 20) + '</button>';
@@ -1566,11 +1573,8 @@ function evFigLegend(fig) {
     '<span><i class="ev-dot" style="border-color:#db2777"></i>選んだ指標の位置</span>';
 }
 
-// カテゴリで最初に図に示す指標(図に乗る指標のうち最も悪いもの)
-function evDefaultSel(cat, ids) {
-  var withFig = ids.filter(function(id) { return _ev.assets.ind[id].fig && evIndResult(cat, id); });
-  return withFig[0] || null;
-}
+// 指標を示す図:その指標が乗る個別の図、無ければ全体マップ
+function evFigOf(id) { var m = _ev.assets.ind[id]; return m.fig || 'whole'; }
 
 function evCategoryHtml(cat) {
   var chips = evChips(_ev.assets.cats);
@@ -1585,29 +1589,26 @@ function evCategoryHtml(cat) {
     var ga = evIndResult(cat, a), gb = evIndResult(cat, b);
     return (gb ? EV_ORD.indexOf(gb.grade) : -1) - (ga ? EV_ORD.indexOf(ga.grade) : -1);
   });
-  if (!_ev.sel || ids.indexOf(_ev.sel) < 0) _ev.sel = evDefaultSel(cat, ids);
-  var figId = (_ev.sel && _ev.assets.ind[_ev.sel].fig) || meta.fig;
+  if (!_ev.sel || ids.indexOf(_ev.sel) < 0) _ev.sel = ids.filter(function(id) { return evIndResult(cat, id); })[0] || ids[0] || null;
+  if (!_ev.catFig) _ev.catFig = meta.fig || (_ev.sel ? evFigOf(_ev.sel) : 'whole');
+  var figId = _ev.catFig, fig = _ev.assets.figs[figId];
+  var toggle = '<div class="ev-figtoggle" role="tablist">' +
+    (meta.fig ? '<button type="button" class="' + (figId === meta.fig ? 'on' : '') + '" onclick="evCatFig(\'' + meta.fig + '\')">この経路の図</button>' : '') +
+    (figId !== meta.fig && figId !== 'whole' ? '<button type="button" class="on">' + evEsc(evFigShort(figId)) + 'の図</button>' : '') +
+    '<button type="button" class="' + (figId === 'whole' ? 'on' : '') + '" onclick="evCatFig(\'whole\')">全体マップ</button></div>';
   var note = '<p class="ev-note">このカテゴリは、下の指標のうち最も悪いもので評価しています。各指標は集団の中での位置で評価しています(臨床基準がある指標は基準値で判定)。</p>';
-  var cards = ids.length ? ids.map(function(id) { return evIndCard(cat, id); }).join('') : '<p class="ev-muted">このカテゴリで使える指標は、まだありません。</p>';
   var hint = _ev.calibErr ? '<div class="ev-warn">集団の分布グラフを表示できません。' + evEsc(_ev.calibErr) + '</div>'
-    : '<p class="ev-lead">帯の濃さは集団の中でその値の人の多さ、▼がこの患者の位置、下の色の線はA〜Eの範囲です。' +
-      (figId ? '「図で見る」の付いた指標を押すと、経路図の該当箇所に印が付きます。' : '') + '</p>';
-  var right = note + hint + '<div class="ev-cards ev-cards--col">' + cards + '</div>';
-  if (!figId) {
-    return chips + '<div class="ev-cat ev-cat--nofig">' + head + note + hint +
-      '<div class="ev-panel ev-panel--muted">このカテゴリの指標に使う物質は、今の経路図には描かれていません。全体の代謝マップ(準備中)で、位置を示せるようにします。</div>' +
-      '<div class="ev-cards">' + cards + '</div></div>' + metab + evNextBtn(cat);
-  }
-  var fig = _ev.assets.figs[figId];
-  var figCat = (_ev.assets.cats.find(function(c) { return c.fig === figId; }) || {}).en;
+    : '<p class="ev-lead">帯の濃さは集団の中でその値の人の多さ、▼がこの患者の位置、下の色の線はA〜Eの範囲です。指標を押すと、図の該当箇所に印が付きます。</p>';
+  var cards = ids.length ? ids.map(function(id) { return evIndCard(cat, id); }).join('') : '<p class="ev-muted">このカテゴリで使える指標は、まだありません。</p>';
   return chips + head + '<div class="ev-cat">' +
-    '<div class="ev-cat__fig"><div class="ev-figcap" id="ev-figcap"></div>' +
-      '<div class="ev-figbox" id="ev-figbox" data-fig="' + figId + '">' + fig.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button></div>' +
+    '<div class="ev-cat__fig">' + toggle + '<div class="ev-figcap" id="ev-figcap"></div>' +
+      '<div class="ev-figbox' + (figId === 'whole' ? ' ev-figbox--whole ev-figbox--inpanel' : '') + '" id="ev-figbox" data-fig="' + figId + '">' + fig.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button></div>' +
       '<div class="ev-legend">' + evFigLegend(fig) + '</div>' +
-      '<details class="ev-figdesc"><summary>' + evEsc(fig.title) + '(図の説明)</summary><p class="ev-lead">' + fig.desc + '</p></details>' +
+      '<details class="ev-figdesc"><summary>図の説明</summary><p class="ev-lead">' + fig.desc + '</p></details>' +
       '<div class="ev-cpd" id="ev-cpd" hidden></div></div>' +
-    '<div class="ev-cat__side">' + right + '</div></div>' + metab + evNextBtn(cat);
+    '<div class="ev-cat__side">' + note + hint + '<div class="ev-cards ev-cards--col">' + cards + '</div></div></div>' + metab + evNextBtn(cat);
 }
+function evCatFig(fid) { _ev.catFig = fid; evRender(); if (_ev.sel) evHighlight(_ev.sel, true); }
 
 // 図に患者の値を塗る(svg要素を指定)
 function evPaintSvg(svg, figId, clickable) {
@@ -1631,6 +1632,31 @@ function evPaintFigure(figId) {
   evPaintSvg(svg, figId, true);
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && svg.pauseAnimations) svg.pauseAnimations();
 }
+function evInfo(id, cat) {
+  var el = document.getElementById('ev-info');
+  if (!el) { el = document.createElement('div'); el.id = 'ev-info'; el.className = 'ev-info'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '指標の説明'); document.body.appendChild(el); }
+  var m = _ev.assets.ind[id]; cat = cat || m.cat;
+  var x = evIndResult(cat, id) || evIndResult(m.cat, id), cal = _ev.calib[id];
+  var med = cal && cal.median_log2 != null ? Math.pow(2, Number(cal.median_log2)) : null, z = x && x.z != null ? Number(x.z) : 0;
+  el.innerHTML = '<div class="ev-info__in"><div class="ev-info__top"><div><div class="ev-info__cat">' + evEsc(evName(m.cat)) + '</div><b>' + evEsc(m.label) + '</b></div>' +
+    evBadge(x ? x.grade : null, 32) + '<button type="button" class="ev-info__x" aria-label="閉じる" onclick="document.getElementById(\'ev-info\').classList.remove(\'on\')">✕</button></div>' +
+    (x ? '<div class="ev-card__val">この患者 <b>' + evFmt(Number(x.value)) + '</b>' + (med != null ? '<span>集団の中央値 ' + evFmt(med) + '</span>' : '') + '</div>' + evHeat(m, cal, Number(x.value))
+       : '<p class="ev-muted">この患者では、計算に必要な物質が検出されませんでした。</p>') +
+    '<p class="ev-card__what">' + evEsc(m.what || m.mean) + '</p>' +
+    '<div class="ev-card__hl">' + (m.high ? '<div class="ev-hl ev-hl--hi' + (z > 0.5 ? ' ev-on' : '') + '"><b>高いと</b>' + evEsc(m.high) + '</div>' : '') +
+      (m.low ? '<div class="ev-hl ev-hl--lo' + (z < -0.5 ? ' ev-on' : '') + '"><b>低いと</b>' + evEsc(m.low) + '</div>' : '') + '</div></div>';
+  el.classList.add('on');
+}
+function evScrollTo(el, box) {
+  var r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+  if (box.scrollWidth > box.clientWidth) box.scrollLeft += (r.left + r.width / 2) - (b.left + box.clientWidth / 2);
+  if (box.scrollHeight > box.clientHeight + 2) box.scrollTop += (r.top + r.height / 2) - (b.top + box.clientHeight / 2);
+  requestAnimationFrame(function() {
+    var r2 = el.getBoundingClientRect();
+    var smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: window.scrollY + r2.top - window.innerHeight * 0.28, behavior: smooth ? 'smooth' : 'auto' });
+  });
+}
 function evKeysFor(m, fid) { return fid === 'whole' ? (m.wkeys || []) : (m.figkeys || []); }
 function evHighlight(id, scroll) {
   var box = document.getElementById('ev-figbox'); if (!box) return;
@@ -1642,7 +1668,7 @@ function evHighlight(id, scroll) {
   var m = _ev.assets.ind[id], keys = evKeysFor(m, box.dataset.fig);
   keys.forEach(function(k) { svg.querySelectorAll('.ring[data-key="' + CSS.escape(k) + '"]').forEach(function(x) { x.classList.add('on'); }); });
   svg.querySelectorAll('path.eg').forEach(function(e) { if (keys.indexOf(e.dataset.a) >= 0 && keys.indexOf(e.dataset.b) >= 0) e.classList.add('eg-on'); });
-  if (scroll) { var first = svg.querySelector('.ring.on'); if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); }
+  if (scroll) { var first = svg.querySelector('.ring.on'); if (first) evScrollTo(first, box); }
   if (cap) cap.innerHTML = '<b>' + evEsc(m.label) + '</b> の位置:' + evEsc(keys.join('・')) +
     (keys.length < m.keys.length ? '<span>(' + evEsc(m.keys.filter(function(k) { return keys.indexOf(k) < 0; }).join('・')) + ' は図の外)</span>' : '');
 }
@@ -1658,13 +1684,14 @@ function evBindCategory(cat) {
     });
     evHighlight(_ev.sel);
   }
-  document.querySelectorAll('#clinic-cat-grid .ev-card[data-fig]').forEach(function(c) {
-    c.addEventListener('click', function(e) {
-      if (e.target.closest('a,button:not(.ev-card__figbtn)')) return;
-      var id = c.dataset.id, m = _ev.assets.ind[id];
-      var cur = document.getElementById('ev-figbox');
-      if (!cur || cur.dataset.fig !== m.fig) { _ev.sel = id; evRender(); evHighlight(id, true); return; }
-      _ev.sel = id; evHighlight(id, true);
+  document.querySelectorAll('#clinic-cat-grid .ev-card[data-id]').forEach(function(c) {
+    c.addEventListener('click', function() {
+      var id = c.dataset.id, cur = document.getElementById('ev-figbox'), curFig = cur && cur.dataset.fig;
+      var m = _ev.assets.ind[id];
+      _ev.sel = id;
+      var ok = curFig && evKeysFor(m, curFig).length;
+      if (!ok) { _ev.catFig = evFigOf(id); evRender(); }
+      evHighlight(id, true); if (window.innerWidth < 900) evInfo(id, cat);
     });
   });
   if (typeof loadClinicMetaboliteData === 'function') loadClinicMetaboliteData(_ev.patientId, cat);
@@ -1723,13 +1750,13 @@ function evWholeHtml(figs) {
   var chips = '<div class="ev-chips"><button type="button" class="ev-chipbtn ev-chipbtn--on"><span>全体マップ</span></button>' + figs.map(function(f) {
     return '<button type="button" class="ev-chipbtn" onclick="evOpenFig(\'' + f + '\')"><span>' + evEsc(evFigShort(f)) + '</span>' + evBadge(evFigWorst(f), 20) + '</button>';
   }).join('') + '</div>';
-  var groups = _ev.assets.cats.map(function(c) {
+  var groups = evSortBad(_ev.assets.cats).map(function(c) {
     var r = _ev.rows[c.en] || {};
     var ids = evIndsOf(c.en);
     if (!ids.length) return '';
     return '<div class="ev-wgroup"><div class="ev-wgroup__h"><span>' + evEsc(evName(c.en)) + '</span>' + evBadge(r.rank, 22) + '</div>' + ids.map(function(id) {
       var m = _ev.assets.ind[id], x = evIndResult(c.en, id);
-      return '<button type="button" class="ev-wind" data-id="' + id + '"><span>' + evEsc(m.label) + '</span>' + evBadge(x ? x.grade : null, 22) + '</button>';
+      return '<button type="button" class="ev-wind" data-id="' + id + '" data-cat="' + evEsc(c.en) + '"><span>' + evEsc(m.label) + '</span>' + evBadge(x ? x.grade : null, 22) + '</button>';
     }).join('') + '</div>';
   }).join('');
   return '<button type="button" class="ev-back" onclick="evOpenFig(null)">‹ 経路図一覧に戻る</button>' + chips +
@@ -1761,12 +1788,12 @@ function evBindPathmap() {
   if (_ev.fig === 'whole') _ev.sel = null;
   evHighlight(_ev.sel);
   document.querySelectorAll('#clinic-cat-grid .ev-card[data-fig]').forEach(function(c) {
-    c.addEventListener('click', function() { _ev.sel = c.dataset.id; evHighlight(c.dataset.id, true); });
+    c.addEventListener('click', function() { _ev.sel = c.dataset.id; evHighlight(c.dataset.id, true); evInfo(c.dataset.id); });
   });
   document.querySelectorAll('#clinic-cat-grid .ev-wind').forEach(function(b) {
     b.addEventListener('click', function() {
       document.querySelectorAll('#clinic-cat-grid .ev-wind').forEach(function(x) { x.classList.toggle('ev-wind--on', x === b); });
-      _ev.sel = b.dataset.id; evHighlight(b.dataset.id, true);
+      _ev.sel = b.dataset.id; evHighlight(b.dataset.id, true); evInfo(b.dataset.id, b.dataset.cat);
     });
   });
 }
@@ -1830,15 +1857,14 @@ function evIndCard(cat, id) {
   var med = cal && cal.median_log2 != null ? Math.pow(2, Number(cal.median_log2)) : null;
   var z = x && x.z != null ? Number(x.z) : 0;
   if (!x) {
-    return '<div class="ev-card ev-card--none' + (m.fig ? ' ev-card--link' : '') + '" data-id="' + id + '"' + (m.fig ? ' data-fig="' + m.fig + '" role="button" tabindex="0"' : '') + '>' +
+    return '<div class="ev-card ev-card--none ev-card--link" data-id="' + id + '" data-fig="' + evFigOf(id) + '" role="button" tabindex="0">' +
       '<div class="ev-card__top"><div><div class="ev-card__label">' + evEsc(m.label || m.name) + '</div>' +
-      '<div class="ev-card__tech">' + evEsc(m.name) + (m.fig ? '<span class="ev-card__fig">図で見る</span>' : '') + '</div></div>' + evBadge(null, 30) + '</div>' +
+      '<div class="ev-card__tech">' + evEsc(m.name) + '<span class="ev-card__fig">図で見る</span></div></div>' + evBadge(null, 30) + '</div>' +
       '<p class="ev-card__what">' + evEsc(m.what || m.mean) + '</p><p class="ev-muted">この患者では、計算に必要な物質が検出されませんでした。</p></div>';
   }
-  var figAttr = m.fig ? ' data-fig="' + m.fig + '" role="button" tabindex="0"' : '';
-  return '<div class="ev-card ev-card--' + x.grade + (m.fig ? ' ev-card--link' : '') + '" data-id="' + id + '"' + figAttr + '>' +
+  return '<div class="ev-card ev-card--' + x.grade + ' ev-card--link" data-id="' + id + '" data-fig="' + evFigOf(id) + '" role="button" tabindex="0">' +
     '<div class="ev-card__top"><div><div class="ev-card__label">' + evEsc(m.label || m.name) + '</div><div class="ev-card__tech">' + evEsc(m.name) +
-    (m.fig ? '<span class="ev-card__fig">図で見る</span>' : '') + '</div></div>' + evBadge(x.grade, 34) + '</div>' +
+    '<span class="ev-card__fig">図で見る</span></div></div>' + evBadge(x.grade, 34) + '</div>' +
     '<div class="ev-card__val">この患者 <b>' + evFmt(Number(x.value)) + '</b>' + (med != null ? '<span>集団の中央値 ' + evFmt(med) + '</span>' : '') + '</div>' +
     evHeat(m, cal, Number(x.value)) +
     '<p class="ev-card__what">' + evEsc(m.what || m.mean) + '</p>' +
