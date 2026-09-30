@@ -495,7 +495,7 @@ async function unreleaseScores(patientId) {
       await fetch(SUPABASE_URL + '/rest/v1/scores?patient_id=eq.' + allIds[i], {
         method: 'PATCH',
         headers: Object.assign({}, HEADERS, { 'Prefer': 'return=minimal' }),
-        body: JSON.stringify({ is_released: false })
+        body: JSON.stringify({ is_released: false, is_frozen: false })
       });
     }
     if (typeof showToast === 'function') showToast(t('clinic.unreleaseToast'), 'success');
@@ -514,7 +514,7 @@ async function releaseScores(patientId) {
       await fetch(SUPABASE_URL + '/rest/v1/scores?patient_id=eq.' + allIds[i], {
         method: 'PATCH',
         headers: Object.assign({}, HEADERS, { 'Prefer': 'return=minimal' }),
-        body: JSON.stringify({ is_released: true })
+        body: JSON.stringify({ is_released: true, is_frozen: true })   // 公開した評価は凍結(再計算で書き換えない)
       });
     }
     if (typeof showToast === 'function') showToast(t('clinic.releaseToast'), 'success');

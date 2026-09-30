@@ -721,6 +721,20 @@ svg.pw path.eg-on{stroke:#db2777;stroke-width:5}
 .ev-info__x{border:0;background:none;font-size:18px;color:var(--ink4);cursor:pointer;min-width:36px;min-height:36px}
 @media(min-width:900px){.ev-info{left:auto;right:20px;margin:0;width:420px}}
 @media(prefers-reduced-motion:reduce){.ev-info{transition:none}}
+
+/* ===== 個人画面 v2 ===== */
+.pv-note{background:var(--foam);border-radius:10px;padding:10px 14px;font-size:12.5px;line-height:1.75;color:var(--ink2);margin-top:14px}
+.pv-empty{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px 18px;font-size:13px;line-height:1.8;color:var(--ink3);text-align:center}
+.pv-empty b{color:var(--forest);font-size:14px}
+.pv-rows{display:grid;gap:6px}
+@media(min-width:760px){.pv-rows{grid-template-columns:1fr 1fr;gap:6px 16px}}
+.pv-mapbtn{margin-top:14px;width:100%;border:1px solid var(--emerald);background:var(--white);color:var(--forest);border-radius:10px;padding:12px 14px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;text-align:left;min-height:48px}
+.pv-pos{margin:8px 0 2px}
+.pv-lv{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--paper);color:var(--ink3)}
+.pv-lv--hi{background:#fdecea;color:#b42318}
+.pv-lv--lo{background:#e8f0fe;color:#1d4ed8}
+#screen-patient .ev-cat__side{max-height:none;position:static}
+@media(max-width:899px){#screen-patient .ev-cat .ev-figbox:not(.ev-figbox--crop){overflow-x:auto}#screen-patient .ev-cat .ev-figbox:not(.ev-figbox--crop) svg.pw{width:720px;max-width:none}}
 </style>
 </head>
 <body>
@@ -1611,7 +1625,7 @@ function setLoginLang(lang) {
 <script src="supabase.js"></script>
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
-<script src="patient.js"></script>
+<script src="patient.js?v=20260930a"></script>
 <script src="clinic.js?v=20260930g"></script>
 <script src="app.js"></script>
 <script>

@@ -37,24 +37,13 @@ async function renderPatientPage(patient) {
 
   try {
     const allIds = (currentUser && currentUser.allIds) || [patient.id];
-    var scores;
-    if (allIds.length > 1) {
-      scores = await fetchScoresMulti(allIds);
-    } else {
-      scores = await fetchScores(patient.id);
-    }
     window._patientAllIds = allIds;
-
-    const releasedScores = scores.filter(function(s) { return s.is_released === true; });
-    // is_releasedがどれもfalse/nullの場合は全スコアを表示（未設定環境対応）
-    window._patientScores = releasedScores.length ? releasedScores : scores;
-    renderPatientScores(window._patientScores);
-    renderAlertBanner(window._patientScores);
-    if (allIds.length > 1) {
-      renderScoreTrendChart(allIds);
-    }
-  } catch(e) { console.error(e); }
-
+    await pvLoad(allIds);
+  } catch(e) {
+    console.error(e);
+    const grid = document.getElementById('patient-score-grid');
+    if (grid) grid.innerHTML = '<div class="ev-warn">結果を表示できませんでした。時間をおいて、もう一度開いてください。</div>';
+  }
 }
 
 function renderAlertBanner(scores) {
@@ -608,4 +597,181 @@ async function renderScoreTrendChart(patientIds) {
       '</div>';
 
   } catch(e) { el.innerHTML = ''; }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+//  個人画面 v2(クリニック画面の要約版)
+//  ・公開済み(is_released)の結果だけを表示する
+//  ・評価はクリニック画面と同じ(指標のうち最も悪いもの)。描画部品は clinic.js の ev* を使う
+//  ・病気の名前やリスク、「高いと/低いと」の文章、生の値の表、患者向けコメントは表示しない
+// ═══════════════════════════════════════════════════════════
+var _pv = { view: 'summary', cat: null, sel: null, pid: null };
+// 個人向けに言い換える表現(病名・リスクに触れないように)
+var PV_TEXT = {
+  URA: { what: 'プリン体(食事や、体の細胞が入れ替わる時に出る物質)が分解されてできる最終産物です。' },
+  TMAO: { label: '腸内細菌が作る物質(TMAO)' }
+};
+function pvLabel(id) { var m = _ev.assets.ind[id]; return (PV_TEXT[id] && PV_TEXT[id].label) || m.label || m.name; }
+function pvWhat(id) { var m = _ev.assets.ind[id]; return (PV_TEXT[id] && PV_TEXT[id].what) || m.what || m.mean; }
+function pvLevel(x) {
+  if (!x || x.z == null) return '';
+  var z = Number(x.z);
+  return z >= 1 ? '<span class="pv-lv pv-lv--hi">高め</span>' : z <= -1 ? '<span class="pv-lv pv-lv--lo">低め</span>' : '<span class="pv-lv">標準的</span>';
+}
+
+async function pvLoad(allIds) {
+  var grid = document.getElementById('patient-score-grid');
+  grid.style.cssText = '';
+  grid.innerHTML = '<div class="ev-muted">' + t('patient.loading') + '</div>';
+  await evLoadAssets();
+  // 公開済みの解析IDのうち、いちばん新しいもの
+  var ids = allIds.slice().sort(function(a, b) { return dateFromPatientId(a) < dateFromPatientId(b) ? -1 : 1; });
+  var rows = null, pid = null;
+  for (var i = ids.length - 1; i >= 0; i--) {
+    var r = await dbSelect('scores', 'patient_id=eq.' + encodeURIComponent(ids[i]) + '&is_released=eq.true&select=category,rank,quant_rank,details');
+    if (r && r.length) { rows = r; pid = ids[i]; break; }
+  }
+  var banner = document.getElementById('patient-alert-banner');
+  if (!rows) {
+    if (banner) banner.style.display = 'none';
+    grid.innerHTML = '<div class="pv-empty"><b>結果はまだ公開されていません。</b><br>クリニックで結果の説明を受けた後に、ここで確認できるようになります。</div>';
+    return;
+  }
+  _ev.rows = {}; rows.forEach(function(r) { _ev.rows[r.category] = r; });
+  _pv.pid = pid; _pv.view = 'summary';
+  if (banner) banner.style.display = 'none';
+  pvRender();
+}
+
+function pvRender() {
+  var grid = document.getElementById('patient-score-grid'); if (!grid) return;
+  var info = document.getElementById('ev-info'); if (info) info.classList.remove('on');
+  if (_pv.view === 'cat') { grid.innerHTML = pvCategoryHtml(_pv.cat); pvBindCategory(_pv.cat); }
+  else if (_pv.view === 'map') { grid.innerHTML = pvMapHtml(); pvBindMap(); }
+  else grid.innerHTML = pvSummaryHtml();
+  var title = document.querySelector('#screen-patient .section-title');
+  if (title) title.style.display = _pv.view === 'summary' ? '' : 'none';
+}
+function pvOpen(view, cat) {
+  _pv.view = view; if (cat) { _pv.cat = cat; _pv.sel = null; }
+  pvRender();
+  var grid = document.getElementById('patient-score-grid'); if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+var PV_NOTE = '<div class="pv-note">この結果は、MetaCheckを受けた方々の中での<b>相対的な位置を示す目安</b>です。病気の診断ではありません。気になる点は、担当の医師にご相談ください。</div>';
+
+function pvSummaryHtml() {
+  var cats = _ev.assets.cats, cnt = { A: 0, B: 0, C: 0, D: 0, E: 0, N: 0 };
+  cats.forEach(function(c) { var r = _ev.rows[c.en]; cnt[(r && r.rank) || 'N']++; });
+  var bar = '<div class="ev-dist" role="img" aria-label="16カテゴリの評価の内訳">' + ['A', 'B', 'C', 'D', 'E'].map(function(g) {
+      return cnt[g] ? '<span class="ev-dist__seg rank-' + g + '" style="flex:' + cnt[g] + '"><b>' + g + '</b>' + cnt[g] + '</span>' : '';
+    }).join('') + (cnt.N ? '<span class="ev-dist__seg ev-dist__seg--n" style="flex:' + cnt.N + '">評価なし ' + cnt.N + '</span>' : '') + '</div>';
+  var rows = evSortBad(cats).map(function(c) {
+    var r = _ev.rows[c.en] || {}, g = r.rank;
+    return '<button type="button" class="ev-srow" onclick="pvOpen(\'cat\',\'' + evJs(c.en) + '\')">' +
+      '<span class="ev-srow__n">' + evEsc(evName(c.en)) + '</span><span class="ev-mx__b ' + (g ? 'ev-mx__b--' + g : 'ev-mx__b--n') + '">' + (g || '—') + '</span></button>';
+  }).join('');
+  return PV_NOTE +
+    '<div class="ev-sum__block" style="margin-top:12px"><div class="ev-sum__t">16カテゴリの評価の内訳</div>' + bar +
+      '<p class="ev-note">A(良好)〜E(気になる)の5段階です。</p></div>' +
+    '<div class="ev-sum__block" style="margin-top:12px"><div class="ev-sum__t">カテゴリ別の評価<small>気になる順。押すと、見ている項目と体の仕組みの図を表示します</small></div>' +
+      '<div class="pv-rows">' + rows + '</div></div>' +
+    '<button type="button" class="pv-mapbtn" onclick="pvOpen(\'map\')">代謝マップで、体全体のつながりを見る ›</button>';
+}
+
+function pvIndCard(cat, id) {
+  var m = _ev.assets.ind[id], x = evIndResult(cat, id), cal = _ev.calib[id];
+  return '<div class="ev-card ev-card--' + (x ? x.grade : 'none') + ' ev-card--link pv-card" data-id="' + id + '" role="button" tabindex="0">' +
+    '<div class="ev-card__top"><div><div class="ev-card__label">' + evEsc(pvLabel(id)) + '</div>' +
+      '<div class="ev-card__tech">' + evEsc(m.name) + '<span class="ev-card__fig">図で見る</span></div></div>' + evBadge(x ? x.grade : null, 32) + '</div>' +
+    (x ? '<div class="pv-pos">' + pvLevel(x) + '</div>' + evHeat(m, cal, Number(x.value)) : '<p class="ev-muted">この項目は、計算に必要な物質が検出されなかったため、評価していません。</p>') +
+    '<p class="ev-card__what">' + evEsc(pvWhat(id)) + '</p></div>';
+}
+
+function pvCategoryHtml(cat) {
+  var r = _ev.rows[cat] || {}, meta = evMeta(cat);
+  var head = '<button type="button" class="ev-back" onclick="pvOpen(\'summary\')">‹ 一覧に戻る</button>' +
+    '<div class="ev-head">' + evBadge(r.rank, 48) + '<div><div class="ev-head__n">' + evEsc(evName(cat)) + '</div><div class="ev-head__d">' + evEsc(evDesc(cat)) + '</div></div></div>';
+  if (!r.details) return head + '<div class="ev-panel"><p class="ev-note">この結果は以前の方式で評価されているため、項目ごとの内訳は表示できません。詳しくは担当の医師にご確認ください。</p></div>';
+  var ids = evIndsOf(cat).sort(function(a, b) {
+    var ga = evIndResult(cat, a), gb = evIndResult(cat, b);
+    return (gb ? EV_ORD.indexOf(gb.grade) : -1) - (ga ? EV_ORD.indexOf(ga.grade) : -1);
+  });
+  if (!_pv.sel || ids.indexOf(_pv.sel) < 0) _pv.sel = ids.filter(function(id) { return evIndResult(cat, id); })[0] || ids[0] || null;
+  var figId = meta.fig || 'whole', fig = _ev.assets.figs[figId];
+  var cards = ids.length ? ids.map(function(id) { return pvIndCard(cat, id); }).join('') : '<p class="ev-muted">このカテゴリで評価できる項目はありません。</p>';
+  return head + '<p class="ev-lead">このカテゴリは、下の項目のうち最も気になるもので評価しています。項目を押すと、図の該当する場所に印が付きます。</p>' +
+    '<div class="ev-cat"><div class="ev-cat__fig"><div class="ev-figcap" id="ev-figcap"></div>' +
+      '<div class="ev-figbox' + (figId === 'whole' ? ' ev-figbox--crop' : '') + '" id="ev-figbox" data-fig="' + figId + '">' + fig.svg + '</div>' +
+      '<div class="ev-legend">' + evFigLegend(fig) + '</div></div>' +
+    '<div class="ev-cat__side"><div class="ev-cards ev-cards--col">' + cards + '</div></div></div>' + PV_NOTE;
+}
+
+// 図の上に、選んだ項目の位置を示す(個別の図に無い項目は全体マップを拡大して示す)
+function pvShow(cat, id, scroll) {
+  var box = document.getElementById('ev-figbox'); if (!box) return;
+  var m = _ev.assets.ind[id], keys = evKeysFor(m, box.dataset.fig);
+  if (!keys.length && box.dataset.fig !== 'whole') {
+    box.dataset.fig = 'whole'; box.classList.add('ev-figbox--crop'); box.innerHTML = _ev.assets.figs.whole.svg;
+    evPaintSvg(box.querySelector('svg'), 'whole', false);
+  }
+  if (box.classList.contains('ev-figbox--crop')) { var save = _ev.sel; _ev.sel = id; evCropToCategory(box.querySelector('svg'), cat); _ev.sel = save; }
+  var svg = box.querySelector('svg'), cap = document.getElementById('ev-figcap');
+  svg.querySelectorAll('.ring').forEach(function(x) { x.classList.remove('on'); });
+  svg.querySelectorAll('path.eg').forEach(function(x) { x.classList.remove('eg-on'); });
+  keys = evKeysFor(m, box.dataset.fig);
+  keys.forEach(function(k) { svg.querySelectorAll('.ring[data-key="' + CSS.escape(k) + '"]').forEach(function(x) { x.classList.add('on'); }); });
+  svg.querySelectorAll('path.eg').forEach(function(e) { if (keys.indexOf(e.dataset.a) >= 0 && keys.indexOf(e.dataset.b) >= 0) e.classList.add('eg-on'); });
+  document.querySelectorAll('#patient-score-grid .pv-card').forEach(function(c) { c.classList.toggle('ev-card--sel', c.dataset.id === id); });
+  if (cap) cap.innerHTML = '<b>' + evEsc(pvLabel(id)) + '</b> の位置';
+  if (scroll) { var first = svg.querySelector('.ring.on'); if (first) evScrollTo(first, box); }
+}
+function pvBindCategory(cat) {
+  var box = document.getElementById('ev-figbox'); if (!box) return;
+  evPaintSvg(box.querySelector('svg'), box.dataset.fig, false);
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && box.querySelector('svg').pauseAnimations) box.querySelector('svg').pauseAnimations();
+  if (_pv.sel) pvShow(cat, _pv.sel, false);
+  document.querySelectorAll('#patient-score-grid .pv-card').forEach(function(c) {
+    c.addEventListener('click', function() { _pv.sel = c.dataset.id; pvShow(cat, c.dataset.id, true); });
+  });
+}
+
+function pvMapHtml() {
+  var fig = _ev.assets.figs.whole;
+  var groups = evSortBad(_ev.assets.cats).map(function(c) {
+    var r = _ev.rows[c.en] || {}, ids = evIndsOf(c.en);
+    if (!ids.length) return '';
+    return '<div class="ev-wgroup"><div class="ev-wgroup__h"><span>' + evEsc(evName(c.en)) + '</span>' + evBadge(r.rank, 22) + '</div>' + ids.map(function(id) {
+      var x = evIndResult(c.en, id);
+      return '<button type="button" class="ev-wind" data-id="' + id + '" data-cat="' + evEsc(c.en) + '"><span>' + evEsc(pvLabel(id)) + '</span>' + evBadge(x ? x.grade : null, 22) + '</button>';
+    }).join('') + '</div>';
+  }).join('');
+  return '<button type="button" class="ev-back" onclick="pvOpen(\'summary\')">‹ 一覧に戻る</button>' +
+    '<div class="ev-head"><div><div class="ev-head__n">代謝マップ</div><div class="ev-head__d">糖・脂肪・アミノ酸がエネルギー(TCA回路)に集まり、そこから体のさまざまな働きへ広がる全体像です。丸の色は、あなたの値が受診者の平均より高め(赤)か低め(青)かを表します。</div></div></div>' +
+    '<div class="ev-figcap" id="ev-figcap"></div>' +
+    '<div class="ev-figbox ev-figbox--whole" id="ev-figbox" data-fig="whole">' + fig.svg + '</div>' +
+    '<div class="ev-legend">' + evFigLegend(fig) + '</div>' +
+    '<div class="ev-sum__t" style="margin-top:18px">項目を押すと、マップの上に位置を示します</div><div class="ev-wgroups">' + groups + '</div>' + PV_NOTE;
+}
+function pvBindMap() {
+  var box = document.getElementById('ev-figbox'); if (!box) return;
+  evPaintSvg(box.querySelector('svg'), 'whole', false);
+  document.querySelectorAll('#patient-score-grid .ev-wind').forEach(function(b) {
+    b.addEventListener('click', function() {
+      document.querySelectorAll('#patient-score-grid .ev-wind').forEach(function(x) { x.classList.toggle('ev-wind--on', x === b); });
+      pvShow(b.dataset.cat, b.dataset.id, true); pvInfo(b.dataset.id, b.dataset.cat);
+    });
+  });
+}
+// 画面下の説明(個人向け:病気・リスクの文章は出さない)
+function pvInfo(id, cat) {
+  var el = document.getElementById('ev-info');
+  if (!el) { el = document.createElement('div'); el.id = 'ev-info'; el.className = 'ev-info'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '項目の説明'); document.body.appendChild(el); }
+  var m = _ev.assets.ind[id], x = evIndResult(cat, id);
+  el.innerHTML = '<div class="ev-info__in"><div class="ev-info__top"><div><div class="ev-info__cat">' + evEsc(evName(cat)) + '</div><b>' + evEsc(pvLabel(id)) + '</b></div>' +
+    evBadge(x ? x.grade : null, 32) + '<button type="button" class="ev-info__x" aria-label="閉じる" onclick="document.getElementById(\'ev-info\').classList.remove(\'on\')">✕</button></div>' +
+    (x ? '<div class="pv-pos">' + pvLevel(x) + '</div>' + evHeat(m, _ev.calib[id], Number(x.value)) : '<p class="ev-muted">この項目は評価していません。</p>') +
+    '<p class="ev-card__what">' + evEsc(pvWhat(id)) + '</p></div>';
+  el.classList.add('on');
 }
