@@ -1422,7 +1422,7 @@ function evWorse(a, b) { if (!a) return b; if (!b) return a; return EV_ORD.index
 async function evLoadAssets() {
   if (_ev.assets) return;
   var res = await Promise.all([
-    fetch('/pathway_figures.json?v=20260930b', { cache: 'no-cache' }).then(function(r) {
+    fetch('/pathway_figures.json?v=20260930c', { cache: 'no-cache' }).then(function(r) {
       if (!r.ok) throw new Error('図の定義ファイル(pathway_figures.json)が見つかりません(' + r.status + ')。');
       return r.json();
     }),
@@ -1611,8 +1611,13 @@ function evCategoryHtml(cat) {
 
 // 図に患者の値を塗る(svg要素を指定)
 function evPaintSvg(svg, figId, clickable) {
-  var figCat = (_ev.assets.cats.find(function(c) { return c.fig === figId; }) || {}).en;
-  var det = (_ev.rows[figCat] && _ev.rows[figCat].details) || {}, fc = det.fc || {};
+  var fc = {};
+  if (figId === 'whole') {
+    Object.keys(_ev.rows).some(function(k) { var d = _ev.rows[k].details; if (d && d.wfc) { fc = d.wfc; return true; } return false; });
+  } else {
+    var figCat = (_ev.assets.cats.find(function(c) { return c.fig === figId; }) || {}).en;
+    fc = ((_ev.rows[figCat] && _ev.rows[figCat].details) || {}).fc || {};
+  }
   svg.querySelectorAll('circle.nd').forEach(function(n) {
     var v = fc[n.dataset.key]; n.setAttribute('fill', v === undefined ? '#e5e7eb' : evFcColor(Number(v)));
     if (clickable) { n.style.cursor = 'pointer'; n.addEventListener('click', function() { evShowCompound(n.dataset.key, v); }); }
@@ -1626,6 +1631,7 @@ function evPaintFigure(figId) {
   evPaintSvg(svg, figId, true);
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && svg.pauseAnimations) svg.pauseAnimations();
 }
+function evKeysFor(m, fid) { return fid === 'whole' ? (m.wkeys || []) : (m.figkeys || []); }
 function evHighlight(id, scroll) {
   var box = document.getElementById('ev-figbox'); if (!box) return;
   var svg = box.querySelector('svg'), cap = document.getElementById('ev-figcap');
@@ -1633,10 +1639,10 @@ function evHighlight(id, scroll) {
   svg.querySelectorAll('path.eg').forEach(function(x) { x.classList.remove('eg-on'); });
   document.querySelectorAll('#clinic-cat-grid .ev-card').forEach(function(c) { c.classList.toggle('ev-card--sel', c.dataset.id === id); });
   if (!id) { if (cap) cap.innerHTML = ''; return; }
-  var m = _ev.assets.ind[id], keys = m.figkeys || [];
+  var m = _ev.assets.ind[id], keys = evKeysFor(m, box.dataset.fig);
   keys.forEach(function(k) { svg.querySelectorAll('.ring[data-key="' + CSS.escape(k) + '"]').forEach(function(x) { x.classList.add('on'); }); });
   svg.querySelectorAll('path.eg').forEach(function(e) { if (keys.indexOf(e.dataset.a) >= 0 && keys.indexOf(e.dataset.b) >= 0) e.classList.add('eg-on'); });
-  if (scroll) { var first = svg.querySelector('.ring.on'); if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  if (scroll) { var first = svg.querySelector('.ring.on'); if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); }
   if (cap) cap.innerHTML = '<b>' + evEsc(m.label) + '</b> の位置:' + evEsc(keys.join('・')) +
     (keys.length < m.keys.length ? '<span>(' + evEsc(m.keys.filter(function(k) { return keys.indexOf(k) < 0; }).join('・')) + ' は図の外)</span>' : '');
 }
@@ -1679,6 +1685,8 @@ function evPathmapHtml() {
   var figs = _ev.assets.cats.filter(function(c) { return c.fig; }).map(function(c) { return c.fig; });
   if (!_ev.fig) {
     return '<div class="ev-sum__block"><div class="ev-sum__t">経路図一覧<small>この患者の値で色を付けています。図を押すと、大きな図と、その図に位置を示せる指標を開きます</small></div>' +
+      '<button type="button" class="ev-pmcard ev-pmcard--whole" onclick="evOpenFig(\'whole\')"><div class="ev-pmcard__svg" data-fig="whole">' + _ev.assets.figs.whole.svg + '</div>' +
+        '<div class="ev-pmcard__t">全体の代謝マップ</div><div class="ev-pmcard__m">7つの経路と、全ての指標の物質のつながり</div></button>' +
       '<div class="ev-pmgrid">' + figs.map(function(fid) {
         var n = evFigInds(fid).length, w = evFigWorst(fid);
         return '<button type="button" class="ev-pmcard" onclick="evOpenFig(\'' + fid + '\')"><div class="ev-pmcard__svg" data-fig="' + fid + '">' + _ev.assets.figs[fid].svg + '</div>' +
@@ -1686,6 +1694,7 @@ function evPathmapHtml() {
           '<div class="ev-pmcard__m">指標 ' + n + '個' + (w ? '<span>最も悪い評価</span>' + evBadge(w, 20) : '') + '</div></button>';
       }).join('') + '</div></div>';
   }
+  if (_ev.fig === 'whole') return evWholeHtml(figs);
   var fid = _ev.fig, fig = _ev.assets.figs[fid], ids = evFigInds(fid);
   ids.sort(function(a, b) {
     var ga = evIndResult(_ev.assets.ind[a].cat, a), gb = evIndResult(_ev.assets.ind[b].cat, b);
@@ -1709,6 +1718,27 @@ function evPathmapHtml() {
     '<div class="ev-cat__side">' + (ids.length ? '<p class="ev-lead">指標を押すと、図の該当箇所に印が付きます。</p><div class="ev-cards ev-cards--col">' + cards + '</div>'
       : '<p class="ev-muted">この図に位置を示せる指標はありません。</p>') + '</div></div>';
 }
+function evWholeHtml(figs) {
+  var fig = _ev.assets.figs.whole;
+  var chips = '<div class="ev-chips"><button type="button" class="ev-chipbtn ev-chipbtn--on"><span>全体マップ</span></button>' + figs.map(function(f) {
+    return '<button type="button" class="ev-chipbtn" onclick="evOpenFig(\'' + f + '\')"><span>' + evEsc(evFigShort(f)) + '</span>' + evBadge(evFigWorst(f), 20) + '</button>';
+  }).join('') + '</div>';
+  var groups = _ev.assets.cats.map(function(c) {
+    var r = _ev.rows[c.en] || {};
+    var ids = evIndsOf(c.en);
+    if (!ids.length) return '';
+    return '<div class="ev-wgroup"><div class="ev-wgroup__h"><span>' + evEsc(evName(c.en)) + '</span>' + evBadge(r.rank, 22) + '</div>' + ids.map(function(id) {
+      var m = _ev.assets.ind[id], x = evIndResult(c.en, id);
+      return '<button type="button" class="ev-wind" data-id="' + id + '"><span>' + evEsc(m.label) + '</span>' + evBadge(x ? x.grade : null, 22) + '</button>';
+    }).join('') + '</div>';
+  }).join('');
+  return '<button type="button" class="ev-back" onclick="evOpenFig(null)">‹ 経路図一覧に戻る</button>' + chips +
+    '<div class="ev-head"><div><div class="ev-head__n">' + evEsc(fig.title) + '</div><div class="ev-head__d">' + fig.desc + '</div></div></div>' +
+    '<div class="ev-figcap" id="ev-figcap"></div>' +
+    '<div class="ev-figbox ev-figbox--whole" id="ev-figbox" data-fig="whole">' + fig.svg + '<button type="button" class="ev-zoom" id="ev-zoom">図を拡大</button></div>' +
+    '<div class="ev-legend">' + evFigLegend(fig) + '</div><div class="ev-cpd" id="ev-cpd" hidden></div>' +
+    '<div class="ev-sum__t" style="margin-top:18px">指標を押すと、全体マップの上に位置を示します</div><div class="ev-wgroups">' + groups + '</div>';
+}
 function evOpenFig(fid) {
   _ev.sel = null; _ev.tab = 'pathmap'; _ev.fig = fid; evTab('pathmap');
   var el = document.getElementById('clinic-cat-grid'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1728,9 +1758,16 @@ function evBindPathmap() {
     var z = box.classList.toggle('ev-figbox--zoom'); zb.textContent = z ? '閉じる' : '図を拡大';
     if (z) requestAnimationFrame(function() { box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2; });
   });
+  if (_ev.fig === 'whole') _ev.sel = null;
   evHighlight(_ev.sel);
   document.querySelectorAll('#clinic-cat-grid .ev-card[data-fig]').forEach(function(c) {
     c.addEventListener('click', function() { _ev.sel = c.dataset.id; evHighlight(c.dataset.id, true); });
+  });
+  document.querySelectorAll('#clinic-cat-grid .ev-wind').forEach(function(b) {
+    b.addEventListener('click', function() {
+      document.querySelectorAll('#clinic-cat-grid .ev-wind').forEach(function(x) { x.classList.toggle('ev-wind--on', x === b); });
+      _ev.sel = b.dataset.id; evHighlight(b.dataset.id, true);
+    });
   });
 }
 

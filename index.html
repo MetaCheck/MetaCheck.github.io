@@ -684,6 +684,20 @@ svg.pw path.eg-on{stroke:#db2777;stroke-width:5}
 .ev-pmcard__m span{margin-left:auto}
 .ev-back{border:0;background:none;color:var(--emerald);font-weight:700;cursor:pointer;padding:6px 0 10px;font-family:inherit;font-size:13px;min-height:36px}
 .ev-card__cat{font-size:11px;color:var(--ink4);margin:4px 2px -4px}
+
+/* ===== 評価画面 v2:全体マップ ===== */
+.ev-pmcard--whole{width:100%;margin-bottom:12px}
+.ev-pmcard--whole .ev-pmcard__svg{height:auto;aspect-ratio:1840/1340;max-height:420px}
+.ev-figbox.ev-figbox--whole{max-width:none}
+.ev-figbox--whole>.ev-zoom{top:auto;bottom:10px;right:10px}
+.ev-figbox--whole svg.pw{width:100%}
+@media(max-width:899px){.ev-figbox--whole{overflow-x:auto}.ev-figbox--whole svg.pw{width:900px;max-width:none}}
+.ev-wgroups{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ev-wgroup{border:1px solid var(--border);border-radius:10px;background:var(--white);padding:8px}
+.ev-wgroup__h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--forest);padding:2px 4px 6px}
+.ev-wind{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;border:0;background:var(--paper);border-radius:8px;padding:5px 6px 5px 10px;margin-top:4px;font-family:inherit;font-size:12px;color:var(--ink2);text-align:left;cursor:pointer;min-height:36px}
+.ev-wind:hover{outline:2px solid #f5c2d9}
+.ev-wind--on{outline:2px solid #db2777;background:#fdf2f8}
 </style>
 </head>
 <body>
@@ -1575,7 +1589,7 @@ function setLoginLang(lang) {
 <script src="i18n.js"></script>
 <script src="auth.js"></script>
 <script src="patient.js"></script>
-<script src="clinic.js?v=20260930c"></script>
+<script src="clinic.js?v=20260930e"></script>
 <script src="app.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', async function() {
